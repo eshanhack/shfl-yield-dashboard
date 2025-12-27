@@ -78,7 +78,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                   <InfoTooltip content={TOOLTIPS.shfl} title="What is SHFL?" />
                 </div>
                 <p className="text-[10px] text-terminal-textSecondary tracking-wide">
-                  Shuffle.com Staking Analytics
+                  TERMINAL v1.0
                 </p>
               </div>
             </div>
