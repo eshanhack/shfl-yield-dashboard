@@ -252,13 +252,42 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-terminal-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-2 border-terminal-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          {/* 3D Flipping SHFL Token */}
+          <div className="perspective-1000 mx-auto mb-6">
+            <div className="w-24 h-24 relative animate-flip-3d transform-style-3d animate-glow-pulse">
+              {/* Front face */}
+              <div className="absolute inset-0 backface-hidden flex items-center justify-center">
+                <img
+                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  alt="SHFL Token"
+                  className="w-20 h-20"
+                />
+              </div>
+              {/* Back face */}
+              <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center">
+                <img
+                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  alt="SHFL Token"
+                  className="w-20 h-20"
+                />
+              </div>
+            </div>
+          </div>
+          <p className="text-terminal-accent text-xl font-bold mb-1">
+            SHFL<span className="text-terminal-text">YIELD</span>
+          </p>
           <p className="text-terminal-textSecondary text-sm">
-            Loading terminal data...
+            Initializing terminal...
           </p>
           <p className="text-terminal-textMuted text-xs mt-2">
-            Fetching from CoinGecko & Shuffle.com
+            Fetching live data from CoinGecko & Shuffle.com
           </p>
+          {/* Loading dots animation */}
+          <div className="flex items-center justify-center gap-1.5 mt-4">
+            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
         </div>
       </div>
     );
