@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 export const metadata: Metadata = {
   title: "SHFL Yield Dashboard | Bloomberg Terminal",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-terminal-black text-terminal-text font-mono antialiased">
-        {children}
+        <CurrencyProvider>
+          {children}
+        </CurrencyProvider>
       </body>
     </html>
   );

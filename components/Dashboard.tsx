@@ -16,6 +16,7 @@ import LotteryHistoryTable from "./LotteryHistoryTable";
 import PersonalCalculator from "./Calculator";
 import YieldCalculatorPanel from "./YieldCalculatorPanel";
 import TicketEVPanel from "./TicketEVPanel";
+import CurrencyAmount from "./CurrencyAmount";
 
 import {
   fetchSHFLPrice,
@@ -343,9 +344,10 @@ export default function Dashboard() {
               )}
             </div>
             <div className="mb-1">
-              <span className="text-2xl font-bold text-terminal-text tabular-nums">
-                {formatUSD(weeklyPoolUSD)}
-              </span>
+              <CurrencyAmount 
+                amount={weeklyPoolUSD} 
+                className="text-2xl font-bold text-terminal-text"
+              />
             </div>
             <div className="text-xs text-terminal-textMuted mb-2">
               Draw #{lotteryStats.drawNumber || 64}
@@ -353,14 +355,15 @@ export default function Dashboard() {
             <div className="space-y-1 pt-2 border-t border-terminal-border/50">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-terminal-textMuted">Last Week Pool</span>
-                <span className="font-medium text-terminal-text tabular-nums">
-                  {formatUSD(completedDraws[0]?.totalPoolUSD || 0)}
-                </span>
+                <CurrencyAmount 
+                  amount={completedDraws[0]?.totalPoolUSD || 0} 
+                  className="font-medium text-terminal-text"
+                />
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-terminal-textMuted">Highest Pool</span>
                 <span className="font-medium text-terminal-positive tabular-nums">
-                  {formatUSD(highestPrizePoolData.pool)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
+                  <CurrencyAmount amount={highestPrizePoolData.pool} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
                 </span>
               </div>
             </div>
@@ -434,24 +437,26 @@ export default function Dashboard() {
               )}
             </div>
             <div className="mb-1">
-              <span className="text-2xl font-bold text-terminal-text tabular-nums">
-                {formatUSD(ngrStats.current4WeekAvg)}
-              </span>
+              <CurrencyAmount 
+                amount={ngrStats.current4WeekAvg} 
+                className="text-2xl font-bold text-terminal-text"
+              />
             </div>
             <div className="text-xs text-terminal-textMuted mb-2">
-              Prior 4wk: {formatUSD(ngrStats.prior4WeekAvg)}
+              Prior 4wk: <CurrencyAmount amount={ngrStats.prior4WeekAvg} />
             </div>
             <div className="space-y-1 pt-2 border-t border-terminal-border/50">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-terminal-textMuted">Last Week NGR</span>
-                <span className="font-medium text-terminal-accent tabular-nums">
-                  {formatUSD(lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85)}
-                </span>
+                <CurrencyAmount 
+                  amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} 
+                  className="font-medium text-terminal-accent"
+                />
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-terminal-textMuted">Highest NGR</span>
                 <span className="font-medium text-terminal-positive tabular-nums">
-                  {formatUSD(highestNGRData.ngr)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
+                  <CurrencyAmount amount={highestNGRData.ngr} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
                 </span>
               </div>
             </div>
