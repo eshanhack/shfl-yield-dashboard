@@ -17,6 +17,8 @@ import PersonalCalculator from "./Calculator";
 import YieldCalculatorPanel from "./YieldCalculatorPanel";
 import TicketEVPanel from "./TicketEVPanel";
 import CurrencyAmount from "./CurrencyAmount";
+import ShuffleRevenueCard from "./ShuffleRevenueCard";
+import ShuffleRevenueChart from "./ShuffleRevenueChart";
 
 import {
   fetchSHFLPrice,
@@ -507,14 +509,27 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Sensitivity Table */}
+        {/* Revenue Card and Sensitivity Table */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-1">
+            <ShuffleRevenueCard
+              historicalDraws={completedDraws}
+              currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <SensitivityTable
+              baseNGR={ngrStats.current4WeekAvg}
+              basePrice={price.usd}
+              totalTickets={lotteryStats.totalTickets}
+              prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+            />
+          </div>
+        </div>
+
+        {/* Shuffle Revenue History Chart */}
         <div className="mb-6">
-          <SensitivityTable
-            baseNGR={ngrStats.current4WeekAvg}
-            basePrice={price.usd}
-            totalTickets={lotteryStats.totalTickets}
-            prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-          />
+          <ShuffleRevenueChart historicalDraws={completedDraws} />
         </div>
 
         {/* Lottery History Table */}
