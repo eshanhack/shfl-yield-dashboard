@@ -78,7 +78,7 @@ export default function TokenReturnsChart() {
         const endPrices: Record<string, number> = {};
         
         // Get the minimum length to ensure all tokens have data for same timestamps
-        const minLength = Math.min(...results.filter(r => r.prices.length > 0).map(r => r.prices.length));
+        const minLength = Math.min(...results.filter((r: { token: TokenData; prices: [number, number][] }) => r.prices.length > 0).map((r: { token: TokenData; prices: [number, number][] }) => r.prices.length));
         
         if (minLength === 0) {
           setChartData([]);
