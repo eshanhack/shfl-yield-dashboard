@@ -233,7 +233,7 @@ function estimateTicketsFromPool(prizePool: number): number {
 export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
   try {
     const response = await fetch("/api/lottery-history", {
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
     
     if (!response.ok) {
@@ -246,11 +246,14 @@ export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
       throw new Error("Invalid response");
     }
     
-    // Transform to NGR history points
-    return data.draws.map((draw: LotteryDrawRaw) => ({
+    // Transform to NGR history points (using totalNGRContribution = ngrAdded + singles*0.85)
+    const points = data.draws.map((draw: LotteryDrawRaw) => ({
       timestamp: new Date(draw.date).getTime(),
-      ngr: draw.ngrAdded,
-    })).reverse(); // Oldest first for charting
+      ngr: draw.totalNGRContribution,
+    }));
+    
+    // Sort oldest first for charting
+    return points.sort((a: NGRHistoryPoint, b: NGRHistoryPoint) => a.timestamp - b.timestamp);
   } catch (error) {
     console.error("Error fetching NGR history:", error);
     return getMockNGRHistory(52);
@@ -374,34 +377,35 @@ export async function combineChartData(
   priceHistory: PriceHistoryPoint[],
   ngrHistory: NGRHistoryPoint[]
 ): Promise<ChartDataPoint[]> {
-  // Create a map of NGR by week
-  const ngrByWeek = new Map<string, number>();
-  ngrHistory.forEach((point) => {
-    const weekKey = getWeekKey(point.timestamp);
-    ngrByWeek.set(weekKey, point.ngr);
-  });
+  // Create chart data based on NGR history (weekly draws)
+  // For each NGR point, find the closest price
+  const chartData: ChartDataPoint[] = [];
   
-  // Sample price data weekly and combine with NGR
-  const weeklyData: ChartDataPoint[] = [];
-  const seenWeeks = new Set<string>();
-  
-  for (const pricePoint of priceHistory) {
-    const weekKey = getWeekKey(pricePoint.timestamp);
-    if (seenWeeks.has(weekKey)) continue;
-    seenWeeks.add(weekKey);
+  for (const ngrPoint of ngrHistory) {
+    // Find the closest price point to this NGR date
+    let closestPrice = priceHistory[0]?.price || 0;
+    let minDiff = Infinity;
     
-    const ngr = ngrByWeek.get(weekKey) ?? 0;
-    const date = new Date(pricePoint.timestamp);
+    for (const pricePoint of priceHistory) {
+      const diff = Math.abs(pricePoint.timestamp - ngrPoint.timestamp);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPrice = pricePoint.price;
+      }
+    }
     
-    weeklyData.push({
+    const date = new Date(ngrPoint.timestamp);
+    
+    chartData.push({
       date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      timestamp: pricePoint.timestamp,
-      price: pricePoint.price,
-      ngr: ngr / 1_000_000, // Convert to millions for display
+      timestamp: ngrPoint.timestamp,
+      price: closestPrice,
+      ngr: ngrPoint.ngr / 1_000_000, // Convert to millions for display
     });
   }
   
-  return weeklyData.sort((a, b) => a.timestamp - b.timestamp);
+  // Sort by date (oldest first)
+  return chartData.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 function getWeekKey(timestamp: number): string {

@@ -19,10 +19,9 @@ interface YieldChartProps {
 }
 
 export default function YieldChart({ data }: YieldChartProps) {
+  // Show all weekly data points
   const formattedData = useMemo(() => {
-    // Sample data to show monthly points
-    const sampled = data.filter((_, i) => i % 4 === 0 || i === data.length - 1);
-    return sampled;
+    return data;
   }, [data]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -54,10 +53,10 @@ export default function YieldChart({ data }: YieldChartProps) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-medium text-terminal-text">
-            NGR vs SHFL Price
+            Weekly NGR vs SHFL Price
           </h3>
           <p className="text-xs text-terminal-textMuted">
-            12-month historical comparison
+            {formattedData.length} weeks of lottery history
           </p>
         </div>
         <div className="flex items-center gap-4">
