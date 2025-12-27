@@ -58,20 +58,19 @@ export default function TokenReturnsChart() {
       setIsLoading(true);
       try {
         const days = periodDays[timePeriod];
-        const promises = TOKENS.map(async (token) => {
-          try {
-            const response = await fetch(
-              `https://api.coingecko.com/api/v3/coins/${token.id}/market_chart?vs_currency=usd&days=${days}`
-            );
-            if (!response.ok) throw new Error("Failed to fetch");
-            const data = await response.json();
-            return { token, prices: data.prices as [number, number][] };
-          } catch {
-            return { token, prices: [] };
-          }
+        
+        // Fetch from our API route to avoid CORS and rate limits
+        const response = await fetch(`/api/token-prices?days=${days}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        
+        const json = await response.json();
+        if (!json.success) throw new Error("API returned error");
+        
+        // Transform data to match expected format
+        const results = json.data.map((item: { symbol: string; prices: [number, number][] }) => {
+          const token = TOKENS.find(t => t.symbol === item.symbol) || TOKENS[0];
+          return { token, prices: item.prices };
         });
-
-        const results = await Promise.all(promises);
         
         // Normalize to percentage returns from start
         const normalizedData: PricePoint[] = [];
