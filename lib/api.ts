@@ -169,10 +169,23 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
   }
 }
 
+export interface NGRStats {
+  current4WeekAvg: number;
+  prior4WeekAvg: number;
+}
+
 /**
- * Fetch 4-week average NGR from lottery history
+ * Fetch 4-week average NGR from lottery history (current and prior)
  */
 export async function fetchAvgWeeklyNGR(): Promise<number> {
+  const stats = await fetchNGRStats();
+  return stats.current4WeekAvg;
+}
+
+/**
+ * Fetch NGR stats including current and prior 4-week averages
+ */
+export async function fetchNGRStats(): Promise<NGRStats> {
   try {
     const response = await fetch("/api/lottery-history", {
       cache: "no-store",
@@ -184,14 +197,16 @@ export async function fetchAvgWeeklyNGR(): Promise<number> {
     
     const data = await response.json();
     
-    if (data.stats?.avgWeeklyNGR_4week) {
-      return data.stats.avgWeeklyNGR_4week;
-    }
-    
-    return 500_000; // Fallback
+    return {
+      current4WeekAvg: data.stats?.avgWeeklyNGR_4week || 500_000,
+      prior4WeekAvg: data.stats?.avgWeeklyNGR_prior4week || 500_000,
+    };
   } catch (error) {
-    console.error("Error fetching avg weekly NGR:", error);
-    return 500_000;
+    console.error("Error fetching NGR stats:", error);
+    return {
+      current4WeekAvg: 500_000,
+      prior4WeekAvg: 500_000,
+    };
   }
 }
 

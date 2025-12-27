@@ -26,12 +26,13 @@ import {
   fetchLotteryHistory,
   fetchLotteryStats,
   fetchNGRHistory,
-  fetchAvgWeeklyNGR,
+  fetchNGRStats,
   combineChartData,
   getMockLotteryStats,
   SHFLPrice,
   ChartDataPoint,
   LotteryStats,
+  NGRStats,
 } from "@/lib/api";
 
 import {
@@ -53,7 +54,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [historicalDraws, setHistoricalDraws] = useState<HistoricalDraw[]>([]);
   const [lotteryStats, setLotteryStats] = useState<LotteryStats>(getMockLotteryStats());
-  const [avgWeeklyNGR, setAvgWeeklyNGR] = useState<number>(500_000);
+  const [ngrStats, setNgrStats] = useState<NGRStats>({ current4WeekAvg: 500_000, prior4WeekAvg: 500_000 });
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -66,13 +67,13 @@ export default function Dashboard() {
     
     try {
       // Fetch all data in parallel
-      const [priceData, priceHistory, ngrHistory, draws, stats, avgNGR] = await Promise.all([
+      const [priceData, priceHistory, ngrHistory, draws, stats, ngrStatsData] = await Promise.all([
         fetchSHFLPrice(),
         fetchPriceHistory(365),
         fetchNGRHistory(),
         fetchLotteryHistory(),
         fetchLotteryStats(),
-        fetchAvgWeeklyNGR(),
+        fetchNGRStats(),
       ]);
 
       setPrice(priceData);
@@ -83,7 +84,7 @@ export default function Dashboard() {
 
       setHistoricalDraws(draws);
       setLotteryStats(stats);
-      setAvgWeeklyNGR(avgNGR);
+      setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
     } catch (error) {
       console.error("Error loading data:", error);
@@ -119,24 +120,32 @@ export default function Dashboard() {
     const currentSplit = historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
     
     return calculateGlobalAPY(
-      avgWeeklyNGR,
+      ngrStats.current4WeekAvg,
       lotteryStats.totalTickets,
       price.usd,
       currentSplit
     );
-  }, [avgWeeklyNGR, lotteryStats.totalTickets, price.usd, historicalDraws]);
+  }, [ngrStats.current4WeekAvg, lotteryStats.totalTickets, price.usd, historicalDraws]);
 
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats.currentWeekPool;
 
-  // Calculate week-over-week NGR change
+  // Calculate 4-week vs prior 4-week NGR change
   const ngrChange = useMemo(() => {
+    const current = ngrStats.current4WeekAvg;
+    const prior = ngrStats.prior4WeekAvg;
+    if (prior === 0) return 0;
+    return ((current - prior) / prior) * 100;
+  }, [ngrStats]);
+
+  // Calculate week-over-week staked change (current vs prior week from history)
+  const stakedChange = useMemo(() => {
     if (historicalDraws.length < 2) return 0;
-    const current = historicalDraws[0]?.ngrUSD || 0;
-    const previous = historicalDraws[1]?.ngrUSD || 0;
-    if (previous === 0) return 0;
-    return ((current - previous) / previous) * 100;
-  }, [historicalDraws]);
+    const currentTickets = lotteryStats.totalTickets;
+    const priorWeekTickets = historicalDraws[0]?.totalTickets || 0;
+    if (priorWeekTickets === 0) return 0;
+    return ((currentTickets - priorWeekTickets) / priorWeekTickets) * 100;
+  }, [lotteryStats.totalTickets, historicalDraws]);
 
   if (isLoading) {
     return (
@@ -212,12 +221,13 @@ export default function Dashboard() {
             value={`${formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL`}
             subtitle={`${formatNumber(lotteryStats.totalTickets)} tickets`}
             icon={Users}
+            change={stakedChange}
           />
 
           <KPICard
             title="Avg. Weekly NGR"
-            value={formatUSD(avgWeeklyNGR)}
-            subtitle="Last 4 draws"
+            value={formatUSD(ngrStats.current4WeekAvg)}
+            subtitle={`Prior 4wk: ${formatUSD(ngrStats.prior4WeekAvg)}`}
             icon={TrendingUp}
             change={ngrChange}
           />
@@ -354,7 +364,7 @@ export default function Dashboard() {
         {/* Sensitivity Table */}
         <div className="mb-6">
           <SensitivityTable
-            baseNGR={avgWeeklyNGR}
+            baseNGR={ngrStats.current4WeekAvg}
             basePrice={price.usd}
             totalTickets={lotteryStats.totalTickets}
             prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
@@ -393,7 +403,7 @@ export default function Dashboard() {
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
         shflPrice={price.usd}
-        weeklyNGR={avgWeeklyNGR}
+        weeklyNGR={ngrStats.current4WeekAvg}
         totalTickets={lotteryStats.totalTickets}
         historicalDraws={historicalDraws}
         prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}

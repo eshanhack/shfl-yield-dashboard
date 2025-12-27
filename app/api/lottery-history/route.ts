@@ -175,9 +175,15 @@ export async function GET(request: Request) {
     });
   }
 
-  // Calculate 4-week average NGR (from the latest 4 draws)
+  // Calculate 4-week average NGR (from the latest 4 draws: weeks 1-4)
   const last4Draws = drawsWithNGR.slice(0, 4);
   const avgWeeklyNGR = last4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last4Draws.length;
+
+  // Calculate prior 4-week average NGR (weeks 5-8)
+  const prior4Draws = drawsWithNGR.slice(4, 8);
+  const priorAvgWeeklyNGR = prior4Draws.length > 0 
+    ? prior4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / prior4Draws.length
+    : avgWeeklyNGR;
 
   // Calculate 12-week average for longer-term view
   const last12Draws = drawsWithNGR.slice(0, 12);
@@ -188,6 +194,7 @@ export async function GET(request: Request) {
     draws: drawsWithNGR,
     stats: {
       avgWeeklyNGR_4week: avgWeeklyNGR,
+      avgWeeklyNGR_prior4week: priorAvgWeeklyNGR,
       avgWeeklyNGR_12week: avg12WeekNGR,
       last4DrawsNGR: last4Draws.map(d => ({
         drawNumber: d.drawNumber,
