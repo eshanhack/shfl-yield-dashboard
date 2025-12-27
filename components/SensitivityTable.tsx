@@ -50,29 +50,19 @@ export default function SensitivityTable({
         </p>
       </div>
 
-      <div className="relative">
-        {/* Price label */}
-        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 text-[10px] text-terminal-textSecondary uppercase tracking-wider">
-          SHFL Price Multiplier →
-        </div>
-
-        {/* NGR label */}
-        <div className="absolute top-1/2 -left-1 transform -translate-y-1/2 -rotate-90 text-[10px] text-terminal-textSecondary uppercase tracking-wider whitespace-nowrap">
-          NGR Multiplier →
-        </div>
-
-        <table className="w-full mt-4 ml-4">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr>
-              <th className="p-2 text-xs text-terminal-textMuted font-normal">
-                NGR / Price
+              <th className="p-3 text-left text-[10px] text-terminal-textMuted font-normal uppercase tracking-wider border-b border-terminal-border">
+                NGR ↓ / Price →
               </th>
               {priceMultipliers.map((mult) => (
                 <th
                   key={mult}
-                  className="p-2 text-xs text-terminal-textSecondary font-medium text-center"
+                  className="p-3 text-center text-xs text-terminal-textSecondary font-medium border-b border-terminal-border"
                 >
-                  {mult}x
+                  <div>{mult}x</div>
                   <div className="text-[10px] text-terminal-textMuted font-normal">
                     ${(basePrice * mult).toFixed(3)}
                   </div>
@@ -83,21 +73,21 @@ export default function SensitivityTable({
           <tbody>
             {table.map((row, rowIndex) => (
               <tr key={rowIndex}>
-                <td className="p-2 text-xs text-terminal-textSecondary font-medium">
-                  {ngrMultipliers[rowIndex]}x
+                <td className="p-3 text-xs text-terminal-textSecondary font-medium border-b border-terminal-border/50">
+                  <div>{ngrMultipliers[rowIndex]}x</div>
                   <div className="text-[10px] text-terminal-textMuted font-normal">
-                    ${((baseNGR * ngrMultipliers[rowIndex]) / 1_000_000).toFixed(1)}M
+                    ${((baseNGR * ngrMultipliers[rowIndex]) / 1_000_000).toFixed(2)}M
                   </div>
                 </td>
                 {row.map((cell, colIndex) => (
                   <td
                     key={colIndex}
                     className={cn(
-                      "p-2 text-center text-xs font-medium rounded transition-all",
+                      "p-3 text-center text-sm font-bold border-b border-terminal-border/50",
                       getApyColor(cell.apy),
                       cell.ngrMultiplier === 1 &&
                         cell.priceMultiplier === 1 &&
-                        "ring-1 ring-terminal-accent"
+                        "ring-2 ring-terminal-accent ring-inset"
                     )}
                   >
                     {cell.apy.toFixed(1)}%
@@ -109,7 +99,7 @@ export default function SensitivityTable({
         </table>
       </div>
 
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-terminal-border">
+      <div className="flex items-center gap-6 mt-4 pt-3 border-t border-terminal-border flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-terminal-positive/30" />
           <span className="text-[10px] text-terminal-textMuted">≥100% APY</span>
@@ -123,11 +113,14 @@ export default function SensitivityTable({
           <span className="text-[10px] text-terminal-textMuted">≥25% APY</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded ring-1 ring-terminal-accent" />
+          <div className="w-3 h-3 rounded bg-terminal-warning/30" />
+          <span className="text-[10px] text-terminal-textMuted">≥10% APY</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded ring-2 ring-terminal-accent" />
           <span className="text-[10px] text-terminal-textMuted">Current</span>
         </div>
       </div>
     </div>
   );
 }
-
