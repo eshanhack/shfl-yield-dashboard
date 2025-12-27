@@ -118,8 +118,8 @@ function wasJackpotWon(jackpotted: number, prizePool: number): boolean {
 }
 
 // Real lottery history data from https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history
-// Only including verified data - add more draws as they become available
 const LOTTERY_HISTORY_DATA: Omit<LotteryDrawData, 'totalNGRContribution' | 'prizes'>[] = [
+  // 2025 Draws (newest first)
   { drawNumber: 62, date: "2025-12-19", prizePool: 1263612, jackpotted: 1064670, ngrAdded: 173555, singlesAdded: 29042, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 61, date: "2025-12-12", prizePool: 3103837, jackpotted: 33626, ngrAdded: 1201151, singlesAdded: 53543, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 60, date: "2025-12-05", prizePool: 3333438, jackpotted: 2845173, ngrAdded: 205120, singlesAdded: 55062, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
@@ -140,6 +140,49 @@ const LOTTERY_HISTORY_DATA: Omit<LotteryDrawData, 'totalNGRContribution' | 'priz
   { drawNumber: 45, date: "2025-08-22", prizePool: 965329, jackpotted: 711215, ngrAdded: 244512, singlesAdded: 10931, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 44, date: "2025-08-15", prizePool: 780653, jackpotted: 649242, ngrAdded: 305156, singlesAdded: 17382, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 43, date: "2025-08-08", prizePool: 802680, jackpotted: 545990, ngrAdded: 217282, singlesAdded: 17988, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
+  { drawNumber: 42, date: "2025-08-01", prizePool: 668791, jackpotted: 500692, ngrAdded: 284000, singlesAdded: 13831, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 41, date: "2025-07-25", prizePool: 2902553, jackpotted: 0, ngrAdded: 205672, singlesAdded: 35583, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 40, date: "2025-07-18", prizePool: 2820005, jackpotted: 2535746, ngrAdded: 331224, singlesAdded: 47513, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 39, date: "2025-07-11", prizePool: 2833794, jackpotted: 2473348, ngrAdded: 299144, singlesAdded: 26343, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 38, date: "2025-07-04", prizePool: 2751679, jackpotted: 2496895, ngrAdded: 310556, singlesAdded: 37576, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 37, date: "2025-06-27", prizePool: 2756108, jackpotted: 2440967, ngrAdded: 273135, singlesAdded: 19726, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 36, date: "2025-06-20", prizePool: 2727721, jackpotted: 2424381, ngrAdded: 312001, singlesAdded: 33795, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 35, date: "2025-06-13", prizePool: 2734011, jackpotted: 2408416, ngrAdded: 285511, singlesAdded: 42539, prizepoolSplit: "5-13-9-10-10-10-15-13-15" },
+  { drawNumber: 34, date: "2025-06-06", prizePool: 2688982, jackpotted: 2410180, ngrAdded: 281291, singlesAdded: 28009, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 33, date: "2025-05-30", prizePool: 2507473, jackpotted: 2301757, ngrAdded: 359216, singlesAdded: 20031, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 32, date: "2025-05-23", prizePool: 2582343, jackpotted: 2265454, ngrAdded: 221987, singlesAdded: 18323, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 31, date: "2025-05-16", prizePool: 2514187, jackpotted: 2262909, ngrAdded: 301111, singlesAdded: 43086, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 30, date: "2025-05-09", prizePool: 2535255, jackpotted: 2165189, ngrAdded: 305912, singlesAdded: 49750, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 29, date: "2025-05-02", prizePool: 2499821, jackpotted: 2099884, ngrAdded: 385621, singlesAdded: 43280, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 28, date: "2025-04-25", prizePool: 2348843, jackpotted: 2085290, ngrAdded: 371251, singlesAdded: 84755, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 27, date: "2025-04-18", prizePool: 2405146, jackpotted: 2025330, ngrAdded: 281290, singlesAdded: 77615, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 26, date: "2025-04-11", prizePool: 2322857, jackpotted: 2148029, ngrAdded: 249556, singlesAdded: 98587, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 25, date: "2025-04-04", prizePool: 2285978, jackpotted: 1982708, ngrAdded: 241563, singlesAdded: 48948, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 24, date: "2025-03-28", prizePool: 2260507, jackpotted: 1922025, ngrAdded: 323021, singlesAdded: 15461, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 23, date: "2025-03-21", prizePool: 2058671, jackpotted: 1825632, ngrAdded: 194039, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 22, date: "2025-03-14", prizePool: 2019671, jackpotted: 1788516, ngrAdded: 231155, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 21, date: "2025-03-07", prizePool: 1968436, jackpotted: 1767296, ngrAdded: 101520, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 20, date: "2025-02-28", prizePool: 1817839, jackpotted: 1746875, ngrAdded: 221561, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 19, date: "2025-02-21", prizePool: 1860261, jackpotted: 1719277, ngrAdded: 98562, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 18, date: "2025-02-14", prizePool: 1805807, jackpotted: 1694398, ngrAdded: 165863, singlesAdded: 0, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
+  { drawNumber: 17, date: "2025-02-07", prizePool: 1742995, jackpotted: 1674738, ngrAdded: 131069, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 16, date: "2025-01-31", prizePool: 1750639, jackpotted: 1629233, ngrAdded: 113762, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 15, date: "2025-01-24", prizePool: 1654383, jackpotted: 1548295, ngrAdded: 202344, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 14, date: "2025-01-17", prizePool: 1608779, jackpotted: 1521727, ngrAdded: 132656, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 13, date: "2025-01-10", prizePool: 1592488, jackpotted: 1419536, ngrAdded: 189243, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 12, date: "2025-01-03", prizePool: 1607021, jackpotted: 1406134, ngrAdded: 186354, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  // 2024 Draws
+  { drawNumber: 11, date: "2024-12-27", prizePool: 1335953, jackpotted: 1170309, ngrAdded: 436711, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 10, date: "2024-12-20", prizePool: 1309212, jackpotted: 1143789, ngrAdded: 192163, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 9, date: "2024-12-13", prizePool: 1113841, jackpotted: 949598, ngrAdded: 359615, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 8, date: "2024-12-06", prizePool: 1062675, jackpotted: 946703, ngrAdded: 167138, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 7, date: "2024-11-29", prizePool: 904742, jackpotted: 810561, ngrAdded: 252114, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 6, date: "2024-11-22", prizePool: 858049, jackpotted: 700000, ngrAdded: 204741, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 5, date: "2024-11-15", prizePool: 734525, jackpotted: 664529, ngrAdded: 193520, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 4, date: "2024-11-08", prizePool: 650156, jackpotted: 582360, ngrAdded: 152165, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 3, date: "2024-11-01", prizePool: 750935, jackpotted: 502774, ngrAdded: 147382, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 2, date: "2024-10-25", prizePool: 640000, jackpotted: 594000, ngrAdded: 156935, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
+  { drawNumber: 1, date: "2024-10-18", prizePool: 1000000, jackpotted: 540000, ngrAdded: 100000, singlesAdded: 0, prizepoolSplit: "40-14-8-8-6-5-4-7-8" },
 ];
 
 async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
