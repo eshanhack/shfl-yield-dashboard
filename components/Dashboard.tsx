@@ -602,7 +602,7 @@ export default function Dashboard() {
         </div>
 
         {/* Lottery History Table */}
-        <LotteryHistoryTable draws={historicalDraws} />
+        <LotteryHistoryTable draws={completedDraws} />
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t border-terminal-border">

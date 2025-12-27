@@ -61,6 +61,8 @@ export default function YieldCalculatorPanel({
   const handleSave = () => {
     localStorage.setItem("shfl-staked-amount", shflAmount.toString());
     setSavedAmount(shflAmount);
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent("shfl-staked-changed", { detail: shflAmount }));
   };
 
   const ticketCount = Math.floor(shflAmount / SHFL_PER_TICKET);

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { HistoricalDraw, formatUSD } from "@/lib/calculations";
+import { useState, useEffect, useMemo } from "react";
+import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
@@ -15,18 +15,67 @@ const ITEMS_PER_PAGE = 10;
 export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps) {
   const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [stakedAmount, setStakedAmount] = useState<number>(1000); // Default 1K SHFL
+  
+  // Load saved staked amount from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("shfl-staked-amount");
+    if (saved) {
+      const amount = parseFloat(saved);
+      if (amount > 0) {
+        setStakedAmount(amount);
+      }
+    }
+    
+    // Listen for custom event when staked amount changes
+    const handleStakedChange = (e: CustomEvent<number>) => {
+      if (e.detail > 0) {
+        setStakedAmount(e.detail);
+      }
+    };
+    
+    // Listen for storage changes (cross-tab)
+    const handleStorageChange = () => {
+      const updated = localStorage.getItem("shfl-staked-amount");
+      if (updated) {
+        const amount = parseFloat(updated);
+        if (amount > 0) {
+          setStakedAmount(amount);
+        }
+      }
+    };
+    
+    window.addEventListener("shfl-staked-changed" as any, handleStakedChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
   
   const totalPages = Math.ceil(draws.length / ITEMS_PER_PAGE);
   const startIndex = currentPage * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentDraws = draws.slice(startIndex, endIndex);
   
-  const avgYield =
-    draws.length > 0
-      ? draws.reduce((sum, d) => sum + d.yieldPerThousandSHFL, 0) / draws.length
-      : 0;
+  // Calculate yield based on user's staked amount
+  const yieldMultiplier = stakedAmount / 1000; // Convert from per 1K to user's amount
+  
+  // Calculate average yield for user's stake
+  const avgYield = useMemo(() => {
+    if (draws.length === 0) return 0;
+    const avgPer1K = draws.reduce((sum, d) => sum + d.yieldPerThousandSHFL, 0) / draws.length;
+    return avgPer1K * yieldMultiplier;
+  }, [draws, yieldMultiplier]);
 
   const jackpotWonCount = draws.filter(d => d.jackpotWon).length;
+  
+  // Format staked amount for display
+  const stakedLabel = stakedAmount >= 1000000 
+    ? `${(stakedAmount / 1000000).toFixed(1)}M` 
+    : stakedAmount >= 1000 
+    ? `${(stakedAmount / 1000).toFixed(0)}K` 
+    : formatNumber(stakedAmount);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)));
@@ -59,7 +108,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
               )}
               <div className="text-right">
                 <div className="text-xs text-terminal-textSecondary">
-                  Avg. Yield/1K SHFL
+                  Avg. Yield/{stakedLabel} SHFL
                 </div>
                 <div className="text-sm font-medium text-terminal-accent">
                   {formatUSD(avgYield)}
@@ -106,7 +155,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                 <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                   <div className="flex items-center gap-1.5 justify-end">
                     <TrendingUp className="w-3 h-3" />
-                    Yield/1K SHFL
+                    Yield/{stakedLabel} SHFL
                   </div>
                 </th>
                 <th className="px-4 py-3 w-10"></th>
@@ -114,7 +163,11 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
             </thead>
             <tbody>
               {currentDraws.map((draw, index) => {
-                const isAboveAvg = draw.yieldPerThousandSHFL > avgYield;
+                const userYield = draw.yieldPerThousandSHFL * yieldMultiplier;
+                const avgPer1K = draws.length > 0 
+                  ? draws.reduce((sum, d) => sum + d.yieldPerThousandSHFL, 0) / draws.length 
+                  : 0;
+                const isAboveAvg = draw.yieldPerThousandSHFL > avgPer1K;
                 // Estimate jackpot as ~87% of pool (based on typical splits)
                 const estimatedJackpot = draw.totalPoolUSD * 0.87;
                 const isJackpotWon = draw.jackpotWon;
@@ -205,7 +258,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                             : "text-terminal-text"
                         )}
                       >
-                        {formatUSD(draw.yieldPerThousandSHFL)}
+                        {formatUSD(userYield)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
