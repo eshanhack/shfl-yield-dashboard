@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { 
   Ticket, 
   Zap, 
   Coins, 
   TrendingUp,
   Clock,
-  Info
+  Info,
+  ChevronDown
 } from "lucide-react";
 import { 
   calculateStandardTicketEV,
@@ -15,6 +16,7 @@ import {
   calculateStakedTicketEV,
   formatUSD,
   formatNumber,
+  HistoricalDraw,
   EVResult
 } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,8 @@ interface TicketEVPanelProps {
   prizeSplit: string;
   totalTickets: number;
   shflPrice: number;
+  historicalDraws?: HistoricalDraw[];
+  currentDrawNumber?: number;
 }
 
 export default function TicketEVPanel({
@@ -31,18 +35,52 @@ export default function TicketEVPanel({
   prizeSplit,
   totalTickets,
   shflPrice,
+  historicalDraws = [],
+  currentDrawNumber = 64,
 }: TicketEVPanelProps) {
+  // "upcoming" means use the current/upcoming draw props, otherwise use historical draw number
+  const [selectedDraw, setSelectedDraw] = useState<"upcoming" | number>("upcoming");
+  
+  // Get the draw data based on selection
+  const drawData = useMemo(() => {
+    if (selectedDraw === "upcoming") {
+      return {
+        pool: totalPool,
+        split: prizeSplit,
+        tickets: totalTickets,
+        label: `Draw #${currentDrawNumber} (Upcoming)`,
+      };
+    }
+    
+    const draw = historicalDraws.find(d => d.drawNumber === selectedDraw);
+    if (draw) {
+      return {
+        pool: draw.totalPoolUSD,
+        split: draw.prizepoolSplit || prizeSplit,
+        tickets: draw.totalTickets || totalTickets,
+        label: `Draw #${draw.drawNumber}`,
+      };
+    }
+    
+    return {
+      pool: totalPool,
+      split: prizeSplit,
+      tickets: totalTickets,
+      label: `Draw #${currentDrawNumber} (Upcoming)`,
+    };
+  }, [selectedDraw, totalPool, prizeSplit, totalTickets, historicalDraws, currentDrawNumber]);
+
   const standardEV = useMemo(() => {
-    return calculateStandardTicketEV(totalPool, prizeSplit, totalTickets);
-  }, [totalPool, prizeSplit, totalTickets]);
+    return calculateStandardTicketEV(drawData.pool, drawData.split, drawData.tickets);
+  }, [drawData]);
 
   const powerplayEV = useMemo(() => {
-    return calculatePowerplayTicketEV(totalPool, prizeSplit, totalTickets);
-  }, [totalPool, prizeSplit, totalTickets]);
+    return calculatePowerplayTicketEV(drawData.pool, drawData.split, drawData.tickets);
+  }, [drawData]);
 
   const stakedEV = useMemo(() => {
-    return calculateStakedTicketEV(totalPool, prizeSplit, totalTickets, shflPrice);
-  }, [totalPool, prizeSplit, totalTickets, shflPrice]);
+    return calculateStakedTicketEV(drawData.pool, drawData.split, drawData.tickets, shflPrice);
+  }, [drawData, shflPrice]);
 
   const getEVColor = (ev: number, cost: number) => {
     const ratio = ev / cost;
@@ -53,17 +91,36 @@ export default function TicketEVPanel({
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-          <TrendingUp className="w-4 h-4 text-terminal-accent" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+            <TrendingUp className="w-4 h-4 text-terminal-accent" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-terminal-text">
+              Ticket Expected Value
+            </h3>
+            <p className="text-[10px] text-terminal-textMuted">
+              Pool: {formatUSD(drawData.pool)} • {drawData.tickets.toLocaleString()} tickets
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-sm font-medium text-terminal-text">
-            Ticket Expected Value
-          </h3>
-          <p className="text-[10px] text-terminal-textMuted">
-            EV analysis for this draw • Pool: {formatUSD(totalPool)}
-          </p>
+        
+        {/* Draw Selector Dropdown */}
+        <div className="relative">
+          <select
+            value={selectedDraw}
+            onChange={(e) => setSelectedDraw(e.target.value === "upcoming" ? "upcoming" : parseInt(e.target.value))}
+            className="appearance-none bg-terminal-dark border border-terminal-border rounded-lg px-3 py-1.5 pr-8 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent cursor-pointer"
+          >
+            <option value="upcoming">Draw #{currentDrawNumber} (Upcoming)</option>
+            {historicalDraws.slice(0, 20).map((draw) => (
+              <option key={draw.drawNumber} value={draw.drawNumber}>
+                Draw #{draw.drawNumber} - {new Date(draw.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-terminal-textMuted pointer-events-none" />
         </div>
       </div>
 

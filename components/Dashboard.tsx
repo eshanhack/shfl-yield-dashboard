@@ -547,6 +547,8 @@ export default function Dashboard() {
               prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
               totalTickets={lotteryStats.totalTickets}
               shflPrice={price.usd}
+              historicalDraws={completedDraws}
+              currentDrawNumber={lotteryStats.drawNumber}
             />
 
             {/* Latest Draw Info */}
