@@ -235,9 +235,13 @@ export default function TokenReturnsChart() {
                 onClick={() => toggleToken(token.symbol)}
                 className={cn(
                   "p-2 rounded-lg border transition-all text-left",
-                  isVisible 
-                    ? "bg-terminal-dark border-terminal-border" 
-                    : "bg-terminal-dark/50 border-terminal-border/50 opacity-50"
+                  token.symbol === "SHFL" 
+                    ? isVisible
+                      ? "bg-terminal-accent/10 border-terminal-accent"
+                      : "bg-terminal-accent/5 border-terminal-accent/30 opacity-50"
+                    : isVisible 
+                      ? "bg-terminal-dark border-terminal-border" 
+                      : "bg-terminal-dark/50 border-terminal-border/50 opacity-50"
                 )}
               >
                 <div className="flex items-center gap-1.5 mb-1">
