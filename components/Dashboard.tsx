@@ -189,28 +189,21 @@ export default function Dashboard() {
                   Current Prize Pool
                 </span>
               </div>
+              {/* Compact Jackpot badge */}
+              <div className="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1">
+                <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                <span className="text-xs font-bold text-yellow-400 tabular-nums">
+                  ${((lotteryStats.jackpotAmount || weeklyPoolUSD * 0.30) / 1_000_000).toFixed(2)}M
+                </span>
+              </div>
             </div>
-            <div className="mb-2">
+            <div className="mb-1">
               <span className="text-2xl font-bold text-terminal-text tabular-nums">
                 {formatUSD(weeklyPoolUSD)}
               </span>
             </div>
-            <div className="text-xs text-terminal-textMuted mb-3">
+            <div className="text-xs text-terminal-textMuted">
               Draw #{lotteryStats.drawNumber || 64}
-            </div>
-            {/* Jackpot highlight */}
-            <div className="bg-gradient-to-r from-yellow-900/30 to-amber-900/20 border border-yellow-600/40 rounded-lg p-3 flex items-center gap-3">
-              <div className="p-2 rounded-full bg-yellow-500/20">
-                <Trophy className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <div className="text-[10px] text-yellow-500/80 uppercase tracking-wider font-medium">
-                  🏆 Jackpot Prize
-                </div>
-                <div className="text-lg font-bold text-yellow-400 tabular-nums">
-                  {formatUSD(lotteryStats.jackpotAmount || weeklyPoolUSD * 0.30)}
-                </div>
-              </div>
             </div>
           </div>
 
