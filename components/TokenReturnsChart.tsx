@@ -96,7 +96,7 @@ export default function TokenReturnsChart() {
             date: "",
           };
           
-          results.forEach(({ token, prices }) => {
+          results.forEach(({ token, prices }: { token: TokenData; prices: [number, number][] }) => {
             if (prices[i]) {
               const [timestamp, price] = prices[i];
               point.timestamp = timestamp;
