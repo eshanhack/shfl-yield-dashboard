@@ -47,11 +47,8 @@ async function scrapeLotteryPage(): Promise<Partial<CurrentLotteryStats>> {
     });
 
     // Wait a bit for dynamic content to load
-    await page.waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Get the page content
-    const content = await page.content();
-    
     // Try to extract prize pool from the rendered page
     // Look for large dollar amounts that could be the jackpot/prize pool
     const prizePoolData = await page.evaluate(() => {
