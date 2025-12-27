@@ -10,6 +10,7 @@ import {
   Zap,
   Ticket,
   RefreshCw,
+  Trophy,
 } from "lucide-react";
 
 import Header from "./Header";
@@ -178,12 +179,40 @@ export default function Dashboard() {
             />
           </div>
 
-          <KPICard
-            title="Current Prize Pool"
-            value={formatUSD(weeklyPoolUSD)}
-            subtitle={`Draw #${lotteryStats.drawNumber || 64}`}
-            icon={DollarSign}
-          />
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                  <DollarSign className="w-4 h-4 text-terminal-accent" />
+                </div>
+                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                  Current Prize Pool
+                </span>
+              </div>
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                {formatUSD(weeklyPoolUSD)}
+              </span>
+            </div>
+            <div className="text-xs text-terminal-textMuted mb-3">
+              Draw #{lotteryStats.drawNumber || 64}
+            </div>
+            {/* Jackpot highlight */}
+            <div className="bg-gradient-to-r from-yellow-900/30 to-amber-900/20 border border-yellow-600/40 rounded-lg p-3 flex items-center gap-3">
+              <div className="p-2 rounded-full bg-yellow-500/20">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div>
+                <div className="text-[10px] text-yellow-500/80 uppercase tracking-wider font-medium">
+                  🏆 Jackpot Prize
+                </div>
+                <div className="text-lg font-bold text-yellow-400 tabular-nums">
+                  {formatUSD(lotteryStats.jackpotAmount || weeklyPoolUSD * 0.30)}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <KPICard
             title="Total Staked"

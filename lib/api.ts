@@ -208,6 +208,7 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
       nextDrawTimestamp: data.stats.nextDrawTimestamp,
       drawStatus: data.stats.drawStatus,
       drawNumber: data.stats.drawNumber,
+      jackpotAmount: data.stats.jackpotAmount,
     };
   } catch (error) {
     console.error("Error fetching lottery stats:", error);
@@ -361,6 +362,7 @@ export interface LotteryStats {
   nextDrawTimestamp: number;
   drawStatus?: string;
   drawNumber?: number;
+  jackpotAmount?: number;
 }
 
 /**
