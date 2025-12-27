@@ -18,12 +18,22 @@ const GET_PRIZES_AND_RESULTS_QUERY = `query getPrizesAndResults($drawId: Float) 
 const GET_LOTTERY_DRAW_QUERY = `query getLotteryDraw($id: Float) {
   lotteryDraw(drawId: $id) {
     id
+    prizePoolAmount
     totalStaked
     status
+    drawAt
   }
 }`;
 
-async function fetchTotalStakedForDraw(drawId: number): Promise<number | null> {
+interface DrawApiData {
+  id: number;
+  prizePoolAmount: number;
+  totalStaked: number;
+  status: string;
+  drawAt: string;
+}
+
+async function fetchDrawFromApi(drawId: number): Promise<DrawApiData | null> {
   try {
     const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
@@ -47,15 +57,28 @@ async function fetchTotalStakedForDraw(drawId: number): Promise<number | null> {
     }
 
     const data = await response.json();
-    if (!data.data?.lotteryDraw?.totalStaked) {
+    if (!data.data?.lotteryDraw) {
       return null;
     }
 
-    return parseFloat(data.data.lotteryDraw.totalStaked);
+    const draw = data.data.lotteryDraw;
+    return {
+      id: draw.id,
+      prizePoolAmount: parseFloat(draw.prizePoolAmount) || 0,
+      totalStaked: parseFloat(draw.totalStaked) || 0,
+      status: draw.status,
+      drawAt: draw.drawAt,
+    };
   } catch (error) {
-    console.error(`Error fetching totalStaked for draw ${drawId}:`, error);
+    console.error(`Error fetching draw ${drawId}:`, error);
     return null;
   }
+}
+
+// Legacy function for backwards compatibility
+async function fetchTotalStakedForDraw(drawId: number): Promise<number | null> {
+  const draw = await fetchDrawFromApi(drawId);
+  return draw?.totalStaked || null;
 }
 
 export interface PrizeData {
@@ -159,73 +182,126 @@ async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
   }
 }
 
+// Get latest draw number
+async function getLatestDrawNumber(): Promise<number> {
+  try {
+    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify({
+        operationName: "getLatestLotteryDraw",
+        query: `query getLatestLotteryDraw { getLatestLotteryDraw { id } }`,
+        variables: {},
+      }),
+      cache: "no-store",
+    });
+    const data = await response.json();
+    return data.data?.getLatestLotteryDraw?.id || 64;
+  } catch {
+    return 64;
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fetchPrizes = searchParams.get("fetchPrizes") === "true";
   const drawId = searchParams.get("drawId");
+  const fetchAll = searchParams.get("fetchAll") === "true";
 
   // If requesting specific draw details
   if (drawId) {
-    const prizes = await fetchPrizesForDraw(parseInt(drawId));
-    const draw = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === parseInt(drawId));
+    const drawNum = parseInt(drawId);
+    const [apiData, prizes] = await Promise.all([
+      fetchDrawFromApi(drawNum),
+      fetchPrizesForDraw(drawNum),
+    ]);
     
-    // Check if jackpot was won from prize data (winCount > 0) or from jackpotted ratio
+    const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
+    
+    // Check if jackpot was won from prize data (winCount > 0)
     const jackpotPrize = prizes?.find(p => p.category === "JACKPOT");
     const jackpotWonFromPrizes = jackpotPrize ? jackpotPrize.winCount > 0 : false;
-    const jackpotWonFromRatio = draw ? wasJackpotWon(draw.jackpotted, draw.prizePool) : false;
+    const jackpotWonFromRatio = staticData ? wasJackpotWon(staticData.jackpotted, staticData.prizePool) : false;
+    
+    // Calculate total NGR from prize data if no static data
+    const totalPool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
+    const ngrAdded = staticData?.ngrAdded || totalPool * 0.15; // Estimate 15% if no data
+    const singlesAdded = staticData?.singlesAdded || 0;
     
     return NextResponse.json({
       success: true,
-      draw: draw ? {
-        ...draw,
-        totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
+      draw: {
+        drawNumber: drawNum,
+        date: apiData?.drawAt || staticData?.date || "",
+        prizePool: totalPool,
+        jackpotted: staticData?.jackpotted || 0,
+        ngrAdded,
+        singlesAdded,
+        prizepoolSplit: staticData?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+        totalNGRContribution: ngrAdded + (singlesAdded * 0.85),
+        totalStaked: apiData?.totalStaked || 0,
+        totalTickets: apiData?.totalStaked ? Math.floor(apiData.totalStaked / 50) : 0,
         prizes,
         jackpotAmount: jackpotPrize?.amount || 0,
         jackpotWon: jackpotWonFromPrizes || jackpotWonFromRatio,
         totalWinners: prizes?.reduce((sum, p) => sum + p.winCount, 0) || 0,
         totalPaidOut: prizes?.reduce((sum, p) => sum + (p.win || 0), 0) || 0,
-      } : null,
+      },
       lastUpdated: new Date().toISOString(),
     });
   }
 
-  // Calculate totalNGRContribution for each draw and determine jackpot status
-  let drawsWithNGR: LotteryDrawData[] = LOTTERY_HISTORY_DATA.map(draw => ({
-    ...draw,
-    totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
-    jackpotWon: wasJackpotWon(draw.jackpotted, draw.prizePool),
-  }));
-
-  // Fetch actual totalStaked for recent draws (for accurate ticket counts)
-  const recentDrawsForTickets = drawsWithNGR.slice(0, 12);
-  const ticketPromises = recentDrawsForTickets.map(draw => 
-    fetchTotalStakedForDraw(draw.drawNumber)
-  );
-  const ticketResults = await Promise.all(ticketPromises);
+  // Get the latest draw number
+  const latestDrawNum = await getLatestDrawNumber();
   
-  drawsWithNGR = drawsWithNGR.map((draw, index) => {
-    if (index < ticketResults.length && ticketResults[index]) {
-      const totalStaked = ticketResults[index]!;
-      return {
-        ...draw,
-        totalStaked,
-        totalTickets: Math.floor(totalStaked / 50),
-      };
-    }
-    return draw;
-  });
+  // Fetch all draws from API (1 to latest) - limit concurrent requests
+  const allDrawNumbers = Array.from({ length: latestDrawNum }, (_, i) => latestDrawNum - i);
+  
+  // Fetch draw data in batches to avoid overwhelming the API
+  const batchSize = 10;
+  const allDrawsData: (DrawApiData | null)[] = [];
+  
+  for (let i = 0; i < allDrawNumbers.length; i += batchSize) {
+    const batch = allDrawNumbers.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(num => fetchDrawFromApi(num)));
+    allDrawsData.push(...batchResults);
+  }
 
-  // Optionally fetch prize data for recent draws (limit to avoid rate limiting)
+  // Build draws list combining API data with static data
+  let drawsWithData: LotteryDrawData[] = allDrawNumbers.map((drawNum, index) => {
+    const apiData = allDrawsData[index];
+    const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
+    
+    const prizePool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
+    const ngrAdded = staticData?.ngrAdded || prizePool * 0.15;
+    const singlesAdded = staticData?.singlesAdded || 0;
+    const jackpotted = staticData?.jackpotted || prizePool * 0.85;
+    
+    return {
+      drawNumber: drawNum,
+      date: apiData?.drawAt?.split('T')[0] || staticData?.date || "",
+      prizePool,
+      jackpotted,
+      ngrAdded,
+      singlesAdded,
+      prizepoolSplit: staticData?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+      totalNGRContribution: ngrAdded + (singlesAdded * 0.85),
+      totalStaked: apiData?.totalStaked || 0,
+      totalTickets: apiData?.totalStaked ? Math.floor(apiData.totalStaked / 50) : 0,
+      jackpotWon: staticData ? wasJackpotWon(staticData.jackpotted, staticData.prizePool) : false,
+    };
+  }).filter(d => d.prizePool > 0); // Filter out draws with no data
+
+  // Optionally fetch prize data for recent draws
   if (fetchPrizes) {
-    const recentDraws = drawsWithNGR.slice(0, 8); // Fetch for last 8 draws
-    
-    const prizesPromises = recentDraws.map(draw => 
-      fetchPrizesForDraw(draw.drawNumber)
-    );
-    
+    const recentDraws = drawsWithData.slice(0, 8);
+    const prizesPromises = recentDraws.map(draw => fetchPrizesForDraw(draw.drawNumber));
     const prizesResults = await Promise.all(prizesPromises);
     
-    drawsWithNGR = drawsWithNGR.map((draw, index) => {
+    drawsWithData = drawsWithData.map((draw, index) => {
       if (index < prizesResults.length && prizesResults[index]) {
         const prizes = prizesResults[index]!;
         return {
@@ -241,22 +317,26 @@ export async function GET(request: Request) {
   }
 
   // Calculate 4-week average NGR (from the latest 4 draws: weeks 1-4)
-  const last4Draws = drawsWithNGR.slice(0, 4);
-  const avgWeeklyNGR = last4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last4Draws.length;
+  const last4Draws = drawsWithData.slice(0, 4);
+  const avgWeeklyNGR = last4Draws.length > 0 
+    ? last4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last4Draws.length
+    : 0;
 
   // Calculate prior 4-week average NGR (weeks 5-8)
-  const prior4Draws = drawsWithNGR.slice(4, 8);
+  const prior4Draws = drawsWithData.slice(4, 8);
   const priorAvgWeeklyNGR = prior4Draws.length > 0 
     ? prior4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / prior4Draws.length
     : avgWeeklyNGR;
 
   // Calculate 12-week average for longer-term view
-  const last12Draws = drawsWithNGR.slice(0, 12);
-  const avg12WeekNGR = last12Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last12Draws.length;
+  const last12Draws = drawsWithData.slice(0, 12);
+  const avg12WeekNGR = last12Draws.length > 0
+    ? last12Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last12Draws.length
+    : 0;
 
   return NextResponse.json({
     success: true,
-    draws: drawsWithNGR,
+    draws: drawsWithData,
     stats: {
       avgWeeklyNGR_4week: avgWeeklyNGR,
       avgWeeklyNGR_prior4week: priorAvgWeeklyNGR,
