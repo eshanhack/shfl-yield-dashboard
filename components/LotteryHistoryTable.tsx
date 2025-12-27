@@ -3,16 +3,25 @@
 import { useState, useEffect, useMemo } from "react";
 import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
-import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
+
+interface UpcomingDraw {
+  drawNumber: number;
+  date: string; // ISO date string
+  totalPoolUSD: number;
+  jackpotAmount: number;
+  totalTickets: number;
+}
 
 interface LotteryHistoryTableProps {
   draws: HistoricalDraw[];
+  upcomingDraw?: UpcomingDraw;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps) {
+export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHistoryTableProps) {
   const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [stakedAmount, setStakedAmount] = useState<number>(1000); // Default 1K SHFL
@@ -162,6 +171,60 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
               </tr>
             </thead>
             <tbody>
+              {/* Upcoming Draw Row - Only show on first page */}
+              {currentPage === 0 && upcomingDraw && (
+                <tr
+                  className="border-b border-terminal-border/50 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10 hover:from-cyan-500/20 hover:via-blue-500/20 hover:to-cyan-500/20 border-l-2 border-l-cyan-500"
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
+                      </div>
+                      <span className="text-sm font-medium tabular-nums text-cyan-100">
+                        #{upcomingDraw.drawNumber}
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase tracking-wider font-bold animate-pulse">
+                        ⏳ UPCOMING
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm tabular-nums text-cyan-200">
+                    {new Date(upcomingDraw.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-sm font-medium tabular-nums text-cyan-100">
+                      {formatUSD(upcomingDraw.totalPoolUSD)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-sm font-medium tabular-nums text-yellow-300">
+                      {formatUSD(upcomingDraw.jackpotAmount)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm tabular-nums text-cyan-200">
+                    {upcomingDraw.totalTickets >= 1000000 
+                      ? `${(upcomingDraw.totalTickets / 1000000).toFixed(2)}M`
+                      : upcomingDraw.totalTickets >= 1000
+                      ? `${(upcomingDraw.totalTickets / 1000).toFixed(0)}K`
+                      : upcomingDraw.totalTickets}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-sm font-medium tabular-nums px-2 py-0.5 rounded text-cyan-300/70 bg-cyan-500/10">
+                      —
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {/* No external link for upcoming draw */}
+                  </td>
+                </tr>
+              )}
+              
+              {/* Completed Draws */}
               {currentDraws.map((draw, index) => {
                 const userYield = draw.yieldPerThousandSHFL * yieldMultiplier;
                 const avgPer1K = draws.length > 0 

@@ -518,7 +518,16 @@ export default function Dashboard() {
         </div>
 
         {/* Lottery History Table */}
-        <LotteryHistoryTable draws={completedDraws} />
+        <LotteryHistoryTable 
+          draws={completedDraws} 
+          upcomingDraw={{
+            drawNumber: lotteryStats.drawNumber || 64,
+            date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
+            totalPoolUSD: weeklyPoolUSD,
+            jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
+            totalTickets: lotteryStats.totalTickets,
+          }}
+        />
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t border-terminal-border">
