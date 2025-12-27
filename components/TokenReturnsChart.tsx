@@ -35,6 +35,7 @@ export default function TokenReturnsChart() {
   const [chartData, setChartData] = useState<PricePoint[]>([]);
   const [returns, setReturns] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
   const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
     new Set(TOKENS.map(t => t.symbol))
   );
@@ -65,6 +66,9 @@ export default function TokenReturnsChart() {
         
         const json = await response.json();
         if (!json.success) throw new Error("API returned error");
+        
+        // Track data source (live vs mock)
+        setDataSource(json.source === "coingecko" ? "live" : "demo");
         
         // Transform data to match expected format
         const results = json.data.map((item: { symbol: string; prices: [number, number][] }) => {
@@ -194,9 +198,19 @@ export default function TokenReturnsChart() {
               <BarChart3 className="w-4 h-4 text-terminal-accent" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-terminal-text">
-                Token Returns Comparison
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-terminal-text">
+                  Token Returns Comparison
+                </h3>
+                <span className={cn(
+                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded",
+                  dataSource === "live" 
+                    ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
+                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                )}>
+                  {dataSource === "live" ? "● LIVE" : "◉ DEMO"}
+                </span>
+              </div>
               <p className="text-[10px] text-terminal-textMuted">
                 SHFL vs major tokens performance
               </p>
