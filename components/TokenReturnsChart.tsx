@@ -254,15 +254,17 @@ export default function TokenReturnsChart() {
       <div className="p-5">
         {/* Returns Summary */}
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          {sortedTokens.map((token) => {
+          {sortedTokens.map((token, index) => {
             const returnVal = returns[token.symbol] || 0;
             const isVisible = visibleTokens.has(token.symbol);
+            // Medal for top 3 performers
+            const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : null;
             return (
               <button
                 key={token.symbol}
                 onClick={() => toggleToken(token.symbol)}
                 className={cn(
-                  "p-3 rounded-lg border transition-all text-left",
+                  "p-3 rounded-lg border transition-all text-left relative",
                   token.symbol === "SHFL" 
                     ? isVisible
                       ? "bg-terminal-accent/10 border-terminal-accent"
@@ -272,6 +274,12 @@ export default function TokenReturnsChart() {
                       : "bg-terminal-dark/50 border-terminal-border/50 opacity-50"
                 )}
               >
+                {/* Medal badge */}
+                {medal && (
+                  <span className="absolute -top-1.5 -right-1.5 text-sm">
+                    {medal}
+                  </span>
+                )}
                 <div className="flex items-center gap-2 mb-1.5">
                   <div 
                     className="w-2.5 h-2.5 rounded-full" 
