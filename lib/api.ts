@@ -49,37 +49,90 @@ export interface LotteryDrawRaw {
   jackpotWon?: boolean;
 }
 
+// Shuffle.com API endpoint for token info (more reliable than CoinGecko)
+const SHUFFLE_API_ENDPOINT = "https://shuffle.com/main-api/graphql/api/graphql";
+
+const GET_TOKEN_INFO_QUERY = `query tokenInfo {
+  tokenInfo {
+    priceInUsd
+    twentyFourHourPercentageChange
+    burnedTokens
+    circulatingSupply
+    __typename
+  }
+}`;
+
 /**
- * Fetch current SHFL price from CoinGecko
+ * Fetch current SHFL price - tries Shuffle.com first, then CoinGecko as fallback
  */
 export async function fetchSHFLPrice(): Promise<SHFLPrice> {
+  // Try Shuffle.com API first (more reliable)
+  try {
+    const shuffleResponse = await fetch(SHUFFLE_API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin": "https://shuffle.com",
+        "Referer": "https://shuffle.com/token",
+      },
+      body: JSON.stringify({
+        operationName: "tokenInfo",
+        query: GET_TOKEN_INFO_QUERY,
+        variables: {},
+      }),
+      cache: "no-store",
+    });
+
+    if (shuffleResponse.ok) {
+      const data = await shuffleResponse.json();
+      const tokenInfo = data.data?.tokenInfo;
+      
+      if (tokenInfo?.priceInUsd) {
+        return {
+          usd: parseFloat(tokenInfo.priceInUsd),
+          usd_24h_change: parseFloat(tokenInfo.twentyFourHourPercentageChange || "0"),
+          last_updated: new Date().toISOString(),
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Shuffle.com API error, trying CoinGecko:", error);
+  }
+
+  // Fallback to CoinGecko
   try {
     const response = await fetch(
       `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`,
-      { next: { revalidate: 60 } } // Cache for 60 seconds
+      { next: { revalidate: 60 } }
     );
     
     if (!response.ok) {
-      throw new Error("Failed to fetch price");
+      throw new Error("Failed to fetch price from CoinGecko");
     }
     
     const data = await response.json();
     const shflData = data[SHFL_COIN_ID];
     
-    return {
-      usd: shflData?.usd ?? 0.15,
-      usd_24h_change: shflData?.usd_24h_change ?? 0,
-      last_updated: new Date((shflData?.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
-    };
+    if (shflData?.usd) {
+      return {
+        usd: shflData.usd,
+        usd_24h_change: shflData.usd_24h_change ?? 0,
+        last_updated: new Date((shflData.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
+      };
+    }
   } catch (error) {
-    console.error("Error fetching SHFL price:", error);
-    // Return mock data on error
-    return {
-      usd: 0.15,
-      usd_24h_change: 2.5,
-      last_updated: new Date().toISOString(),
-    };
+    console.error("CoinGecko API error:", error);
   }
+
+  // Last resort fallback - should rarely happen
+  console.error("All price APIs failed, using fallback");
+  return {
+    usd: 0.30, // More realistic fallback
+    usd_24h_change: 0,
+    last_updated: new Date().toISOString(),
+  };
 }
 
 /**

@@ -120,6 +120,7 @@ function wasJackpotWon(jackpotted: number, prizePool: number): boolean {
 // Real lottery history data from https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history
 const LOTTERY_HISTORY_DATA: Omit<LotteryDrawData, 'totalNGRContribution' | 'prizes'>[] = [
   // 2025 Draws (newest first)
+  { drawNumber: 63, date: "2025-12-26", prizePool: 1376659, jackpotted: 1090160, ngrAdded: 260000, singlesAdded: 31175, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 62, date: "2025-12-19", prizePool: 1263612, jackpotted: 1064670, ngrAdded: 173555, singlesAdded: 29042, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 61, date: "2025-12-12", prizePool: 3103837, jackpotted: 33626, ngrAdded: 1201151, singlesAdded: 53543, prizepoolSplit: "30-14-8-9-7-6-5-10-11" },
   { drawNumber: 60, date: "2025-12-05", prizePool: 3333438, jackpotted: 2845173, ngrAdded: 205120, singlesAdded: 55062, prizepoolSplit: "15-13-9-9-9-9-15-11-10" },
