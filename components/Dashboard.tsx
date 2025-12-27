@@ -7,7 +7,6 @@ import {
   Users,
   TrendingUp,
   Zap,
-  Ticket,
   RefreshCw,
 } from "lucide-react";
 
@@ -17,6 +16,7 @@ import SensitivityTable from "./SensitivityTable";
 import LotteryHistoryTable from "./LotteryHistoryTable";
 import PersonalCalculator from "./Calculator";
 import YieldCalculatorPanel from "./YieldCalculatorPanel";
+import TicketEVPanel from "./TicketEVPanel";
 
 import {
   fetchSHFLPrice,
@@ -542,23 +542,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <Ticket className="w-4 h-4 text-terminal-accent" />
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">
-                  Your Position
-                </span>
-              </div>
-              <p className="text-sm text-terminal-textMuted mb-3">
-                Calculate your expected yield based on your SHFL stake.
-              </p>
-              <button
-                onClick={() => setIsCalculatorOpen(true)}
-                className="btn-terminal w-full text-sm"
-              >
-                Open Calculator
-              </button>
-            </div>
+            <TicketEVPanel
+              totalPool={weeklyPoolUSD}
+              prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+              totalTickets={lotteryStats.totalTickets}
+              shflPrice={price.usd}
+            />
 
             {/* Latest Draw Info */}
             {completedDraws[0] && (

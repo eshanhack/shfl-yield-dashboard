@@ -275,3 +275,183 @@ export function formatPercent(value: number): string {
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
+
+/**
+ * Calculate Expected Value for different ticket types
+ */
+
+// Powerplay probabilities (guaranteed powerball)
+// Only divisions that require powerball, but with 100% PB probability
+export const POWERPLAY_PROBABILITIES = [
+  { division: 1, name: "Jackpot", match: "5+PB", probability: 1 / 3_478_761 },
+  { division: 3, name: "3rd", match: "4+PB", probability: 250 / 3_478_761 },
+  { division: 5, name: "5th", match: "3+PB", probability: 12_250 / 3_478_761 },
+  { division: 7, name: "7th", match: "2+PB", probability: 196_000 / 3_478_761 },
+  { division: 8, name: "8th", match: "1+PB", probability: 1_151_500 / 3_478_761 },
+  { division: 9, name: "9th", match: "PB", probability: 2_118_760 / 3_478_761 },
+];
+
+export interface EVResult {
+  ticketType: string;
+  cost: number;
+  expectedPrize: number;
+  ev: number; // Expected Value = expectedPrize - cost
+  evPercent: number; // EV as percentage of cost
+  breakdowns: { division: number; name: string; probability: number; expectedPrize: number; contribution: number }[];
+}
+
+/**
+ * Calculate prize allocation for each division based on pool and split
+ */
+export function calculatePrizeAllocation(
+  totalPool: number,
+  prizeSplit: string
+): { division: number; poolAmount: number; percentage: number }[] {
+  const splits = prizeSplit.split('-').map(s => parseFloat(s));
+  
+  return splits.map((percentage, index) => ({
+    division: index + 1,
+    poolAmount: (totalPool * percentage) / 100,
+    percentage,
+  }));
+}
+
+/**
+ * Calculate EV for a Standard Ticket ($0.25)
+ */
+export function calculateStandardTicketEV(
+  totalPool: number,
+  prizeSplit: string,
+  totalTickets: number
+): EVResult {
+  const cost = 0.25;
+  const allocations = calculatePrizeAllocation(totalPool, prizeSplit);
+  
+  const breakdowns = PRIZE_DIVISIONS.map((div) => {
+    const allocation = allocations.find(a => a.division === div.division);
+    const poolAmount = allocation?.poolAmount || 0;
+    
+    // Expected winners = totalTickets * probability
+    const expectedWinners = Math.max(1, totalTickets * div.probability);
+    // Expected prize per winner
+    const expectedPrize = poolAmount / expectedWinners;
+    // Contribution to EV = probability * expected prize
+    const contribution = div.probability * expectedPrize;
+    
+    return {
+      division: div.division,
+      name: div.name,
+      probability: div.probability,
+      expectedPrize,
+      contribution,
+    };
+  });
+  
+  const expectedPrize = breakdowns.reduce((sum, b) => sum + b.contribution, 0);
+  const ev = expectedPrize - cost;
+  const evPercent = (ev / cost) * 100;
+  
+  return {
+    ticketType: "Standard Ticket",
+    cost,
+    expectedPrize,
+    ev,
+    evPercent,
+    breakdowns,
+  };
+}
+
+/**
+ * Calculate EV for a Powerplay Ticket ($4)
+ * Guarantees the powerball number
+ */
+export function calculatePowerplayTicketEV(
+  totalPool: number,
+  prizeSplit: string,
+  totalTickets: number
+): EVResult {
+  const cost = 4.00;
+  const allocations = calculatePrizeAllocation(totalPool, prizeSplit);
+  
+  const breakdowns = POWERPLAY_PROBABILITIES.map((div) => {
+    const allocation = allocations.find(a => a.division === div.division);
+    const poolAmount = allocation?.poolAmount || 0;
+    
+    // For powerplay, estimate winners based on standard probability
+    const standardDiv = PRIZE_DIVISIONS.find(d => d.division === div.division);
+    const expectedWinners = Math.max(1, totalTickets * (standardDiv?.probability || div.probability));
+    const expectedPrize = poolAmount / expectedWinners;
+    const contribution = div.probability * expectedPrize;
+    
+    return {
+      division: div.division,
+      name: div.name,
+      probability: div.probability,
+      expectedPrize,
+      contribution,
+    };
+  });
+  
+  const expectedPrize = breakdowns.reduce((sum, b) => sum + b.contribution, 0);
+  const ev = expectedPrize - cost;
+  const evPercent = (ev / cost) * 100;
+  
+  return {
+    ticketType: "Powerplay Ticket",
+    cost,
+    expectedPrize,
+    ev,
+    evPercent,
+    breakdowns,
+  };
+}
+
+/**
+ * Calculate EV for a Staked Ticket (50 SHFL)
+ * This is a one-time stake that gives entries forever
+ */
+export function calculateStakedTicketEV(
+  totalPool: number,
+  prizeSplit: string,
+  totalTickets: number,
+  shflPrice: number
+): EVResult & { weeksToBreakeven: number; annualROI: number } {
+  const cost = 50 * shflPrice;
+  const allocations = calculatePrizeAllocation(totalPool, prizeSplit);
+  
+  const breakdowns = PRIZE_DIVISIONS.map((div) => {
+    const allocation = allocations.find(a => a.division === div.division);
+    const poolAmount = allocation?.poolAmount || 0;
+    
+    const expectedWinners = Math.max(1, totalTickets * div.probability);
+    const expectedPrize = poolAmount / expectedWinners;
+    const contribution = div.probability * expectedPrize;
+    
+    return {
+      division: div.division,
+      name: div.name,
+      probability: div.probability,
+      expectedPrize,
+      contribution,
+    };
+  });
+  
+  // EV per draw (same as standard ticket)
+  const expectedPrizePerDraw = breakdowns.reduce((sum, b) => sum + b.contribution, 0);
+  
+  // For staked tickets, calculate weeks to break even and annual ROI
+  const weeksToBreakeven = expectedPrizePerDraw > 0 ? cost / expectedPrizePerDraw : Infinity;
+  const annualExpected = expectedPrizePerDraw * 52;
+  const annualROI = (annualExpected / cost) * 100;
+  
+  return {
+    ticketType: "Staked Ticket",
+    cost,
+    expectedPrize: expectedPrizePerDraw,
+    ev: expectedPrizePerDraw, // Per draw EV (cost is already sunk)
+    evPercent: (expectedPrizePerDraw / cost) * 100 * 52, // Annualized
+    breakdowns,
+    weeksToBreakeven,
+    annualROI,
+  };
+}
