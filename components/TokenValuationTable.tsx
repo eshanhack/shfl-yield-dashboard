@@ -1,212 +1,198 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Scale, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Scale, Info, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
 import InfoTooltip from "./InfoTooltip";
-import CurrencyAmount from "./CurrencyAmount";
 
-type TimePeriod = "7d" | "30d" | "90d" | "365d";
+type ViewMode = "revenue" | "earnings";
 
 interface TokenMetrics {
-  id: string;
   symbol: string;
   name: string;
   color: string;
-  marketCap: number;
-  weeklyRevenue: number; // Revenue that accrues to token per week
-  weeklyEarnings: number; // Earnings (profit) that accrues to token per week
-  fdv?: number;
+  // Weekly figures
+  weeklyRevenue: number; // Total platform revenue
+  revenueAccrualPct: number; // % of revenue that goes to token holders
 }
 
-// Token data with estimated revenue/earnings accrual
-// These are estimates based on public information about tokenomics
+// Token data with revenue accrual percentages
 const TOKEN_DATA: TokenMetrics[] = [
   {
-    id: "shuffle-2",
     symbol: "SHFL",
     name: "Shuffle",
     color: "#8A2BE2",
-    marketCap: 0, // Will be fetched
-    weeklyRevenue: 600000, // ~15% of NGR goes to lottery (stakers)
-    weeklyEarnings: 600000, // Most revenue = earnings for stakers
+    weeklyRevenue: 2000000, // Shuffle.com total weekly NGR (estimated)
+    revenueAccrualPct: 0.15, // 15% goes to lottery/stakers
   },
   {
-    id: "hyperliquid",
     symbol: "HYPE",
     name: "Hyperliquid",
     color: "#00D4AA",
-    marketCap: 0,
-    weeklyRevenue: 2000000, // Estimated weekly fees
-    weeklyEarnings: 1500000, // After costs
+    weeklyRevenue: 2500000, // Weekly trading fees
+    revenueAccrualPct: 0.54, // 54% to assistance fund + buybacks
   },
   {
-    id: "pump-fun",
-    symbol: "PUMP",
-    name: "Pump.fun",
-    color: "#FF6B6B",
-    marketCap: 0,
-    weeklyRevenue: 3000000, // Estimated from token launches
-    weeklyEarnings: 2500000,
-  },
-  {
-    id: "rollbit-coin",
     symbol: "RLB",
     name: "Rollbit",
     color: "#FFD700",
-    marketCap: 0,
-    weeklyRevenue: 800000, // Estimated lottery/buybacks
-    weeklyEarnings: 600000,
+    weeklyRevenue: 1500000, // Rollbit total NGR
+    revenueAccrualPct: 0.30, // ~30% to lottery/buybacks
   },
 ];
 
-interface TokenWithRatios extends TokenMetrics {
-  revToMcap: number;
-  earningsToMcap: number;
-  annualizedRev: number;
-  annualizedEarnings: number;
-  peRatio: number;
-  psRatio: number;
+interface TokenWithCalculations extends TokenMetrics {
+  marketCap: number;
+  weeklyEarnings: number; // Revenue * accrual %
+  annualRevenue: number;
+  annualEarnings: number;
+  psRatio: number; // Price/Sales (based on revenue)
+  peRatio: number; // Price/Earnings (based on earnings to holders)
 }
 
 export default function TokenValuationTable() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("365d");
-  const [tokens, setTokens] = useState<TokenWithRatios[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("earnings");
+  const [tokens, setTokens] = useState<TokenWithCalculations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const periodMultiplier: Record<TimePeriod, number> = {
-    "7d": 1,
-    "30d": 4.33,
-    "90d": 13,
-    "365d": 52,
-  };
-
-  const periodLabels: Record<TimePeriod, string> = {
-    "7d": "Weekly",
-    "30d": "Monthly",
-    "90d": "Quarterly",
-    "365d": "Annual",
-  };
+  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const fetchMarketCaps = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch market caps from CoinGecko
-        const ids = TOKEN_DATA.map(t => t.id).join(",");
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currency=usd&include_market_cap=true`
-        );
+        const response = await fetch("/api/market-caps");
+        const json = await response.json();
         
-        let marketCaps: Record<string, number> = {};
+        setDataSource(json.source === "live" ? "live" : "demo");
         
-        if (response.ok) {
-          const data = await response.json();
-          TOKEN_DATA.forEach(token => {
-            if (data[token.id]) {
-              marketCaps[token.symbol] = data[token.id].usd_market_cap || 0;
-            }
-          });
-        }
+        const marketCaps = json.data || {};
         
-        // Calculate ratios
-        const multiplier = periodMultiplier[timePeriod];
-        const tokensWithRatios: TokenWithRatios[] = TOKEN_DATA.map(token => {
-          const mcap = marketCaps[token.symbol] || token.marketCap || 100000000; // Fallback
-          const periodRevenue = token.weeklyRevenue * multiplier;
-          const periodEarnings = token.weeklyEarnings * multiplier;
-          const annualizedRev = token.weeklyRevenue * 52;
-          const annualizedEarnings = token.weeklyEarnings * 52;
+        const tokensWithCalcs: TokenWithCalculations[] = TOKEN_DATA.map(token => {
+          const marketCap = marketCaps[token.symbol] || 100000000;
+          const weeklyEarnings = token.weeklyRevenue * token.revenueAccrualPct;
+          const annualRevenue = token.weeklyRevenue * 52;
+          const annualEarnings = weeklyEarnings * 52;
           
           return {
             ...token,
-            marketCap: mcap,
-            revToMcap: mcap > 0 ? mcap / periodRevenue : 0,
-            earningsToMcap: mcap > 0 ? mcap / periodEarnings : 0,
-            annualizedRev,
-            annualizedEarnings,
-            peRatio: mcap > 0 ? mcap / annualizedEarnings : 0, // P/E
-            psRatio: mcap > 0 ? mcap / annualizedRev : 0, // P/S
+            marketCap,
+            weeklyEarnings,
+            annualRevenue,
+            annualEarnings,
+            psRatio: marketCap / annualRevenue,
+            peRatio: marketCap / annualEarnings,
           };
         });
         
-        // Sort by P/E ratio (lower = better)
-        tokensWithRatios.sort((a, b) => a.peRatio - b.peRatio);
+        // Sort by the current view mode ratio
+        tokensWithCalcs.sort((a, b) => {
+          const ratioA = viewMode === "revenue" ? a.psRatio : a.peRatio;
+          const ratioB = viewMode === "revenue" ? b.psRatio : b.peRatio;
+          return ratioA - ratioB;
+        });
         
-        setTokens(tokensWithRatios);
+        setTokens(tokensWithCalcs);
       } catch (error) {
-        console.error("Error fetching market caps:", error);
+        console.error("Error:", error);
       }
       setIsLoading(false);
     };
 
-    fetchMarketCaps();
-  }, [timePeriod]);
+    fetchData();
+  }, [viewMode]);
 
   // Get color based on ratio (lower = greener = cheaper)
   const getRatioColor = (ratio: number, allRatios: number[]) => {
-    const min = Math.min(...allRatios);
-    const max = Math.max(...allRatios);
-    const normalized = (ratio - min) / (max - min || 1);
+    const sorted = [...allRatios].sort((a, b) => a - b);
+    const rank = sorted.indexOf(ratio);
     
-    if (normalized <= 0.25) return "text-green-400 bg-green-500/20";
-    if (normalized <= 0.5) return "text-emerald-400 bg-emerald-500/20";
-    if (normalized <= 0.75) return "text-yellow-400 bg-yellow-500/20";
+    if (rank === 0) return "text-green-400 bg-green-500/20";
+    if (rank === 1) return "text-yellow-400 bg-yellow-500/20";
     return "text-red-400 bg-red-500/20";
   };
 
-  const peRatios = tokens.map(t => t.peRatio);
-  const psRatios = tokens.map(t => t.psRatio);
+  const currentRatios = tokens.map(t => viewMode === "revenue" ? t.psRatio : t.peRatio);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-terminal-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <Scale className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium text-terminal-text">
-                  Token Valuation Comparison
+                  Token Valuation
                 </h3>
                 <InfoTooltip 
-                  content="Compares how much revenue and earnings accrue to token holders relative to market cap. Lower ratios = potentially undervalued."
+                  content="Compares how much revenue/earnings accrue to token holders relative to market cap. Lower ratios = potentially better value."
                   title="Valuation Metrics"
                 />
+                <span className={cn(
+                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded",
+                  dataSource === "live" 
+                    ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
+                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                )}>
+                  {dataSource === "live" ? "● LIVE" : "◉ DEMO"}
+                </span>
               </div>
               <p className="text-[10px] text-terminal-textMuted">
-                Revenue & earnings accrual to token holders
+                {viewMode === "revenue" ? "Platform revenue" : "Earnings accrued to holders"}
               </p>
             </div>
           </div>
           
-          {/* Time Period Selector */}
-          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5">
-            {(["7d", "30d", "90d", "365d"] as TimePeriod[]).map((period) => (
-              <button
-                key={period}
-                onClick={() => setTimePeriod(period)}
-                className={cn(
-                  "px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
-                  timePeriod === period
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-terminal-textMuted hover:text-terminal-text"
-                )}
-              >
-                {period === "365d" ? "1Y" : period.toUpperCase()}
-              </button>
-            ))}
+          {/* View Mode Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-terminal-dark border border-terminal-border rounded-lg text-xs font-medium text-terminal-text hover:border-terminal-accent transition-colors"
+            >
+              {viewMode === "revenue" ? "Revenue" : "Earnings"}
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", dropdownOpen && "rotate-180")} />
+            </button>
+            
+            {dropdownOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-terminal-card border border-terminal-border rounded-lg shadow-lg overflow-hidden">
+                <button
+                  onClick={() => { setViewMode("revenue"); setDropdownOpen(false); }}
+                  className={cn(
+                    "w-full px-3 py-2.5 text-left text-xs transition-colors",
+                    viewMode === "revenue" 
+                      ? "bg-terminal-accent/20 text-terminal-accent" 
+                      : "text-terminal-text hover:bg-terminal-border/50"
+                  )}
+                >
+                  <div className="font-medium">Revenue (P/S)</div>
+                  <div className="text-[10px] text-terminal-textMuted mt-0.5">Total platform revenue</div>
+                </button>
+                <button
+                  onClick={() => { setViewMode("earnings"); setDropdownOpen(false); }}
+                  className={cn(
+                    "w-full px-3 py-2.5 text-left text-xs transition-colors border-t border-terminal-border/50",
+                    viewMode === "earnings" 
+                      ? "bg-terminal-accent/20 text-terminal-accent" 
+                      : "text-terminal-text hover:bg-terminal-border/50"
+                  )}
+                >
+                  <div className="font-medium">Earnings (P/E)</div>
+                  <div className="text-[10px] text-terminal-textMuted mt-0.5">Revenue accrued to holders</div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 flex-1">
         {isLoading ? (
-          <div className="h-[250px] flex items-center justify-center">
+          <div className="h-full flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-terminal-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
@@ -228,39 +214,45 @@ export default function TokenValuationTable() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-4 px-4">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-terminal-border">
-                    <th className="px-3 py-2 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    <th className="px-4 py-3 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       Token
                     </th>
-                    <th className="px-3 py-2 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       Market Cap
                     </th>
-                    <th className="px-3 py-2 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
-                        {periodLabels[timePeriod]} Rev
+                        Annual {viewMode === "revenue" ? "Rev" : "Earnings"}
                         <InfoTooltip 
-                          content="Estimated revenue that accrues to token holders in the selected period"
+                          content={viewMode === "revenue" 
+                            ? "Total platform revenue annualized" 
+                            : "Revenue accrued to token holders (varies by tokenomics)"
+                          }
                           position="top"
                         />
                       </div>
                     </th>
-                    <th className="px-3 py-2 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
-                        P/S Ratio
+                        Accrual %
                         <InfoTooltip 
-                          content="Price to Sales - Market Cap divided by annualized revenue. Lower = potentially undervalued."
+                          content="Percentage of revenue that goes to token holders"
                           position="top"
                         />
                       </div>
                     </th>
-                    <th className="px-3 py-2 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
-                        P/E Ratio
+                        {viewMode === "revenue" ? "P/S" : "P/E"} Ratio
                         <InfoTooltip 
-                          content="Price to Earnings - Market Cap divided by annualized earnings accrued to token. Lower = potentially undervalued."
+                          content={viewMode === "revenue"
+                            ? "Market Cap ÷ Annual Revenue. Lower = potentially undervalued."
+                            : "Market Cap ÷ Annual Earnings. Lower = potentially undervalued."
+                          }
                           position="top"
                         />
                       </div>
@@ -268,78 +260,80 @@ export default function TokenValuationTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tokens.map((token, index) => (
-                    <tr 
-                      key={token.symbol}
-                      className={cn(
-                        "border-b border-terminal-border/50 transition-colors",
-                        token.symbol === "SHFL" && "bg-terminal-accent/5",
-                        "hover:bg-terminal-accent/10"
-                      )}
-                    >
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: token.color }}
-                          />
-                          <div>
-                            <span className="text-sm font-medium text-terminal-text">
-                              {token.symbol}
-                            </span>
-                            {token.symbol === "SHFL" && (
-                              <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent">
-                                YOU
+                  {tokens.map((token, index) => {
+                    const ratio = viewMode === "revenue" ? token.psRatio : token.peRatio;
+                    const annualValue = viewMode === "revenue" ? token.annualRevenue : token.annualEarnings;
+                    return (
+                      <tr 
+                        key={token.symbol}
+                        className={cn(
+                          "border-b border-terminal-border/50 transition-colors",
+                          token.symbol === "SHFL" && "bg-terminal-accent/5",
+                          "hover:bg-terminal-border/30"
+                        )}
+                      >
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: token.color }}
+                            />
+                            <div>
+                              <span className="text-sm font-medium text-terminal-text">
+                                {token.symbol}
                               </span>
-                            )}
-                            {index === 0 && (
-                              <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">
-                                BEST VALUE
+                              <span className="text-[10px] text-terminal-textMuted ml-2">
+                                {token.name}
                               </span>
-                            )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-sm text-terminal-text tabular-nums">
-                          ${formatNumber(Math.round(token.marketCap / 1000000))}M
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-sm text-terminal-textSecondary tabular-nums">
-                          ${formatNumber(Math.round(token.weeklyRevenue * periodMultiplier[timePeriod]))}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className={cn(
-                          "text-sm font-medium tabular-nums px-2 py-0.5 rounded",
-                          getRatioColor(token.psRatio, psRatios)
-                        )}>
-                          {token.psRatio.toFixed(1)}x
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className={cn(
-                          "text-sm font-medium tabular-nums px-2 py-0.5 rounded",
-                          getRatioColor(token.peRatio, peRatios)
-                        )}>
-                          {token.peRatio.toFixed(1)}x
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className="text-sm text-terminal-text tabular-nums font-medium">
+                            ${token.marketCap >= 1000000000 
+                              ? (token.marketCap / 1000000000).toFixed(1) + "B"
+                              : Math.round(token.marketCap / 1000000) + "M"
+                            }
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className="text-sm text-terminal-textSecondary tabular-nums">
+                            ${formatNumber(Math.round(annualValue / 1000000))}M
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className={cn(
+                            "text-xs font-medium tabular-nums",
+                            token.revenueAccrualPct >= 0.5 ? "text-green-400" : 
+                            token.revenueAccrualPct >= 0.2 ? "text-yellow-400" : "text-terminal-textSecondary"
+                          )}>
+                            {(token.revenueAccrualPct * 100).toFixed(0)}%
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <span className={cn(
+                            "text-sm font-bold tabular-nums px-2.5 py-1 rounded-md",
+                            getRatioColor(ratio, currentRatios)
+                          )}>
+                            {ratio.toFixed(1)}x
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Info Note */}
-            <div className="mt-4 pt-3 border-t border-terminal-border">
+            <div className="mt-4 pt-4 border-t border-terminal-border">
               <div className="flex items-start gap-2">
-                <Info className="w-3 h-3 text-terminal-textMuted mt-0.5 flex-shrink-0" />
+                <Info className="w-3.5 h-3.5 text-terminal-textMuted mt-0.5 flex-shrink-0" />
                 <p className="text-[10px] text-terminal-textMuted leading-relaxed">
-                  Revenue estimates based on public tokenomics and on-chain data. 
-                  Lower P/E and P/S ratios indicate potentially better value relative to earnings/revenue accrual.
-                  SHFL stakers receive 15% of Shuffle.com NGR through the lottery.
+                  {viewMode === "revenue" 
+                    ? "P/S compares market cap to total platform revenue. SHFL's revenue is Shuffle.com's full NGR."
+                    : "P/E compares market cap to earnings accrued to holders. SHFL stakers receive 15% of NGR through the lottery. HYPE holders receive 54% through buybacks & assistance fund."
+                  }
                 </p>
               </div>
             </div>
@@ -349,4 +343,3 @@ export default function TokenValuationTable() {
     </div>
   );
 }
-
