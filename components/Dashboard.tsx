@@ -254,7 +254,7 @@ export default function Dashboard() {
                     Current Prize Split
                   </span>
                   <span className="text-sm font-medium text-terminal-accent text-right text-[10px]">
-                    30-14-8-9-7-6-5-10-11
+                    {historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-terminal-border">

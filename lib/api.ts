@@ -144,6 +144,7 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
       ngrUSD: draw.totalNGRContribution, // Use the calculated total NGR contribution
       totalTickets: estimateTicketsFromPool(draw.prizePool),
       yieldPerThousandSHFL: calculateYieldPer1KSHFL(draw.prizePool, draw.totalNGRContribution),
+      prizepoolSplit: draw.prizepoolSplit,
     }));
   } catch (error) {
     console.error("Error fetching lottery history:", error);

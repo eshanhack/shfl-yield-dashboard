@@ -47,6 +47,7 @@ export interface HistoricalDraw {
   ngrUSD: number;
   totalTickets: number;
   yieldPerThousandSHFL: number;
+  prizepoolSplit?: string;
 }
 
 /**
