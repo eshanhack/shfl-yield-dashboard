@@ -527,6 +527,7 @@ export default function Dashboard() {
             jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
             totalTickets: lotteryStats.totalTickets,
             prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+            ngrUSD: completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
           }}
         />
 

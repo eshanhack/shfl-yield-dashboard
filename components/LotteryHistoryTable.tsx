@@ -14,6 +14,7 @@ interface UpcomingDraw {
   jackpotAmount: number;
   totalTickets: number;
   prizeSplit: string;
+  ngrUSD: number; // NGR for yield calculation
 }
 
 interface LotteryHistoryTableProps {
@@ -96,7 +97,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
   const upcomingYield = useMemo(() => {
     if (!upcomingDraw) return 0;
     const yieldPer1K = calculateYieldPer1KSHFL(
-      upcomingDraw.totalPoolUSD,
+      upcomingDraw.ngrUSD,
       upcomingDraw.totalTickets,
       upcomingDraw.prizeSplit
     );
