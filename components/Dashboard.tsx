@@ -19,6 +19,7 @@ import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
 import LotteryHistoryTable from "./LotteryHistoryTable";
 import PersonalCalculator from "./Calculator";
+import YieldCalculatorPanel from "./YieldCalculatorPanel";
 
 import {
   fetchSHFLPrice,
@@ -282,14 +283,17 @@ export default function Dashboard() {
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <button
-            onClick={() => setIsCalculatorOpen(true)}
-            className="btn-terminal-solid flex items-center gap-2 text-sm font-medium"
-          >
-            <Calculator className="w-4 h-4" />
-            Personal Yield Calculator
-          </button>
         </div>
+
+        {/* Yield Calculator Panel */}
+        <YieldCalculatorPanel
+          shflPrice={price.usd}
+          currentWeekNGR={historicalDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+          avgWeeklyNGR={ngrStats.current4WeekAvg}
+          totalTickets={lotteryStats.totalTickets}
+          historicalDraws={historicalDraws}
+          prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+        />
 
         {/* Charts and Tables Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
