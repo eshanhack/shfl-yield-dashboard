@@ -68,7 +68,9 @@ export default function TokenReturnsChart() {
         if (!json.success) throw new Error("API returned error");
         
         // Track data source (live vs demo)
-        setDataSource(json.source === "live" || json.source === "partial" ? "live" : "demo");
+        setDataSource(json.source === "live" ? "live" : "demo");
+        
+        console.log("Token data:", json.tokensWithData, "Source:", json.source);
         
         // Transform data to match expected format - filter out empty results
         const results = json.data

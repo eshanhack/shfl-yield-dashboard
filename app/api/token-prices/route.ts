@@ -2,18 +2,14 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Binance symbols for major tokens
-const BINANCE_TOKENS = [
-  { symbol: "BTC", binanceSymbol: "BTCUSDT" },
-  { symbol: "ETH", binanceSymbol: "ETHUSDT" },
-  { symbol: "SOL", binanceSymbol: "SOLUSDT" },
-  { symbol: "HYPE", binanceSymbol: "HYPEUSDT" },
-];
-
-// CoinGecko tokens (SHFL and RLB not on Binance)
-const COINGECKO_TOKENS = [
+// All tokens use CoinGecko
+const TOKENS = [
   { id: "shuffle-2", symbol: "SHFL" },
+  { id: "bitcoin", symbol: "BTC" },
+  { id: "ethereum", symbol: "ETH" },
+  { id: "solana", symbol: "SOL" },
   { id: "rollbit-coin", symbol: "RLB" },
+  { id: "hyperliquid", symbol: "HYPE" },
 ];
 
 interface PriceData {
@@ -21,118 +17,92 @@ interface PriceData {
   prices: [number, number][];
 }
 
-// Fetch from Binance Klines API
-async function fetchBinanceData(binanceSymbol: string, symbol: string, days: number): Promise<PriceData> {
-  try {
-    // Calculate interval based on days
-    let interval = "1h";
-    let limit = days * 24;
-    
-    if (days <= 1) {
-      interval = "5m";
-      limit = 288; // 24 hours of 5-min candles
-    } else if (days <= 7) {
-      interval = "1h";
-      limit = days * 24;
-    } else if (days <= 30) {
-      interval = "4h";
-      limit = days * 6;
-    } else {
-      interval = "1d";
-      limit = days;
-    }
-    
-    // Cap limit at 1000 (Binance max)
-    limit = Math.min(limit, 1000);
-    
-    const response = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`,
-      { cache: "no-store" }
-    );
+// Simple in-memory cache
+const cache: Record<string, { data: PriceData[]; timestamp: number }> = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-    if (!response.ok) {
-      console.error(`Binance API error for ${symbol}: ${response.status}`);
-      return { symbol, prices: [] };
-    }
-
-    const data = await response.json();
-    
-    // Binance klines format: [openTime, open, high, low, close, volume, closeTime, ...]
-    // We want [timestamp, closePrice]
-    const prices: [number, number][] = data.map((candle: any[]) => [
-      candle[0], // openTime (timestamp)
-      parseFloat(candle[4]), // close price
-    ]);
-
-    return { symbol, prices };
-  } catch (error) {
-    console.error(`Error fetching ${symbol} from Binance:`, error);
-    return { symbol, prices: [] };
-  }
-}
-
-// Fetch from CoinGecko API
-async function fetchCoinGeckoData(tokenId: string, symbol: string, days: number): Promise<PriceData> {
-  try {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
-      {
-        headers: {
-          "Accept": "application/json",
-          "User-Agent": "SHFLPro Dashboard",
-        },
-        cache: "no-store",
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      if (response.status === 429) {
+        // Rate limited, wait and retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        continue;
       }
-    );
-
-    if (!response.ok) {
-      console.error(`CoinGecko API error for ${symbol}: ${response.status}`);
-      return { symbol, prices: [] };
+      return response;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
-
-    const data = await response.json();
-    return {
-      symbol,
-      prices: data.prices || [],
-    };
-  } catch (error) {
-    console.error(`Error fetching ${symbol} from CoinGecko:`, error);
-    return { symbol, prices: [] };
   }
+  throw new Error("Max retries reached");
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const days = parseInt(searchParams.get("days") || "30");
+  const days = searchParams.get("days") || "30";
+  const cacheKey = `prices_${days}`;
+
+  // Check cache first
+  const cached = cache[cacheKey];
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return NextResponse.json({
+      success: true,
+      data: cached.data,
+      source: "live",
+      cached: true,
+      lastUpdated: new Date(cached.timestamp).toISOString(),
+    });
+  }
 
   const results: PriceData[] = [];
-  let allLive = true;
-
-  // Fetch Binance tokens in parallel
-  const binancePromises = BINANCE_TOKENS.map(token => 
-    fetchBinanceData(token.binanceSymbol, token.symbol, days)
-  );
+  const apiKey = process.env.COINGECKO_API_KEY;
   
-  // Fetch CoinGecko tokens in parallel
-  const coingeckoPromises = COINGECKO_TOKENS.map(token =>
-    fetchCoinGeckoData(token.id, token.symbol, days)
-  );
+  // Build base URL - use pro API if key available
+  const baseUrl = apiKey 
+    ? "https://pro-api.coingecko.com/api/v3"
+    : "https://api.coingecko.com/api/v3";
 
-  // Wait for all requests
-  const [binanceResults, coingeckoResults] = await Promise.all([
-    Promise.all(binancePromises),
-    Promise.all(coingeckoPromises),
-  ]);
+  // Fetch tokens sequentially to avoid rate limits
+  for (const token of TOKENS) {
+    try {
+      const url = `${baseUrl}/coins/${token.id}/market_chart?vs_currency=usd&days=${days}`;
+      const headers: Record<string, string> = {
+        "Accept": "application/json",
+      };
+      
+      if (apiKey) {
+        headers["x-cg-pro-api-key"] = apiKey;
+      }
 
-  // Combine results
-  results.push(...binanceResults);
-  results.push(...coingeckoResults);
+      const response = await fetchWithRetry(url, { headers, cache: "no-store" });
 
-  // Check if any failed
-  for (const result of results) {
-    if (result.prices.length === 0) {
-      allLive = false;
-      console.log(`No data for ${result.symbol}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.prices && data.prices.length > 0) {
+          results.push({
+            symbol: token.symbol,
+            prices: data.prices,
+          });
+          console.log(`✓ Fetched ${token.symbol}: ${data.prices.length} points`);
+        } else {
+          console.log(`✗ No price data for ${token.symbol}`);
+          results.push({ symbol: token.symbol, prices: [] });
+        }
+      } else {
+        console.log(`✗ Failed ${token.symbol}: ${response.status}`);
+        results.push({ symbol: token.symbol, prices: [] });
+      }
+    } catch (error) {
+      console.error(`✗ Error fetching ${token.symbol}:`, error);
+      results.push({ symbol: token.symbol, prices: [] });
+    }
+
+    // Delay between requests to avoid rate limiting (unless we have API key)
+    if (!apiKey) {
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
   }
 
@@ -140,10 +110,17 @@ export async function GET(request: Request) {
   const order = ["SHFL", "BTC", "ETH", "SOL", "RLB", "HYPE"];
   results.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
 
+  // Cache the results
+  cache[cacheKey] = { data: results, timestamp: Date.now() };
+
+  const hasData = results.some(r => r.prices.length > 0);
+
   return NextResponse.json({
     success: true,
     data: results,
-    source: allLive ? "live" : "partial",
+    source: hasData ? "live" : "error",
+    cached: false,
+    tokensWithData: results.filter(r => r.prices.length > 0).map(r => r.symbol),
     lastUpdated: new Date().toISOString(),
   });
 }
