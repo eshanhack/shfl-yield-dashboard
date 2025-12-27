@@ -127,10 +127,19 @@ export default function Dashboard() {
     };
   }, []);
 
+  // Filter to only completed draws (exclude upcoming/future draws)
+  const completedDraws = useMemo(() => {
+    const now = new Date();
+    return historicalDraws.filter((draw) => {
+      const drawDate = new Date(draw.date);
+      return drawDate < now;
+    });
+  }, [historicalDraws]);
+
   // Calculate current APY based on 4-week average NGR
   const currentAPY = useMemo(() => {
-    // Get current prize split from latest draw
-    const currentSplit = historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
+    // Get current prize split from latest completed draw
+    const currentSplit = completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
     
     return calculateGlobalAPY(
       ngrStats.current4WeekAvg,
@@ -138,7 +147,7 @@ export default function Dashboard() {
       price.usd,
       currentSplit
     );
-  }, [ngrStats.current4WeekAvg, lotteryStats.totalTickets, price.usd, historicalDraws]);
+  }, [ngrStats.current4WeekAvg, lotteryStats.totalTickets, price.usd, completedDraws]);
 
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats.currentWeekPool;
@@ -161,12 +170,12 @@ export default function Dashboard() {
 
   // Calculate last week's APY (from the most recent completed draw)
   const lastWeekAPY = useMemo(() => {
-    if (historicalDraws.length === 0) return 0;
-    const lastDraw = historicalDraws[0];
+    if (completedDraws.length === 0) return 0;
+    const lastDraw = completedDraws[0];
     const ngrContribution = lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85;
     const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
     return calculateGlobalAPY(ngrContribution, totalTickets, price.usd, lastDraw.prizepoolSplit);
-  }, [historicalDraws, lotteryStats.totalTickets, price.usd]);
+  }, [completedDraws, lotteryStats.totalTickets, price.usd]);
 
   // Calculate APY change from last week vs current 4-week avg
   const apyChange = useMemo(() => {
@@ -176,11 +185,11 @@ export default function Dashboard() {
 
   // Find highest APY draw
   const highestAPYData = useMemo(() => {
-    if (historicalDraws.length === 0) return { apy: 0, weeksAgo: 0 };
+    if (completedDraws.length === 0) return { apy: 0, weeksAgo: 0 };
     
     let highest = { apy: 0, weeksAgo: 0 };
     
-    historicalDraws.forEach((draw, index) => {
+    completedDraws.forEach((draw, index) => {
       const ngrContribution = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
       const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
       const drawAPY = calculateGlobalAPY(ngrContribution, totalTickets, price.usd, draw.prizepoolSplit);
@@ -191,44 +200,43 @@ export default function Dashboard() {
     });
     
     return highest;
-  }, [historicalDraws, lotteryStats.totalTickets, price.usd]);
+  }, [completedDraws, lotteryStats.totalTickets, price.usd]);
 
   // Find highest prize pool
   const highestPrizePoolData = useMemo(() => {
-    if (historicalDraws.length === 0) return { pool: 0, weeksAgo: 0 };
+    if (completedDraws.length === 0) return { pool: 0, weeksAgo: 0 };
     
     let highest = { pool: 0, weeksAgo: 0 };
     
-    historicalDraws.forEach((draw, index) => {
+    completedDraws.forEach((draw, index) => {
       if (draw.totalPoolUSD > highest.pool) {
         highest = { pool: draw.totalPoolUSD, weeksAgo: index };
       }
     });
     
     return highest;
-  }, [historicalDraws]);
+  }, [completedDraws]);
 
   // Calculate prize pool change vs last week
   const prizePoolChange = useMemo(() => {
-    if (historicalDraws.length === 0) return 0;
-    const lastPool = historicalDraws[0]?.totalPoolUSD || 0;
+    if (completedDraws.length === 0) return 0;
+    const lastPool = completedDraws[0]?.totalPoolUSD || 0;
     if (lastPool === 0) return 0;
     return ((weeklyPoolUSD - lastPool) / lastPool) * 100;
-  }, [weeklyPoolUSD, historicalDraws]);
+  }, [weeklyPoolUSD, completedDraws]);
 
-  // Current week's NGR (from API or latest draw)
-  const currentWeekNGR = useMemo(() => {
-    // The current draw's NGR is the live data we're showing
-    return historicalDraws[0]?.ngrUSD || 0;
-  }, [historicalDraws]);
+  // Last week's NGR (from most recent completed draw)
+  const lastWeekNGR = useMemo(() => {
+    return completedDraws[0]?.ngrUSD || 0;
+  }, [completedDraws]);
 
   // Find highest NGR week
   const highestNGRData = useMemo(() => {
-    if (historicalDraws.length === 0) return { ngr: 0, weeksAgo: 0 };
+    if (completedDraws.length === 0) return { ngr: 0, weeksAgo: 0 };
     
     let highest = { ngr: 0, weeksAgo: 0 };
     
-    historicalDraws.forEach((draw, index) => {
+    completedDraws.forEach((draw, index) => {
       const ngrTotal = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
       if (ngrTotal > highest.ngr) {
         highest = { ngr: ngrTotal, weeksAgo: index };
@@ -236,7 +244,7 @@ export default function Dashboard() {
     });
     
     return highest;
-  }, [historicalDraws]);
+  }, [completedDraws]);
 
   if (isLoading) {
     return (
@@ -348,7 +356,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-terminal-textMuted">Last Week Pool</span>
                 <span className="font-medium text-terminal-text tabular-nums">
-                  {formatUSD(historicalDraws[0]?.totalPoolUSD || 0)}
+                  {formatUSD(completedDraws[0]?.totalPoolUSD || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -437,9 +445,9 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1 pt-2 border-t border-terminal-border/50">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">This Week NGR</span>
+                <span className="text-terminal-textMuted">Last Week NGR</span>
                 <span className="font-medium text-terminal-accent tabular-nums">
-                  {formatUSD(currentWeekNGR + (historicalDraws[0]?.singlesAdded || 0) * 0.85)}
+                  {formatUSD(lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -469,11 +477,11 @@ export default function Dashboard() {
         {/* Yield Calculator Panel */}
         <YieldCalculatorPanel
           shflPrice={price.usd}
-          currentWeekNGR={historicalDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+          currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
           avgWeeklyNGR={ngrStats.current4WeekAvg}
           totalTickets={lotteryStats.totalTickets}
-          historicalDraws={historicalDraws}
-          prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+          historicalDraws={completedDraws}
+          prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
         />
 
         {/* Charts and Tables Grid */}
@@ -512,7 +520,7 @@ export default function Dashboard() {
                     Current Prize Split
                   </span>
                   <span className="text-sm font-medium text-terminal-accent text-right text-[10px]">
-                    {historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+                    {completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-terminal-border">
@@ -553,28 +561,28 @@ export default function Dashboard() {
             </div>
 
             {/* Latest Draw Info */}
-            {historicalDraws[0] && (
+            {completedDraws[0] && (
               <div className="bg-terminal-dark border border-terminal-border rounded-lg p-4">
                 <div className="text-xs text-terminal-textSecondary uppercase tracking-wider mb-2">
-                  Latest Draw #{historicalDraws[0].drawNumber}
+                  Latest Draw #{completedDraws[0].drawNumber}
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-xs text-terminal-textMuted">Date</span>
                     <span className="text-xs text-terminal-text">
-                      {new Date(historicalDraws[0].date).toLocaleDateString()}
+                      {new Date(completedDraws[0].date).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-xs text-terminal-textMuted">Pool</span>
                     <span className="text-xs text-terminal-positive font-medium">
-                      {formatUSD(historicalDraws[0].totalPoolUSD)}
+                      {formatUSD(completedDraws[0].totalPoolUSD)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-xs text-terminal-textMuted">NGR Added</span>
                     <span className="text-xs text-terminal-accent font-medium">
-                      {formatUSD(historicalDraws[0].ngrUSD)}
+                      {formatUSD(completedDraws[0].ngrUSD)}
                     </span>
                   </div>
                 </div>
@@ -589,7 +597,7 @@ export default function Dashboard() {
             baseNGR={ngrStats.current4WeekAvg}
             basePrice={price.usd}
             totalTickets={lotteryStats.totalTickets}
-            prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+            prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
           />
         </div>
 
@@ -627,8 +635,8 @@ export default function Dashboard() {
         shflPrice={price.usd}
         weeklyNGR={ngrStats.current4WeekAvg}
         totalTickets={lotteryStats.totalTickets}
-        historicalDraws={historicalDraws}
-        prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+        historicalDraws={completedDraws}
+        prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
       />
     </div>
   );

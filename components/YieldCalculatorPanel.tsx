@@ -82,7 +82,7 @@ export default function YieldCalculatorPanel({
   const annualYield = avgWeekYield.annualExpectedUSD;
   const annualAPY = avgWeekYield.effectiveAPY;
 
-  // Historical yields for each draw
+  // Historical yields for each draw (historicalDraws should already be filtered to completed draws)
   const historicalYields = useMemo(() => {
     return historicalDraws.slice(0, 8).map((draw) => {
       const yieldResult = calculateYield(
