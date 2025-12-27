@@ -6,7 +6,6 @@ import {
   TrendingUp, 
   Calendar, 
   History,
-  Save,
   Coins
 } from "lucide-react";
 import { 
@@ -37,19 +36,31 @@ export default function YieldCalculatorPanel({
   prizeSplit,
 }: YieldCalculatorPanelProps) {
   const [inputValue, setInputValue] = useState<string>("100000");
-  const [savedAmount, setSavedAmount] = useState<number | null>(null);
 
   // Parse the input value to number
   const shflAmount = parseFloat(inputValue) || 0;
 
-  // Load saved amount from localStorage
+  // Load saved amount from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("shfl-staked-amount");
     if (saved) {
       setInputValue(saved);
-      setSavedAmount(parseFloat(saved));
     }
   }, []);
+
+  // Auto-save whenever the input value changes (debounced)
+  useEffect(() => {
+    const amount = parseFloat(inputValue) || 0;
+    if (amount > 0) {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem("shfl-staked-amount", amount.toString());
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent("shfl-staked-changed", { detail: amount }));
+      }, 300); // 300ms debounce
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [inputValue]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -57,13 +68,6 @@ export default function YieldCalculatorPanel({
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setInputValue(value);
     }
-  };
-
-  const handleSave = () => {
-    localStorage.setItem("shfl-staked-amount", shflAmount.toString());
-    setSavedAmount(shflAmount);
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent("shfl-staked-changed", { detail: shflAmount }));
   };
 
   const ticketCount = Math.floor(shflAmount / SHFL_PER_TICKET);
@@ -158,17 +162,6 @@ export default function YieldCalculatorPanel({
                 <CurrencyAmount amount={stakingValueUSD} />
               </div>
             </div>
-            <button
-              onClick={handleSave}
-              className={`flex items-center gap-1.5 px-4 py-3 rounded-lg text-sm font-medium transition-all h-[46px] ${
-                savedAmount === shflAmount
-                  ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
-                  : "bg-terminal-accent/10 text-terminal-accent border border-terminal-accent/30 hover:bg-terminal-accent/20"
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              {savedAmount === shflAmount ? "Saved" : "Save"}
-            </button>
           </div>
         </div>
 
