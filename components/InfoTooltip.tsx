@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Info, HelpCircle } from "lucide-react";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InfoTooltipProps {
   content: string;
   title?: string;
   variant?: "icon" | "text" | "inline";
-  position?: "top" | "bottom" | "auto";
+  position?: "top" | "bottom" | "left" | "auto";
   className?: string;
   children?: React.ReactNode;
 }
@@ -22,18 +22,87 @@ export default function InfoTooltip({
   children 
 }: InfoTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [showBelow, setShowBelow] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<{ vertical: "top" | "bottom"; horizontal: "center" | "left" | "right" }>({
+    vertical: "bottom",
+    horizontal: "center"
+  });
   const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isVisible && triggerRef.current && position === "auto") {
+    if (isVisible && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      // If there's less than 150px above, show below
-      setShowBelow(rect.top < 150);
+      const tooltipWidth = 256; // w-64 = 16rem = 256px
+      
+      // Vertical position
+      let vertical: "top" | "bottom" = "bottom";
+      if (position === "top") {
+        vertical = "top";
+      } else if (position === "bottom") {
+        vertical = "bottom";
+      } else if (position === "auto") {
+        vertical = rect.top < 150 ? "bottom" : "top";
+      }
+      
+      // Horizontal position - check if tooltip would be cut off
+      let horizontal: "center" | "left" | "right" = "center";
+      const spaceOnRight = window.innerWidth - rect.right;
+      const spaceOnLeft = rect.left;
+      
+      if (spaceOnRight < tooltipWidth / 2 + 20) {
+        // Not enough space on right, align to right edge
+        horizontal = "right";
+      } else if (spaceOnLeft < tooltipWidth / 2 + 20) {
+        // Not enough space on left, align to left edge
+        horizontal = "left";
+      }
+      
+      setTooltipPosition({ vertical, horizontal });
     }
   }, [isVisible, position]);
 
-  const shouldShowBelow = position === "bottom" || (position === "auto" && showBelow);
+  const getTooltipClasses = () => {
+    const classes = ["absolute z-[100] w-64 pointer-events-none"];
+    
+    // Vertical positioning
+    if (tooltipPosition.vertical === "bottom") {
+      classes.push("top-full mt-2");
+    } else {
+      classes.push("bottom-full mb-2");
+    }
+    
+    // Horizontal positioning
+    if (tooltipPosition.horizontal === "center") {
+      classes.push("left-1/2 -translate-x-1/2");
+    } else if (tooltipPosition.horizontal === "right") {
+      classes.push("right-0");
+    } else {
+      classes.push("left-0");
+    }
+    
+    return classes.join(" ");
+  };
+
+  const getArrowClasses = () => {
+    const classes = ["absolute w-3 h-3 bg-terminal-dark border-terminal-accent/30"];
+    
+    if (tooltipPosition.vertical === "bottom") {
+      classes.push("-top-1.5 border-l border-t rotate-45");
+    } else {
+      classes.push("-bottom-1.5 border-r border-b rotate-45");
+    }
+    
+    // Arrow horizontal position
+    if (tooltipPosition.horizontal === "center") {
+      classes.push("left-1/2 -translate-x-1/2");
+    } else if (tooltipPosition.horizontal === "right") {
+      classes.push("right-4");
+    } else {
+      classes.push("left-4");
+    }
+    
+    return classes.join(" ");
+  };
 
   return (
     <span 
@@ -53,12 +122,7 @@ export default function InfoTooltip({
       )}
       
       {isVisible && (
-        <div 
-          className={cn(
-            "absolute z-50 left-1/2 -translate-x-1/2 w-64 pointer-events-none",
-            shouldShowBelow ? "top-full mt-2" : "bottom-full mb-2"
-          )}
-        >
+        <div ref={tooltipRef} className={getTooltipClasses()}>
           <div className="bg-terminal-dark border border-terminal-accent/30 rounded-lg p-3 shadow-xl shadow-terminal-accent/10">
             {title && (
               <div className="text-xs font-medium text-terminal-accent mb-1">{title}</div>
@@ -68,14 +132,7 @@ export default function InfoTooltip({
             </p>
           </div>
           {/* Arrow */}
-          <div 
-            className={cn(
-              "absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-terminal-dark border-terminal-accent/30",
-              shouldShowBelow 
-                ? "-top-1.5 border-l border-t rotate-45" 
-                : "-bottom-1.5 border-r border-b rotate-45"
-            )} 
-          />
+          <div className={getArrowClasses()} />
         </div>
       )}
     </span>
@@ -99,4 +156,3 @@ export const TOOLTIPS = {
   ev: "Expected Value - the average return per ticket. For purchased tickets, 85% of sales go to the prize pool (15% house edge). Negative EV is expected. Staked tickets have no ongoing cost, so EV represents pure expected winnings.",
   unstaking: "You can unstake your SHFL anytime. Your tokens will be returned after the next lottery draw completes. Note: unstaked tokens won't participate in the upcoming draw.",
 };
-
