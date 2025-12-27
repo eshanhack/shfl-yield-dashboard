@@ -237,9 +237,9 @@ export default function TokenReturnsChart() {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-5">
         {/* Returns Summary */}
-        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           {sortedTokens.map((token) => {
             const returnVal = returns[token.symbol] || 0;
             const isVisible = visibleTokens.has(token.symbol);
@@ -248,7 +248,7 @@ export default function TokenReturnsChart() {
                 key={token.symbol}
                 onClick={() => toggleToken(token.symbol)}
                 className={cn(
-                  "p-2 rounded-lg border transition-all text-left",
+                  "p-3 rounded-lg border transition-all text-left",
                   token.symbol === "SHFL" 
                     ? isVisible
                       ? "bg-terminal-accent/10 border-terminal-accent"
@@ -258,20 +258,20 @@ export default function TokenReturnsChart() {
                       : "bg-terminal-dark/50 border-terminal-border/50 opacity-50"
                 )}
               >
-                <div className="flex items-center gap-1.5 mb-1">
+                <div className="flex items-center gap-2 mb-1.5">
                   <div 
-                    className="w-2 h-2 rounded-full" 
+                    className="w-2.5 h-2.5 rounded-full" 
                     style={{ backgroundColor: token.color }}
                   />
-                  <span className="text-[10px] font-medium text-terminal-text">
+                  <span className="text-xs font-medium text-terminal-text">
                     {token.symbol}
                   </span>
                 </div>
                 <div className={cn(
-                  "text-sm font-bold tabular-nums flex items-center gap-1",
+                  "text-base font-bold tabular-nums flex items-center gap-1.5",
                   returnVal >= 0 ? "text-terminal-positive" : "text-terminal-negative"
                 )}>
-                  {returnVal >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {returnVal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                   {returnVal >= 0 ? "+" : ""}{returnVal.toFixed(1)}%
                 </div>
               </button>
@@ -280,7 +280,7 @@ export default function TokenReturnsChart() {
         </div>
 
         {/* Chart */}
-        <div className="h-[200px]">
+        <div className="h-[260px]">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-terminal-accent border-t-transparent rounded-full animate-spin" />
