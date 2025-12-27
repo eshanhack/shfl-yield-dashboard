@@ -15,6 +15,49 @@ const GET_PRIZES_AND_RESULTS_QUERY = `query getPrizesAndResults($drawId: Float) 
   }
 }`;
 
+const GET_LOTTERY_DRAW_QUERY = `query getLotteryDraw($id: Float) {
+  lotteryDraw(drawId: $id) {
+    id
+    totalStaked
+    status
+  }
+}`;
+
+async function fetchTotalStakedForDraw(drawId: number): Promise<number | null> {
+  try {
+    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin": "https://shuffle.com",
+        "Referer": "https://shuffle.com/token",
+      },
+      body: JSON.stringify({
+        operationName: "getLotteryDraw",
+        query: GET_LOTTERY_DRAW_QUERY,
+        variables: { id: drawId },
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data.data?.lotteryDraw?.totalStaked) {
+      return null;
+    }
+
+    return parseFloat(data.data.lotteryDraw.totalStaked);
+  } catch (error) {
+    console.error(`Error fetching totalStaked for draw ${drawId}:`, error);
+    return null;
+  }
+}
+
 export interface PrizeData {
   category: string;
   amount: number;
@@ -31,6 +74,8 @@ export interface LotteryDrawData {
   singlesAdded: number;
   prizepoolSplit: string;
   totalNGRContribution: number;
+  totalStaked?: number;
+  totalTickets?: number;
   prizes?: PrizeData[];
   jackpotAmount?: number;
   totalWinners?: number;
@@ -149,6 +194,25 @@ export async function GET(request: Request) {
     totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
     jackpotWon: wasJackpotWon(draw.jackpotted, draw.prizePool),
   }));
+
+  // Fetch actual totalStaked for recent draws (for accurate ticket counts)
+  const recentDrawsForTickets = drawsWithNGR.slice(0, 12);
+  const ticketPromises = recentDrawsForTickets.map(draw => 
+    fetchTotalStakedForDraw(draw.drawNumber)
+  );
+  const ticketResults = await Promise.all(ticketPromises);
+  
+  drawsWithNGR = drawsWithNGR.map((draw, index) => {
+    if (index < ticketResults.length && ticketResults[index]) {
+      const totalStaked = ticketResults[index]!;
+      return {
+        ...draw,
+        totalStaked,
+        totalTickets: Math.floor(totalStaked / 50),
+      };
+    }
+    return draw;
+  });
 
   // Optionally fetch prize data for recent draws (limit to avoid rate limiting)
   if (fetchPrizes) {

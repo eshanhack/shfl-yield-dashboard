@@ -40,6 +40,8 @@ export interface LotteryDrawRaw {
   singlesAdded: number;
   prizepoolSplit: string;
   totalNGRContribution: number; // ngrAdded + (singlesAdded * 0.85)
+  totalStaked?: number;
+  totalTickets?: number;
   prizes?: PrizeData[];
   jackpotAmount?: number;
   totalWinners?: number;
@@ -150,7 +152,8 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
     
     // Transform raw API data to HistoricalDraw format
     return data.draws.map((draw: LotteryDrawRaw) => {
-      const totalTickets = estimateTicketsFromPool(draw.prizePool);
+      // Use actual totalTickets from API if available, otherwise estimate
+      const totalTickets = draw.totalTickets || estimateTicketsFromPool(draw.prizePool);
       return {
         drawNumber: draw.drawNumber,
         date: draw.date,
