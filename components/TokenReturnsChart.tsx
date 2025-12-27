@@ -70,50 +70,60 @@ export default function TokenReturnsChart() {
         // Track data source (live vs demo)
         setDataSource(json.source === "live" || json.source === "partial" ? "live" : "demo");
         
-        // Transform data to match expected format
-        const results = json.data.map((item: { symbol: string; prices: [number, number][] }) => {
-          const token = TOKENS.find(t => t.symbol === item.symbol) || TOKENS[0];
-          return { token, prices: item.prices };
-        });
+        // Transform data to match expected format - filter out empty results
+        const results = json.data
+          .map((item: { symbol: string; prices: [number, number][] }) => {
+            const token = TOKENS.find(t => t.symbol === item.symbol) || TOKENS[0];
+            return { token, prices: item.prices };
+          })
+          .filter((r: { token: TokenData; prices: [number, number][] }) => r.prices.length > 0);
+        
+        if (results.length === 0) {
+          setChartData([]);
+          setReturns({});
+          setIsLoading(false);
+          return;
+        }
         
         // Normalize to percentage returns from start
         const normalizedData: PricePoint[] = [];
         const startPrices: Record<string, number> = {};
         const endPrices: Record<string, number> = {};
         
-        // Get the minimum length to ensure all tokens have data for same timestamps
-        const minLength = Math.min(...results.filter((r: { token: TokenData; prices: [number, number][] }) => r.prices.length > 0).map((r: { token: TokenData; prices: [number, number][] }) => r.prices.length));
+        // Use the maximum length and interpolate for shorter datasets
+        const maxLength = Math.max(...results.map((r: { token: TokenData; prices: [number, number][] }) => r.prices.length));
         
-        if (minLength === 0) {
-          setChartData([]);
-          setReturns({});
-          setIsLoading(false);
-          return;
-        }
-
         // Sample data points (max 100 points for performance)
-        const step = Math.max(1, Math.floor(minLength / 100));
+        const step = Math.max(1, Math.floor(maxLength / 100));
         
-        for (let i = 0; i < minLength; i += step) {
+        for (let i = 0; i < maxLength; i += step) {
           const point: PricePoint = {
             timestamp: 0,
             date: "",
           };
           
           results.forEach(({ token, prices }: { token: TokenData; prices: [number, number][] }) => {
-            if (prices[i]) {
-              const [timestamp, price] = prices[i];
-              point.timestamp = timestamp;
-              point.date = new Date(timestamp).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: timePeriod === "1d" ? "numeric" : undefined,
-              });
+            // Scale index for tokens with different data lengths
+            const scaledIndex = Math.min(
+              Math.floor((i / maxLength) * prices.length),
+              prices.length - 1
+            );
+            
+            if (prices[scaledIndex]) {
+              const [timestamp, price] = prices[scaledIndex];
+              if (!point.timestamp) {
+                point.timestamp = timestamp;
+                point.date = new Date(timestamp).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: timePeriod === "1d" ? "numeric" : undefined,
+                });
+              }
               
               if (i === 0) {
                 startPrices[token.symbol] = price;
               }
-              if (i >= minLength - step) {
+              if (i >= maxLength - step) {
                 endPrices[token.symbol] = price;
               }
               
@@ -124,7 +134,9 @@ export default function TokenReturnsChart() {
             }
           });
           
-          normalizedData.push(point);
+          if (point.timestamp) {
+            normalizedData.push(point);
+          }
         }
         
         // Calculate final returns
