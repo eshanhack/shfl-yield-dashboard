@@ -3,15 +3,23 @@
 import { useState } from "react";
 import { HistoricalDraw, formatUSD } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
-import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles } from "lucide-react";
+import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
 
 interface LotteryHistoryTableProps {
   draws: HistoricalDraw[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps) {
   const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  
+  const totalPages = Math.ceil(draws.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentDraws = draws.slice(startIndex, endIndex);
   
   const avgYield =
     draws.length > 0
@@ -19,6 +27,10 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
       : 0;
 
   const jackpotWonCount = draws.filter(d => d.jackpotWon).length;
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)));
+  };
 
   return (
     <>
@@ -30,7 +42,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                 Lottery History
               </h3>
               <p className="text-xs text-terminal-textMuted">
-                Click on a draw to view full prize breakdown
+                {draws.length} total draws • Click on a draw to view full prize breakdown
               </p>
             </div>
             <div className="flex items-center gap-6">
@@ -101,11 +113,12 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
               </tr>
             </thead>
             <tbody>
-              {draws.map((draw, index) => {
+              {currentDraws.map((draw, index) => {
                 const isAboveAvg = draw.yieldPerThousandSHFL > avgYield;
                 // Estimate jackpot as ~87% of pool (based on typical splits)
                 const estimatedJackpot = draw.totalPoolUSD * 0.87;
                 const isJackpotWon = draw.jackpotWon;
+                const isLatest = currentPage === 0 && index === 0;
                 
                 return (
                   <tr
@@ -116,7 +129,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                       isJackpotWon 
                         ? "bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-amber-500/20 hover:from-yellow-500/30 hover:via-yellow-400/20 hover:to-amber-500/30 border-l-2 border-l-yellow-500"
                         : "hover:bg-terminal-accent/10",
-                      index === 0 && !isJackpotWon && "bg-terminal-accent/5"
+                      isLatest && !isJackpotWon && "bg-terminal-accent/5"
                     )}
                   >
                     <td className="px-4 py-3">
@@ -133,7 +146,7 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                         )}>
                           #{draw.drawNumber}
                         </span>
-                        {index === 0 && (
+                        {isLatest && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase tracking-wider">
                             Latest
                           </span>
@@ -175,7 +188,11 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                       "px-4 py-3 text-right text-sm tabular-nums",
                       isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
                     )}>
-                      {(draw.totalTickets / 1000000).toFixed(2)}M
+                      {draw.totalTickets >= 1000000 
+                        ? `${(draw.totalTickets / 1000000).toFixed(2)}M`
+                        : draw.totalTickets >= 1000
+                        ? `${(draw.totalTickets / 1000).toFixed(0)}K`
+                        : draw.totalTickets}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span
@@ -204,18 +221,89 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
           </table>
         </div>
 
+        {/* Pagination */}
         <div className="p-3 bg-terminal-dark/50 border-t border-terminal-border">
-          <div className="flex items-center justify-between text-xs text-terminal-textMuted">
-            <span className="flex items-center gap-4">
-              <span>Showing {draws.length} recent draws</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs text-terminal-textMuted">
+              <span>
+                Showing {startIndex + 1}-{Math.min(endIndex, draws.length)} of {draws.length} draws
+              </span>
               {jackpotWonCount > 0 && (
                 <span className="flex items-center gap-1 text-yellow-500">
                   <Trophy className="w-3 h-3" />
                   Gold rows = Jackpot Won
                 </span>
               )}
-            </span>
-            <span>Click any row for details</span>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className={cn(
+                    "p-1.5 rounded transition-colors",
+                    currentPage === 0 
+                      ? "text-terminal-textMuted/50 cursor-not-allowed" 
+                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                  )}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i).map((page) => {
+                    // Show first, last, current, and adjacent pages
+                    const showPage = 
+                      page === 0 || 
+                      page === totalPages - 1 || 
+                      Math.abs(page - currentPage) <= 1;
+                    
+                    const showEllipsis = 
+                      (page === 1 && currentPage > 2) ||
+                      (page === totalPages - 2 && currentPage < totalPages - 3);
+                    
+                    if (!showPage && !showEllipsis) return null;
+                    
+                    if (showEllipsis && !showPage) {
+                      return (
+                        <span key={page} className="px-1 text-terminal-textMuted">
+                          ...
+                        </span>
+                      );
+                    }
+                    
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={cn(
+                          "min-w-[28px] h-7 px-2 rounded text-xs font-medium transition-colors",
+                          currentPage === page
+                            ? "bg-terminal-accent text-black"
+                            : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                        )}
+                      >
+                        {page + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages - 1}
+                  className={cn(
+                    "p-1.5 rounded transition-colors",
+                    currentPage === totalPages - 1 
+                      ? "text-terminal-textMuted/50 cursor-not-allowed" 
+                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                  )}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
