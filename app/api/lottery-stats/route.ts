@@ -12,58 +12,112 @@ export interface CurrentLotteryStats {
   powerplayPrice: number;
 }
 
-/**
- * Estimate current prize pool based on lottery history patterns
- * 
- * The prize pool consists of:
- * - Jackpot rollover from previous draw
- * - NGR added at start of week
- * - Singles added throughout the week
- */
-function estimateCurrentPrizePool(): number {
-  // Based on recent lottery history from Draw #62 (Dec 19, 2025):
-  // - Prize Pool: $1,263,612
-  // - Jackpotted: $1,064,670
-  // - NGR Added: $173,555
-  // - Singles Added: $29,042
-  
-  // Current pool is approximately $1,402,348 (from user report)
-  // This suggests we're mid-week building up
-  
-  // Most recent draw data (Draw #62):
-  const lastDrawPool = 1_263_612;
-  const lastJackpotted = 1_064_670;
-  const avgNGRAdded = 400_000; // Average from recent draws
-  const avgSinglesPerDay = 5_000; // Approximate
-  
-  // Calculate days since last draw (Friday)
-  const now = new Date();
-  const lastFriday = getLastDrawDate();
-  const daysSinceDraw = Math.floor((now.getTime() - lastFriday.getTime()) / (1000 * 60 * 60 * 24));
-  
-  // Estimate: Jackpot rollover + NGR + accumulated singles
-  const estimatedPool = lastJackpotted + avgNGRAdded + (avgSinglesPerDay * Math.min(daysSinceDraw, 7));
-  
-  return estimatedPool;
-}
+const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
 
-function getLastDrawDate(): Date {
-  const now = new Date();
-  const lastFriday = new Date(now);
-  
-  // Find the most recent Friday at 7am UTC
-  const currentDay = now.getUTCDay();
-  const daysSinceLastFriday = (currentDay + 2) % 7; // Days since last Friday
-  
-  lastFriday.setUTCDate(now.getUTCDate() - daysSinceLastFriday);
-  lastFriday.setUTCHours(7, 0, 0, 0);
-  
-  // If we haven't passed this Friday's draw yet, go back another week
-  if (lastFriday > now) {
-    lastFriday.setUTCDate(lastFriday.getUTCDate() - 7);
+// Common GraphQL queries to try
+const QUERIES = [
+  // Query 1: Get current lottery info
+  {
+    query: `query GetLotteryInfo {
+      lottery {
+        prizePool
+        jackpot
+        totalTickets
+        nextDraw
+      }
+    }`
+  },
+  // Query 2: Alternative structure
+  {
+    query: `query {
+      currentLottery {
+        prizePool
+        jackpot
+        ticketCount
+      }
+    }`
+  },
+  // Query 3: Get lottery stats
+  {
+    query: `query GetLotteryStats {
+      lotteryStats {
+        currentPrizePool
+        jackpotAmount
+        totalEntries
+      }
+    }`
+  },
+  // Query 4: Simple lottery query
+  {
+    query: `query {
+      lottery {
+        pool
+        jackpot
+      }
+    }`
+  },
+  // Query 5: Introspection to discover schema
+  {
+    query: `query IntrospectionQuery {
+      __schema {
+        queryType {
+          fields {
+            name
+            type {
+              name
+              kind
+            }
+          }
+        }
+      }
+    }`
+  }
+];
+
+async function fetchFromGraphQL(): Promise<{ prizePool: number; jackpot: number; tickets: number } | null> {
+  for (const queryObj of QUERIES) {
+    try {
+      const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Origin": "https://shuffle.com",
+          "Referer": "https://shuffle.com/lottery",
+        },
+        body: JSON.stringify(queryObj),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("GraphQL response:", JSON.stringify(data));
+        
+        // Try to extract prize pool from various response structures
+        if (data.data) {
+          const lottery = data.data.lottery || data.data.currentLottery || data.data.lotteryStats || {};
+          const prizePool = lottery.prizePool || lottery.currentPrizePool || lottery.pool || 0;
+          const jackpot = lottery.jackpot || lottery.jackpotAmount || 0;
+          const tickets = lottery.totalTickets || lottery.ticketCount || lottery.totalEntries || 0;
+          
+          if (prizePool > 0 || jackpot > 0) {
+            return { prizePool, jackpot, tickets };
+          }
+        }
+        
+        // Log schema info if we got introspection data
+        if (data.data?.__schema) {
+          console.log("GraphQL Schema fields:", data.data.__schema.queryType?.fields?.map((f: any) => f.name));
+        }
+      }
+    } catch (error) {
+      console.log("GraphQL query failed:", error);
+      continue;
+    }
   }
   
-  return lastFriday;
+  return null;
 }
 
 /**
@@ -92,49 +146,30 @@ function getNextDrawTimestamp(): number {
 
 export async function GET() {
   try {
-    // Try to fetch from a potential API endpoint
-    // TODO: Replace with actual API endpoint if discovered
-    const apiEndpoints = [
-      "https://shuffle.com/api/lottery/stats",
-      "https://shuffle.com/api/lottery/current",
-      "https://api.shuffle.com/lottery",
-    ];
-
-    let prizePool = 0;
+    // Try to fetch from GraphQL API
+    const graphqlData = await fetchFromGraphQL();
     
-    for (const endpoint of apiEndpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          headers: {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json",
-          },
-          signal: AbortSignal.timeout(5000),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Try common field names
-          prizePool = data.prizePool || data.prize_pool || data.jackpot || 
-                      data.totalPrize || data.pool || data.currentPool || 0;
-          if (prizePool > 0) break;
-        }
-      } catch {
-        // Continue to next endpoint
-      }
-    }
-
-    // If no API worked, use estimation
+    let prizePool = graphqlData?.prizePool || 0;
+    let jackpot = graphqlData?.jackpot || 0;
+    let tickets = graphqlData?.tickets || 0;
+    
+    // Fallback values based on latest known data
     if (prizePool === 0) {
-      prizePool = estimateCurrentPrizePool();
+      prizePool = 1_402_348; // Latest known value from user
+    }
+    if (jackpot === 0) {
+      jackpot = prizePool * 0.30; // ~30% based on prize split
+    }
+    if (tickets === 0) {
+      tickets = 1_000_000; // Estimate
     }
 
     const stats: CurrentLotteryStats = {
-      totalTickets: 1_000_000, // Estimate
-      totalSHFLStaked: 50_000_000,
+      totalTickets: tickets,
+      totalSHFLStaked: tickets * 50,
       currentPrizePool: prizePool,
       nextDrawTimestamp: getNextDrawTimestamp(),
-      jackpotAmount: prizePool * 0.30, // ~30% goes to jackpot based on split
+      jackpotAmount: jackpot,
       ticketPrice: 0.25,
       powerplayPrice: 4.00,
     };
@@ -142,7 +177,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       stats,
-      source: prizePool > 0 ? "estimated" : "api",
+      source: graphqlData ? "shuffle.com GraphQL API" : "fallback",
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {
@@ -154,7 +189,7 @@ export async function GET() {
       stats: {
         totalTickets: 1_000_000,
         totalSHFLStaked: 50_000_000,
-        currentPrizePool: 1_402_348, // Latest known value
+        currentPrizePool: 1_402_348,
         nextDrawTimestamp: getNextDrawTimestamp(),
         jackpotAmount: 420_000,
         ticketPrice: 0.25,
