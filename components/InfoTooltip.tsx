@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ interface InfoTooltipProps {
   content: string;
   title?: string;
   variant?: "icon" | "text" | "inline";
+  position?: "top" | "bottom" | "auto";
   className?: string;
   children?: React.ReactNode;
 }
@@ -16,13 +17,27 @@ export default function InfoTooltip({
   content, 
   title,
   variant = "icon",
+  position = "auto",
   className,
   children 
 }: InfoTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [showBelow, setShowBelow] = useState(false);
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (isVisible && triggerRef.current && position === "auto") {
+      const rect = triggerRef.current.getBoundingClientRect();
+      // If there's less than 150px above, show below
+      setShowBelow(rect.top < 150);
+    }
+  }, [isVisible, position]);
+
+  const shouldShowBelow = position === "bottom" || (position === "auto" && showBelow);
 
   return (
     <span 
+      ref={triggerRef}
       className={cn("relative inline-flex items-center", className)}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
@@ -38,7 +53,12 @@ export default function InfoTooltip({
       )}
       
       {isVisible && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 pointer-events-none">
+        <div 
+          className={cn(
+            "absolute z-50 left-1/2 -translate-x-1/2 w-64 pointer-events-none",
+            shouldShowBelow ? "top-full mt-2" : "bottom-full mb-2"
+          )}
+        >
           <div className="bg-terminal-dark border border-terminal-accent/30 rounded-lg p-3 shadow-xl shadow-terminal-accent/10">
             {title && (
               <div className="text-xs font-medium text-terminal-accent mb-1">{title}</div>
@@ -48,7 +68,14 @@ export default function InfoTooltip({
             </p>
           </div>
           {/* Arrow */}
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-terminal-dark border-r border-b border-terminal-accent/30 rotate-45" />
+          <div 
+            className={cn(
+              "absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-terminal-dark border-terminal-accent/30",
+              shouldShowBelow 
+                ? "-top-1.5 border-l border-t rotate-45" 
+                : "-bottom-1.5 border-r border-b rotate-45"
+            )} 
+          />
         </div>
       )}
     </span>
