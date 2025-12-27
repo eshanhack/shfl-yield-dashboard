@@ -35,18 +35,28 @@ export default function YieldCalculatorPanel({
   historicalDraws,
   prizeSplit,
 }: YieldCalculatorPanelProps) {
-  const [shflAmount, setShflAmount] = useState<number>(100000);
+  const [inputValue, setInputValue] = useState<string>("100000");
   const [savedAmount, setSavedAmount] = useState<number | null>(null);
+
+  // Parse the input value to number
+  const shflAmount = parseFloat(inputValue) || 0;
 
   // Load saved amount from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("shfl-staked-amount");
     if (saved) {
-      const amount = parseFloat(saved);
-      setShflAmount(amount);
-      setSavedAmount(amount);
+      setInputValue(saved);
+      setSavedAmount(parseFloat(saved));
     }
   }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string or valid numbers only
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setInputValue(value);
+    }
+  };
 
   const handleSave = () => {
     localStorage.setItem("shfl-staked-amount", shflAmount.toString());
@@ -120,9 +130,10 @@ export default function YieldCalculatorPanel({
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={shflAmount}
-                onChange={(e) => setShflAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                type="text"
+                inputMode="numeric"
+                value={inputValue}
+                onChange={handleInputChange}
                 className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-4 py-3 text-lg font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
                 placeholder="100000"
               />
