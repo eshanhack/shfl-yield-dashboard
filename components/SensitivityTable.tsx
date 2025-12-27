@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { SensitivityCell, generateSensitivityTable } from "@/lib/calculations";
+import { useMemo, useState, useEffect } from "react";
+import { SensitivityCell, generateSensitivityTable, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 
 interface SensitivityTableProps {
@@ -17,6 +17,51 @@ export default function SensitivityTable({
   totalTickets,
   prizeSplit = "30-14-8-9-7-6-5-10-11",
 }: SensitivityTableProps) {
+  const [stakedAmount, setStakedAmount] = useState<number>(1000);
+  
+  // Load saved staked amount from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("shfl-staked-amount");
+    if (saved) {
+      const amount = parseFloat(saved);
+      if (amount > 0) {
+        setStakedAmount(amount);
+      }
+    }
+    
+    // Listen for custom event when staked amount changes
+    const handleStakedChange = (e: CustomEvent<number>) => {
+      if (e.detail > 0) {
+        setStakedAmount(e.detail);
+      }
+    };
+    
+    // Listen for storage changes (cross-tab)
+    const handleStorageChange = () => {
+      const updated = localStorage.getItem("shfl-staked-amount");
+      if (updated) {
+        const amount = parseFloat(updated);
+        if (amount > 0) {
+          setStakedAmount(amount);
+        }
+      }
+    };
+    
+    window.addEventListener("shfl-staked-changed" as any, handleStakedChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+  
+  // Format staked amount for display
+  const stakedLabel = stakedAmount >= 1000000 
+    ? `${(stakedAmount / 1000000).toFixed(1)}M` 
+    : stakedAmount >= 1000 
+    ? `${formatNumber(stakedAmount / 1000)}K` 
+    : formatNumber(stakedAmount);
+
   const ngrMultipliers = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
   const priceMultipliers = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
@@ -46,7 +91,7 @@ export default function SensitivityTable({
           Yield Sensitivity Matrix
         </h3>
         <p className="text-xs text-terminal-textMuted">
-          APY % based on NGR and SHFL price fluctuations (per 1,000 SHFL staked)
+          APY % based on NGR and SHFL price fluctuations (per {stakedLabel} SHFL staked)
         </p>
       </div>
 
