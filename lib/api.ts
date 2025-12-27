@@ -156,7 +156,7 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
 export async function fetchLotteryStats(): Promise<LotteryStats> {
   try {
     const response = await fetch("/api/lottery-stats", {
-      next: { revalidate: 300 }, // Cache for 5 minutes
+      cache: "no-store", // Always fetch fresh data
     });
     
     if (!response.ok) {
@@ -175,6 +175,8 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
       currentWeekNGR: data.stats.currentPrizePool / 0.15, // Reverse calculate NGR
       currentWeekPool: data.stats.currentPrizePool,
       nextDrawTimestamp: data.stats.nextDrawTimestamp,
+      drawStatus: data.stats.drawStatus,
+      drawId: data.stats.drawId,
     };
   } catch (error) {
     console.error("Error fetching lottery stats:", error);
@@ -335,6 +337,8 @@ export interface LotteryStats {
   currentWeekNGR: number;
   currentWeekPool: number;
   nextDrawTimestamp: number;
+  drawStatus?: string;
+  drawId?: string;
 }
 
 /**
