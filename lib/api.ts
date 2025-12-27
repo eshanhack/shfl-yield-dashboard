@@ -284,26 +284,45 @@ export function getMockHistoricalDraws(count: number = 12): HistoricalDraw[] {
 }
 
 /**
+ * Get next draw timestamp - Friday 6pm AEDT (7am UTC)
+ */
+export function getNextDrawTimestamp(): number {
+  const now = new Date();
+  const nextFriday = new Date(now);
+  
+  // Get current day (0 = Sunday, 5 = Friday)
+  const currentDay = now.getUTCDay();
+  
+  // Calculate days until Friday
+  let daysUntilFriday = (5 - currentDay + 7) % 7;
+  
+  // If it's Friday, check if we're past the draw time (7:00 UTC = 6pm AEDT)
+  if (daysUntilFriday === 0) {
+    const drawTimeToday = new Date(now);
+    drawTimeToday.setUTCHours(7, 0, 0, 0);
+    if (now >= drawTimeToday) {
+      daysUntilFriday = 7; // Next Friday
+    }
+  }
+  
+  nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
+  nextFriday.setUTCHours(7, 0, 0, 0); // 7am UTC = 6pm AEDT
+  
+  return nextFriday.getTime();
+}
+
+/**
  * Get current lottery stats (fallback)
  */
 export function getMockLotteryStats(): LotteryStats {
-  // Find next Friday 12:00 UTC (based on draw pattern)
-  const now = new Date();
-  const nextFriday = new Date(now);
-  const daysUntilFriday = (5 - now.getUTCDay() + 7) % 7;
-  nextFriday.setUTCDate(now.getUTCDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
-  nextFriday.setUTCHours(12, 0, 0, 0);
-  
-  if (nextFriday <= now) {
-    nextFriday.setUTCDate(nextFriday.getUTCDate() + 7);
-  }
+  const nextDrawTimestamp = getNextDrawTimestamp();
   
   return {
     totalTickets: 1_000_000,
     totalSHFLStaked: 50_000_000, // 1M tickets * 50 SHFL
     currentWeekNGR: 600_000, // Based on recent averages
     currentWeekPool: 2_500_000, // Current pool estimate
-    nextDrawTimestamp: nextFriday.getTime(),
+    nextDrawTimestamp,
   };
 }
 

@@ -270,10 +270,10 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-xs text-terminal-textSecondary">
-                    Draw Frequency
+                    Draw Time
                   </span>
                   <span className="text-sm font-medium text-terminal-text">
-                    Weekly (Friday)
+                    Fri 6PM AEDT
                   </span>
                 </div>
               </div>

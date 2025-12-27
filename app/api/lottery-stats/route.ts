@@ -60,7 +60,7 @@ export async function GET() {
       totalTickets: 0,
       totalSHFLStaked: 0,
       currentPrizePool: 0,
-      nextDrawTimestamp: getNextSundayTimestamp(),
+      nextDrawTimestamp: getNextDrawTimestamp(),
       jackpotAmount: 0,
       ticketPrice: 50,
     };
@@ -122,7 +122,7 @@ export async function GET() {
         totalTickets: 1_000_000,
         totalSHFLStaked: 50_000_000,
         currentPrizePool: 2_500_000,
-        nextDrawTimestamp: getNextSundayTimestamp(),
+        nextDrawTimestamp: getNextDrawTimestamp(),
         jackpotAmount: 750_000,
         ticketPrice: 50,
       },
@@ -131,20 +131,31 @@ export async function GET() {
   }
 }
 
-function getNextSundayTimestamp(): number {
+/**
+ * Get next draw timestamp - Friday 6pm AEDT (7am UTC)
+ */
+function getNextDrawTimestamp(): number {
   const now = new Date();
-  const nextSunday = new Date(now);
+  const nextFriday = new Date(now);
   
-  // Find next Sunday
-  const daysUntilSunday = (7 - now.getUTCDay()) % 7;
-  nextSunday.setUTCDate(now.getUTCDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
-  nextSunday.setUTCHours(12, 0, 0, 0); // Noon UTC
+  // Get current day (0 = Sunday, 5 = Friday)
+  const currentDay = now.getUTCDay();
   
-  // If it's Sunday but past noon, go to next Sunday
-  if (nextSunday <= now) {
-    nextSunday.setUTCDate(nextSunday.getUTCDate() + 7);
+  // Calculate days until Friday
+  let daysUntilFriday = (5 - currentDay + 7) % 7;
+  
+  // If it's Friday, check if we're past the draw time (7:00 UTC = 6pm AEDT)
+  if (daysUntilFriday === 0) {
+    const drawTimeToday = new Date(now);
+    drawTimeToday.setUTCHours(7, 0, 0, 0);
+    if (now >= drawTimeToday) {
+      daysUntilFriday = 7; // Next Friday
+    }
   }
   
-  return nextSunday.getTime();
+  nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
+  nextFriday.setUTCHours(7, 0, 0, 0); // 7am UTC = 6pm AEDT
+  
+  return nextFriday.getTime();
 }
 
