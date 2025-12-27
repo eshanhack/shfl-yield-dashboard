@@ -215,13 +215,51 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <KPICard
-            title="Total Staked"
-            value={`${formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL`}
-            subtitle={`${formatNumber(lotteryStats.totalTickets)} tickets`}
-            icon={Users}
-            change={stakedChange}
-          />
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                  <Users className="w-4 h-4 text-terminal-accent" />
+                </div>
+                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                  Total Staked
+                </span>
+              </div>
+              {stakedChange !== 0 && (
+                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                  stakedChange > 0 
+                    ? "text-terminal-positive bg-terminal-positive/10" 
+                    : "text-terminal-negative bg-terminal-negative/10"
+                }`}>
+                  {stakedChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                  <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(2)}%</span>
+                </div>
+              )}
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                {formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">Circulating Supply</span>
+                <span className="font-bold text-terminal-accent tabular-nums">
+                  {lotteryStats.circulatingSupply 
+                    ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(2)
+                    : "0"}%
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">Total Supply</span>
+                <span className="font-bold text-purple-400 tabular-nums">
+                  {lotteryStats.totalSupply 
+                    ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(2)
+                    : "0"}%
+                </span>
+              </div>
+            </div>
+          </div>
 
           <KPICard
             title="Avg. Weekly NGR"

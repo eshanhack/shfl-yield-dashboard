@@ -14,9 +14,13 @@ export interface CurrentLotteryStats {
   drawNumber: number;
   priorWeekTickets?: number;
   priorWeekSHFLStaked?: number;
+  circulatingSupply?: number;
+  burnedTokens?: number;
+  totalSupply?: number;
 }
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
+const API_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/api/graphql";
 
 // Query 0: Get prizes and results (for jackpot amount)
 const GET_PRIZES_AND_RESULTS_QUERY = `query getPrizesAndResults($drawId: Float) {
@@ -29,6 +33,62 @@ const GET_PRIZES_AND_RESULTS_QUERY = `query getPrizesAndResults($drawId: Float) 
     __typename
   }
 }`;
+
+// Query for token info (circulating supply, burned tokens)
+const GET_TOKEN_INFO_QUERY = `query tokenInfo {
+  tokenInfo {
+    priceInUsd
+    twentyFourHourPercentageChange
+    burnedTokens
+    circulatingSupply
+    airdrop2StartDate
+    __typename
+  }
+}`;
+
+interface TokenInfoResponse {
+  data: {
+    tokenInfo: {
+      priceInUsd: string;
+      twentyFourHourPercentageChange: string;
+      burnedTokens: string;
+      circulatingSupply: string;
+      airdrop2StartDate: string;
+    };
+  };
+}
+
+async function fetchTokenInfo(): Promise<TokenInfoResponse["data"]["tokenInfo"] | null> {
+  try {
+    const response = await fetch(API_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin": "https://shuffle.com",
+        "Referer": "https://shuffle.com/token",
+      },
+      body: JSON.stringify({
+        operationName: "tokenInfo",
+        query: GET_TOKEN_INFO_QUERY,
+        variables: {},
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("Token info request failed:", response.status, response.statusText);
+      return null;
+    }
+
+    const data: TokenInfoResponse = await response.json();
+    return data.data?.tokenInfo || null;
+  } catch (error) {
+    console.error("Error fetching token info:", error);
+    return null;
+  }
+}
 
 // Query 1: Get latest lottery draw info (prize pool, draw number, status)
 const GET_LATEST_LOTTERY_DRAW_QUERY = `query getLatestLotteryDraw {
@@ -244,10 +304,11 @@ function getNextDrawTimestamp(): number {
 
 export async function GET() {
   try {
-    // Fetch both queries in parallel
-    const [latestDrawData, drawWithStakedData] = await Promise.all([
+    // Fetch all queries in parallel
+    const [latestDrawData, drawWithStakedData, tokenInfo] = await Promise.all([
       fetchLatestLotteryDraw(),
       fetchLotteryDrawWithStaked(),
+      fetchTokenInfo(),
     ]);
     
     // Use data from both responses
@@ -307,6 +368,11 @@ export async function GET() {
       totalStaked = 50_000_000;
     }
 
+    // Parse token info
+    const circulatingSupply = tokenInfo?.circulatingSupply ? parseFloat(tokenInfo.circulatingSupply) : 0;
+    const burnedTokens = tokenInfo?.burnedTokens ? parseFloat(tokenInfo.burnedTokens) : 0;
+    const totalSupplyRemaining = 1_000_000_000 - burnedTokens; // 1B total supply minus burned
+
     const stats: CurrentLotteryStats = {
       totalTickets,
       totalSHFLStaked: totalStaked,
@@ -319,6 +385,9 @@ export async function GET() {
       drawNumber,
       priorWeekTickets,
       priorWeekSHFLStaked,
+      circulatingSupply,
+      burnedTokens,
+      totalSupply: totalSupplyRemaining,
     };
 
     return NextResponse.json({

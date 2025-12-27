@@ -240,6 +240,9 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
       jackpotAmount: data.stats.jackpotAmount,
       priorWeekTickets: data.stats.priorWeekTickets,
       priorWeekSHFLStaked: data.stats.priorWeekSHFLStaked,
+      circulatingSupply: data.stats.circulatingSupply,
+      burnedTokens: data.stats.burnedTokens,
+      totalSupply: data.stats.totalSupply,
     };
   } catch (error) {
     console.error("Error fetching lottery stats:", error);
@@ -396,6 +399,9 @@ export interface LotteryStats {
   jackpotAmount?: number;
   priorWeekTickets?: number;
   priorWeekSHFLStaked?: number;
+  circulatingSupply?: number;
+  burnedTokens?: number;
+  totalSupply?: number;
 }
 
 /**
