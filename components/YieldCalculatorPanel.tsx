@@ -126,7 +126,7 @@ export default function YieldCalculatorPanel({
 
       <div className="p-4">
         {/* Input Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 pb-6 border-b border-terminal-border">
+        <div className="flex flex-col sm:flex-row items-end gap-4 mb-6 pb-6 border-b border-terminal-border">
           <div className="flex-1 w-full sm:w-auto">
             <label className="block text-xs text-terminal-textSecondary uppercase tracking-wider mb-2">
               SHFL Staked Amount
@@ -145,22 +145,22 @@ export default function YieldCalculatorPanel({
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-center">
+          <div className="flex items-end gap-4">
+            <div className="text-center min-w-[70px]">
               <div className="text-xs text-terminal-textMuted mb-1">Tickets</div>
-              <div className="text-lg font-bold text-terminal-accent tabular-nums">
+              <div className="text-lg font-bold text-terminal-accent tabular-nums h-[46px] flex items-center justify-center">
                 {formatNumber(ticketCount)}
               </div>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-[90px]">
               <div className="text-xs text-terminal-textMuted mb-1">Value</div>
-              <div className="text-lg font-bold text-terminal-text">
+              <div className="text-lg font-bold text-terminal-text h-[46px] flex items-center justify-center">
                 <CurrencyAmount amount={stakingValueUSD} />
               </div>
             </div>
             <button
               onClick={handleSave}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-3 rounded-lg text-sm font-medium transition-all h-[46px] ${
                 savedAmount === shflAmount
                   ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
                   : "bg-terminal-accent/10 text-terminal-accent border border-terminal-accent/30 hover:bg-terminal-accent/20"
