@@ -20,6 +20,8 @@ import CurrencyAmount from "./CurrencyAmount";
 import ShuffleRevenueCard from "./ShuffleRevenueCard";
 import ShuffleRevenueChart from "./ShuffleRevenueChart";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
+import TokenReturnsChart from "./TokenReturnsChart";
+import TokenValuationTable from "./TokenValuationTable";
 
 import {
   fetchSHFLPrice,
@@ -564,6 +566,12 @@ export default function Dashboard() {
         {/* Shuffle Revenue History Chart */}
         <div className="mb-6">
           <ShuffleRevenueChart historicalDraws={completedDraws} />
+        </div>
+
+        {/* Token Comparison Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <TokenReturnsChart />
+          <TokenValuationTable />
         </div>
 
         {/* Lottery History Table */}
