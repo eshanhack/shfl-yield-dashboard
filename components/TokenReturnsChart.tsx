@@ -67,8 +67,8 @@ export default function TokenReturnsChart() {
         const json = await response.json();
         if (!json.success) throw new Error("API returned error");
         
-        // Track data source (live vs mock)
-        setDataSource(json.source === "coingecko" ? "live" : "demo");
+        // Track data source (live vs demo)
+        setDataSource(json.source === "live" || json.source === "partial" ? "live" : "demo");
         
         // Transform data to match expected format
         const results = json.data.map((item: { symbol: string; prices: [number, number][] }) => {
