@@ -16,6 +16,7 @@ export interface CurrentLotteryStats {
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
 
+// Query 1: Get latest lottery draw info (prize pool, draw number, status)
 const GET_LATEST_LOTTERY_DRAW_QUERY = `query getLatestLotteryDraw {
   getLatestLotteryDraw {
     id
@@ -41,25 +42,59 @@ const GET_LATEST_LOTTERY_DRAW_QUERY = `query getLatestLotteryDraw {
   }
 }`;
 
-interface LotteryDrawResponse {
+// Query 2: Get lottery draw with totalStaked (for ticket count)
+const GET_LOTTERY_DRAW_QUERY = `query getLotteryDraw($id: Float) {
+  lotteryDraw(drawId: $id) {
+    id
+    prizePoolAmount
+    totalPrizesWon
+    totalStaked
+    status
+    drawAt
+    powerBall
+    primaryBall1
+    primaryBall2
+    primaryBall3
+    primaryBall4
+    primaryBall5
+    csvHash
+    hashedSeed
+    seed
+    provablyFair {
+      blockNumber
+      blockHash
+      __typename
+    }
+    __typename
+  }
+}`;
+
+interface LatestLotteryDrawResponse {
   data: {
     getLatestLotteryDraw: {
-      id: number; // This is the draw number
-      prizePoolAmount: string; // String like "1402348.021875"
+      id: number;
+      prizePoolAmount: string;
       totalPrizesWon: string | null;
       status: string;
       drawAt: string;
-      powerBall: number | null;
-      primaryBall1: number | null;
-      primaryBall2: number | null;
-      primaryBall3: number | null;
-      primaryBall4: number | null;
-      primaryBall5: number | null;
     };
   };
 }
 
-async function fetchLotteryData(): Promise<LotteryDrawResponse["data"]["getLatestLotteryDraw"] | null> {
+interface LotteryDrawResponse {
+  data: {
+    lotteryDraw: {
+      id: number;
+      prizePoolAmount: string;
+      totalPrizesWon: string | null;
+      totalStaked: string; // This is what we need for ticket count
+      status: string;
+      drawAt: string;
+    };
+  };
+}
+
+async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data"]["getLatestLotteryDraw"] | null> {
   try {
     const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
@@ -83,15 +118,42 @@ async function fetchLotteryData(): Promise<LotteryDrawResponse["data"]["getLates
       return null;
     }
 
-    const data: LotteryDrawResponse = await response.json();
-    
-    if (data.data?.getLatestLotteryDraw) {
-      return data.data.getLatestLotteryDraw;
-    }
-    
-    return null;
+    const data: LatestLotteryDrawResponse = await response.json();
+    return data.data?.getLatestLotteryDraw || null;
   } catch (error) {
-    console.error("Error fetching lottery data:", error);
+    console.error("Error fetching latest lottery draw:", error);
+    return null;
+  }
+}
+
+async function fetchLotteryDrawWithStaked(): Promise<LotteryDrawResponse["data"]["lotteryDraw"] | null> {
+  try {
+    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin": "https://shuffle.com",
+        "Referer": "https://shuffle.com/token",
+      },
+      body: JSON.stringify({
+        operationName: "getLotteryDraw",
+        query: GET_LOTTERY_DRAW_QUERY,
+        variables: {},
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("GraphQL request failed:", response.status, response.statusText);
+      return null;
+    }
+
+    const data: LotteryDrawResponse = await response.json();
+    return data.data?.lotteryDraw || null;
+  } catch (error) {
+    console.error("Error fetching lottery draw with staked:", error);
     return null;
   }
 }
@@ -122,14 +184,24 @@ function getNextDrawTimestamp(): number {
 
 export async function GET() {
   try {
-    // Fetch live data from Shuffle GraphQL API
-    const lotteryData = await fetchLotteryData();
+    // Fetch both queries in parallel
+    const [latestDrawData, drawWithStakedData] = await Promise.all([
+      fetchLatestLotteryDraw(),
+      fetchLotteryDrawWithStaked(),
+    ]);
+    
+    // Use data from both responses
+    const lotteryData = latestDrawData || drawWithStakedData;
     
     // Parse prizePoolAmount as float (it's a string like "1402348.021875")
     let prizePool = lotteryData?.prizePoolAmount ? parseFloat(lotteryData.prizePoolAmount) : 0;
     let drawStatus = lotteryData?.status || "unknown";
-    let drawNumber = lotteryData?.id || 0; // id IS the draw number
+    let drawNumber = lotteryData?.id || 0;
     let nextDrawTime = getNextDrawTimestamp();
+    
+    // Get totalStaked from the second query and calculate tickets
+    let totalStaked = drawWithStakedData?.totalStaked ? parseFloat(drawWithStakedData.totalStaked) : 0;
+    let totalTickets = totalStaked > 0 ? Math.floor(totalStaked / 50) : 0;
     
     // If we have a drawAt from the API, use it
     if (lotteryData?.drawAt) {
@@ -140,20 +212,24 @@ export async function GET() {
       }
     }
     
-    // Fallback if API didn't return data
+    // Fallbacks
     if (prizePool === 0) {
-      prizePool = 1_402_348; // Latest known value
+      prizePool = 1_402_348;
     }
     if (drawNumber === 0) {
-      drawNumber = 64; // Latest known draw number
+      drawNumber = 64;
+    }
+    if (totalTickets === 0) {
+      totalTickets = 1_000_000; // Fallback estimate
+      totalStaked = 50_000_000;
     }
 
     const stats: CurrentLotteryStats = {
-      totalTickets: 1_000_000, // Estimate - not available in this query
-      totalSHFLStaked: 50_000_000,
+      totalTickets,
+      totalSHFLStaked: totalStaked,
       currentPrizePool: prizePool,
       nextDrawTimestamp: nextDrawTime,
-      jackpotAmount: prizePool * 0.30, // ~30% based on prize split
+      jackpotAmount: prizePool * 0.30,
       ticketPrice: 0.25,
       powerplayPrice: 4.00,
       drawStatus,
