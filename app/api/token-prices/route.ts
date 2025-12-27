@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// All tokens use CoinGecko
 const TOKENS = [
   { id: "shuffle-2", symbol: "SHFL" },
   { id: "bitcoin", symbol: "BTC" },
@@ -20,25 +19,6 @@ interface PriceData {
 // Simple in-memory cache
 const cache: Record<string, { data: PriceData[]; timestamp: number }> = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      if (response.ok) return response;
-      if (response.status === 429) {
-        // Rate limited, wait and retry
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-        continue;
-      }
-      return response;
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-  }
-  throw new Error("Max retries reached");
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -58,26 +38,41 @@ export async function GET(request: Request) {
   }
 
   const results: PriceData[] = [];
-  const apiKey = process.env.COINGECKO_API_KEY;
   
-  // Build base URL - use pro API if key available
-  const baseUrl = apiKey 
-    ? "https://pro-api.coingecko.com/api/v3"
-    : "https://api.coingecko.com/api/v3";
+  // Check for API keys (support both Demo and Pro)
+  const demoKey = process.env.COINGECKO_API_KEY || process.env.COINGECKO_DEMO_KEY;
+  const proKey = process.env.COINGECKO_PRO_KEY;
+  
+  // Determine which API to use
+  let baseUrl = "https://api.coingecko.com/api/v3";
+  let apiKeyHeader: Record<string, string> = {};
+  
+  if (proKey) {
+    baseUrl = "https://pro-api.coingecko.com/api/v3";
+    apiKeyHeader = { "x-cg-pro-api-key": proKey };
+    console.log("Using CoinGecko Pro API");
+  } else if (demoKey) {
+    baseUrl = "https://api.coingecko.com/api/v3";
+    apiKeyHeader = { "x-cg-demo-api-key": demoKey };
+    console.log("Using CoinGecko Demo API with key");
+  } else {
+    console.log("Using CoinGecko public API (no key)");
+  }
 
   // Fetch tokens sequentially to avoid rate limits
   for (const token of TOKENS) {
     try {
       const url = `${baseUrl}/coins/${token.id}/market_chart?vs_currency=usd&days=${days}`;
-      const headers: Record<string, string> = {
-        "Accept": "application/json",
-      };
       
-      if (apiKey) {
-        headers["x-cg-pro-api-key"] = apiKey;
-      }
+      const response = await fetch(url, {
+        headers: {
+          "Accept": "application/json",
+          ...apiKeyHeader,
+        },
+        cache: "no-store",
+      });
 
-      const response = await fetchWithRetry(url, { headers, cache: "no-store" });
+      console.log(`${token.symbol}: ${response.status}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -86,24 +81,22 @@ export async function GET(request: Request) {
             symbol: token.symbol,
             prices: data.prices,
           });
-          console.log(`✓ Fetched ${token.symbol}: ${data.prices.length} points`);
         } else {
-          console.log(`✗ No price data for ${token.symbol}`);
           results.push({ symbol: token.symbol, prices: [] });
         }
       } else {
-        console.log(`✗ Failed ${token.symbol}: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`Failed ${token.symbol}: ${response.status} - ${errorText}`);
         results.push({ symbol: token.symbol, prices: [] });
       }
     } catch (error) {
-      console.error(`✗ Error fetching ${token.symbol}:`, error);
+      console.error(`Error fetching ${token.symbol}:`, error);
       results.push({ symbol: token.symbol, prices: [] });
     }
 
-    // Delay between requests to avoid rate limiting (unless we have API key)
-    if (!apiKey) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
+    // Small delay between requests (shorter if we have API key)
+    const delay = (demoKey || proKey) ? 100 : 400;
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
   // Sort by preferred order
@@ -111,9 +104,10 @@ export async function GET(request: Request) {
   results.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
 
   // Cache the results
-  cache[cacheKey] = { data: results, timestamp: Date.now() };
-
   const hasData = results.some(r => r.prices.length > 0);
+  if (hasData) {
+    cache[cacheKey] = { data: results, timestamp: Date.now() };
+  }
 
   return NextResponse.json({
     success: true,
@@ -121,6 +115,7 @@ export async function GET(request: Request) {
     source: hasData ? "live" : "error",
     cached: false,
     tokensWithData: results.filter(r => r.prices.length > 0).map(r => r.symbol),
+    hasApiKey: !!(demoKey || proKey),
     lastUpdated: new Date().toISOString(),
   });
 }
