@@ -11,7 +11,7 @@ export interface CurrentLotteryStats {
   ticketPrice: number;
   powerplayPrice: number;
   drawStatus: string;
-  drawId: string;
+  drawNumber: number;
 }
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
@@ -44,9 +44,9 @@ const GET_LATEST_LOTTERY_DRAW_QUERY = `query getLatestLotteryDraw {
 interface LotteryDrawResponse {
   data: {
     getLatestLotteryDraw: {
-      id: string;
-      prizePoolAmount: number;
-      totalPrizesWon: number;
+      id: number; // This is the draw number
+      prizePoolAmount: string; // String like "1402348.021875"
+      totalPrizesWon: string | null;
       status: string;
       drawAt: string;
       powerBall: number | null;
@@ -125,9 +125,10 @@ export async function GET() {
     // Fetch live data from Shuffle GraphQL API
     const lotteryData = await fetchLotteryData();
     
-    let prizePool = lotteryData?.prizePoolAmount || 0;
+    // Parse prizePoolAmount as float (it's a string like "1402348.021875")
+    let prizePool = lotteryData?.prizePoolAmount ? parseFloat(lotteryData.prizePoolAmount) : 0;
     let drawStatus = lotteryData?.status || "unknown";
-    let drawId = lotteryData?.id || "";
+    let drawNumber = lotteryData?.id || 0; // id IS the draw number
     let nextDrawTime = getNextDrawTimestamp();
     
     // If we have a drawAt from the API, use it
@@ -143,6 +144,9 @@ export async function GET() {
     if (prizePool === 0) {
       prizePool = 1_402_348; // Latest known value
     }
+    if (drawNumber === 0) {
+      drawNumber = 64; // Latest known draw number
+    }
 
     const stats: CurrentLotteryStats = {
       totalTickets: 1_000_000, // Estimate - not available in this query
@@ -153,7 +157,7 @@ export async function GET() {
       ticketPrice: 0.25,
       powerplayPrice: 4.00,
       drawStatus,
-      drawId,
+      drawNumber,
     };
 
     return NextResponse.json({
@@ -177,7 +181,7 @@ export async function GET() {
         ticketPrice: 0.25,
         powerplayPrice: 4.00,
         drawStatus: "unknown",
-        drawId: "",
+        drawNumber: 64,
       },
       lastUpdated: new Date().toISOString(),
     });

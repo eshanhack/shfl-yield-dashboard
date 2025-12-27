@@ -180,7 +180,7 @@ export default function Dashboard() {
           <KPICard
             title="Current Prize Pool"
             value={formatUSD(weeklyPoolUSD)}
-            subtitle={`Draw #${(historicalDraws[0]?.drawNumber || 0) + 1}`}
+            subtitle={`Draw #${lotteryStats.drawNumber || 64}`}
             icon={DollarSign}
           />
 
