@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { X, Calculator as CalcIcon, DollarSign, Percent, History, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  calculateSimpleYield,
+  calculateYield,
   calculateHistoricalEarnings,
   formatUSD,
   formatPercent,
@@ -20,6 +20,7 @@ interface CalculatorProps {
   weeklyNGR: number;
   totalTickets: number;
   historicalDraws: HistoricalDraw[];
+  prizeSplit?: string;
 }
 
 export default function PersonalCalculator({
@@ -29,14 +30,15 @@ export default function PersonalCalculator({
   weeklyNGR,
   totalTickets,
   historicalDraws,
+  prizeSplit = "30-14-8-9-7-6-5-10-11",
 }: CalculatorProps) {
   const [shflStaked, setShflStaked] = useState<string>("1000");
 
   const stakedAmount = parseFloat(shflStaked) || 0;
 
   const yieldResult = useMemo(() => {
-    return calculateSimpleYield(stakedAmount, shflPrice, weeklyNGR, totalTickets);
-  }, [stakedAmount, shflPrice, weeklyNGR, totalTickets]);
+    return calculateYield(stakedAmount, shflPrice, weeklyNGR, totalTickets, prizeSplit);
+  }, [stakedAmount, shflPrice, weeklyNGR, totalTickets, prizeSplit]);
 
   const historicalEarnings = useMemo(() => {
     return calculateHistoricalEarnings(stakedAmount, historicalDraws.slice(0, 4));

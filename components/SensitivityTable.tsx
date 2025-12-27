@@ -8,12 +8,14 @@ interface SensitivityTableProps {
   baseNGR: number;
   basePrice: number;
   totalTickets: number;
+  prizeSplit?: string;
 }
 
 export default function SensitivityTable({
   baseNGR,
   basePrice,
   totalTickets,
+  prizeSplit = "30-14-8-9-7-6-5-10-11",
 }: SensitivityTableProps) {
   const ngrMultipliers = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
   const priceMultipliers = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -23,10 +25,11 @@ export default function SensitivityTable({
       baseNGR,
       basePrice,
       totalTickets,
+      prizeSplit,
       ngrMultipliers,
       priceMultipliers
     );
-  }, [baseNGR, basePrice, totalTickets]);
+  }, [baseNGR, basePrice, totalTickets, prizeSplit]);
 
   const getApyColor = (apy: number) => {
     if (apy >= 100) return "text-terminal-positive bg-terminal-positive/10";

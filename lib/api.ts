@@ -137,15 +137,18 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
     }
     
     // Transform raw API data to HistoricalDraw format
-    return data.draws.map((draw: LotteryDrawRaw) => ({
-      drawNumber: draw.drawNumber,
-      date: draw.date,
-      totalPoolUSD: draw.prizePool,
-      ngrUSD: draw.totalNGRContribution, // Use the calculated total NGR contribution
-      totalTickets: estimateTicketsFromPool(draw.prizePool),
-      yieldPerThousandSHFL: calculateYieldPer1KSHFL(draw.prizePool, draw.totalNGRContribution),
-      prizepoolSplit: draw.prizepoolSplit,
-    }));
+    return data.draws.map((draw: LotteryDrawRaw) => {
+      const totalTickets = estimateTicketsFromPool(draw.prizePool);
+      return {
+        drawNumber: draw.drawNumber,
+        date: draw.date,
+        totalPoolUSD: draw.prizePool,
+        ngrUSD: draw.totalNGRContribution, // NGR + (singles * 0.85)
+        totalTickets,
+        yieldPerThousandSHFL: calcYield(draw.totalNGRContribution, totalTickets, draw.prizepoolSplit),
+        prizepoolSplit: draw.prizepoolSplit,
+      };
+    });
   } catch (error) {
     console.error("Error fetching lottery history:", error);
     return getMockHistoricalDraws(12);
@@ -212,6 +215,8 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
   }
 }
 
+import { calculateYieldPer1KSHFL as calcYield, getNonJackpotPercentage } from "./calculations";
+
 /**
  * Estimate ticket count based on prize pool size
  */
@@ -220,20 +225,6 @@ function estimateTicketsFromPool(prizePool: number): number {
   // This is a rough estimate - actual data would be better
   const ticketsPerMillionPool = 400_000;
   return Math.floor((prizePool / 1_000_000) * ticketsPerMillionPool);
-}
-
-/**
- * Calculate yield per 1000 SHFL staked
- */
-function calculateYieldPer1KSHFL(prizePool: number, ngrAdded: number): number {
-  // 1000 SHFL = 20 tickets
-  // Estimate total tickets based on pool size
-  const totalTickets = estimateTicketsFromPool(prizePool);
-  if (totalTickets === 0) return 0;
-  
-  const ticketsPer1K = 20;
-  const userShare = ticketsPer1K / totalTickets;
-  return prizePool * userShare;
 }
 
 /**

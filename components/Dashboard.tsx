@@ -34,7 +34,7 @@ import {
 } from "@/lib/api";
 
 import {
-  calculateMovingAverageAPY,
+  calculateGlobalAPY,
   formatUSD,
   formatPercent,
   formatNumber,
@@ -112,14 +112,18 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Calculate current APY based on 4-week moving average
+  // Calculate current APY based on 4-week average NGR
   const currentAPY = useMemo(() => {
-    return calculateMovingAverageAPY(
-      historicalDraws,
+    // Get current prize split from latest draw
+    const currentSplit = historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
+    
+    return calculateGlobalAPY(
+      avgWeeklyNGR,
+      lotteryStats.totalTickets,
       price.usd,
-      lotteryStats.totalTickets
+      currentSplit
     );
-  }, [historicalDraws, price.usd, lotteryStats.totalTickets]);
+  }, [avgWeeklyNGR, lotteryStats.totalTickets, price.usd, historicalDraws]);
 
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats.currentWeekPool;
@@ -331,6 +335,7 @@ export default function Dashboard() {
             baseNGR={avgWeeklyNGR}
             basePrice={price.usd}
             totalTickets={lotteryStats.totalTickets}
+            prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
           />
         </div>
 
@@ -369,6 +374,7 @@ export default function Dashboard() {
         weeklyNGR={avgWeeklyNGR}
         totalTickets={lotteryStats.totalTickets}
         historicalDraws={historicalDraws}
+        prizeSplit={historicalDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
       />
     </div>
   );
