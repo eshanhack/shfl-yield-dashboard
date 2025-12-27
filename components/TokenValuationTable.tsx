@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Scale, Info, ChevronDown } from "lucide-react";
+import { Scale, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
 import InfoTooltip from "./InfoTooltip";
@@ -34,6 +34,13 @@ const TOKEN_DATA: TokenMetrics[] = [
     revenueAccrualPct: 0.54, // 54% to assistance fund + buybacks
   },
   {
+    symbol: "PUMP",
+    name: "Pump.fun",
+    color: "#FF6B6B",
+    weeklyRevenue: 3000000, // Token launch fees
+    revenueAccrualPct: 0.50, // ~50% to buybacks/holders
+  },
+  {
     symbol: "RLB",
     name: "Rollbit",
     color: "#FFD700",
@@ -56,7 +63,6 @@ export default function TokenValuationTable() {
   const [tokens, setTokens] = useState<TokenWithCalculations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<"live" | "demo">("live");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,44 +154,30 @@ export default function TokenValuationTable() {
             </div>
           </div>
           
-          {/* View Mode Dropdown */}
-          <div className="relative">
+          {/* View Mode Tabs */}
+          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5">
             <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-terminal-dark border border-terminal-border rounded-lg text-xs font-medium text-terminal-text hover:border-terminal-accent transition-colors"
+              onClick={() => setViewMode("revenue")}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all",
+                viewMode === "revenue"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-terminal-textMuted hover:text-terminal-text"
+              )}
             >
-              {viewMode === "revenue" ? "Revenue" : "Earnings"}
-              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", dropdownOpen && "rotate-180")} />
+              Revenue (P/S)
             </button>
-            
-            {dropdownOpen && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-terminal-card border border-terminal-border rounded-lg shadow-lg overflow-hidden">
-                <button
-                  onClick={() => { setViewMode("revenue"); setDropdownOpen(false); }}
-                  className={cn(
-                    "w-full px-3 py-2.5 text-left text-xs transition-colors",
-                    viewMode === "revenue" 
-                      ? "bg-terminal-accent/20 text-terminal-accent" 
-                      : "text-terminal-text hover:bg-terminal-border/50"
-                  )}
-                >
-                  <div className="font-medium">Revenue (P/S)</div>
-                  <div className="text-[10px] text-terminal-textMuted mt-0.5">Total platform revenue</div>
-                </button>
-                <button
-                  onClick={() => { setViewMode("earnings"); setDropdownOpen(false); }}
-                  className={cn(
-                    "w-full px-3 py-2.5 text-left text-xs transition-colors border-t border-terminal-border/50",
-                    viewMode === "earnings" 
-                      ? "bg-terminal-accent/20 text-terminal-accent" 
-                      : "text-terminal-text hover:bg-terminal-border/50"
-                  )}
-                >
-                  <div className="font-medium">Earnings (P/E)</div>
-                  <div className="text-[10px] text-terminal-textMuted mt-0.5">Revenue accrued to holders</div>
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => setViewMode("earnings")}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all",
+                viewMode === "earnings"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-terminal-textMuted hover:text-terminal-text"
+              )}
+            >
+              Earnings (P/E)
+            </button>
           </div>
         </div>
       </div>
@@ -232,7 +224,7 @@ export default function TokenValuationTable() {
                             ? "Total platform revenue annualized" 
                             : "Revenue accrued to token holders (varies by tokenomics)"
                           }
-                          position="top"
+                          position="bottom"
                         />
                       </div>
                     </th>
@@ -241,7 +233,7 @@ export default function TokenValuationTable() {
                         Accrual %
                         <InfoTooltip 
                           content="Percentage of revenue that goes to token holders"
-                          position="top"
+                          position="bottom"
                         />
                       </div>
                     </th>
@@ -253,7 +245,7 @@ export default function TokenValuationTable() {
                             ? "Market Cap ÷ Annual Revenue. Lower = potentially undervalued."
                             : "Market Cap ÷ Annual Earnings. Lower = potentially undervalued."
                           }
-                          position="top"
+                          position="bottom"
                         />
                       </div>
                     </th>

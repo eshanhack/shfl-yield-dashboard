@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 const TOKENS = [
   { id: "shuffle-2", symbol: "SHFL" },
   { id: "hyperliquid", symbol: "HYPE" },
+  { id: "pump-fun", symbol: "PUMP" },
   { id: "rollbit-coin", symbol: "RLB" },
 ];
 
@@ -70,6 +71,7 @@ export async function GET() {
     data: {
       SHFL: 110000000,
       HYPE: 8500000000,
+      PUMP: 500000000,
       RLB: 85000000,
     },
     source: "fallback",
