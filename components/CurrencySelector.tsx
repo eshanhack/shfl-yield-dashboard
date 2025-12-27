@@ -43,7 +43,13 @@ export default function CurrencySelector() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] max-h-[300px] overflow-y-auto bg-terminal-card border border-terminal-border rounded-lg shadow-lg">
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] max-h-[340px] overflow-y-auto bg-terminal-card border border-terminal-border rounded-lg shadow-lg">
+          {/* Info header */}
+          <div className="px-3 py-2 border-b border-terminal-border/50 bg-terminal-dark/50">
+            <p className="text-[10px] text-terminal-textMuted leading-relaxed">
+              Select a currency. Hover over any USDC amount to see it converted.
+            </p>
+          </div>
           <div className="p-1">
             {CURRENCIES.map((currency) => (
               <button
