@@ -3,9 +3,9 @@ import "./globals.css";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 export const metadata: Metadata = {
-  title: "SHFL Yield Dashboard | Bloomberg Terminal",
+  title: "SHFLPro | SHFL Token Dashboard",
   description: "Track SHFL token staking profitability and lottery yields with real-time data",
-  keywords: ["SHFL", "Shuffle", "yield", "staking", "lottery", "crypto"],
+  keywords: ["SHFL", "SHFLPro", "Shuffle", "yield", "staking", "lottery", "crypto"],
 };
 
 export default function RootLayout({

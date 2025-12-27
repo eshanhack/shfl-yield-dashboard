@@ -1,4 +1,4 @@
-# SHFL Yield Dashboard
+# SHFLPro
 
 A Bloomberg Terminal-style dashboard for tracking SHFL token staking profitability and lottery yields on Shuffle.com.
 
@@ -74,7 +74,7 @@ npm start
 ## Project Structure
 
 ```
-shfl-yield-dashboard/
+shfl-pro/
 ├── app/
 │   ├── globals.css       # Global styles & Bloomberg aesthetic
 │   ├── layout.tsx        # Root layout

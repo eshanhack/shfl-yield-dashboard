@@ -1,5 +1,5 @@
 /**
- * SHFL Yield Calculations
+ * SHFLPro Calculations
  * 
  * Key mechanics:
  * - 1 Ticket = 50 SHFL staked (can unstake, tokens returned after next draw)

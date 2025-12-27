@@ -73,7 +73,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-semibold tracking-tight">
-                    SHFL<span className="text-terminal-accent">YIELD</span>
+                    SHFL<span className="text-terminal-accent">Pro</span>
                   </h1>
                   <InfoTooltip content={TOOLTIPS.shfl} title="What is SHFL?" />
                 </div>

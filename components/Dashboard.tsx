@@ -552,7 +552,7 @@ export default function Dashboard() {
         <footer className="mt-8 pt-6 border-t border-terminal-border">
           <div className="flex items-center justify-between text-xs text-terminal-textMuted">
             <div className="flex items-center gap-4">
-              <span>SHFL Yield Terminal v1.0</span>
+              <span>SHFLPro Terminal v1.0</span>
               <span>•</span>
               <span>Data updates every 60s</span>
             </div>

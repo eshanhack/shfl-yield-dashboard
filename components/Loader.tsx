@@ -108,7 +108,7 @@ export default function Loader() {
           </div>
           
           <p style={{ color: '#8A2BE2', fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>
-            SHFL<span style={{ color: '#fff' }}>YIELD</span>
+            SHFL<span style={{ color: '#fff' }}>Pro</span>
           </p>
           <p style={{ color: '#A0A0A0', fontSize: '14px' }}>
             Initializing terminal...
