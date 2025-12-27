@@ -6,7 +6,6 @@ import {
   DollarSign,
   Users,
   TrendingUp,
-  Zap,
   RefreshCw,
 } from "lucide-react";
 
@@ -39,7 +38,6 @@ import {
   formatPercent,
   formatNumber,
   HistoricalDraw,
-  SHFL_PER_TICKET,
 } from "@/lib/calculations";
 
 // Helper function to format relative time in words
@@ -484,64 +482,15 @@ export default function Dashboard() {
           prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
         />
 
-        {/* Charts and Tables Grid */}
+        {/* Charts and Ticket EV Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* NGR vs Price Chart */}
           <div className="lg:col-span-2">
             <YieldChart data={chartData} />
           </div>
 
-          {/* Quick Stats */}
-          <div className="space-y-4">
-            <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-              <h3 className="text-sm font-medium text-terminal-text mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-terminal-accent" />
-                Lottery Mechanics
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-terminal-border">
-                  <span className="text-xs text-terminal-textSecondary">
-                    SHFL per Ticket
-                  </span>
-                  <span className="text-sm font-medium text-terminal-text">
-                    {SHFL_PER_TICKET} SHFL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-terminal-border">
-                  <span className="text-xs text-terminal-textSecondary">
-                    Ticket Cost (USD)
-                  </span>
-                  <span className="text-sm font-medium text-terminal-text">
-                    ${(SHFL_PER_TICKET * price.usd).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-terminal-border">
-                  <span className="text-xs text-terminal-textSecondary">
-                    Current Prize Split
-                  </span>
-                  <span className="text-sm font-medium text-terminal-accent text-right text-[10px]">
-                    {completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-terminal-border">
-                  <span className="text-xs text-terminal-textSecondary">
-                    Prize Tiers
-                  </span>
-                  <span className="text-sm font-medium text-terminal-text">
-                    9 Levels
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-xs text-terminal-textSecondary">
-                    Draw Time
-                  </span>
-                  <span className="text-sm font-medium text-terminal-text">
-                    Fri 6PM AEDT
-                  </span>
-                </div>
-              </div>
-            </div>
-
+          {/* Ticket Expected Value */}
+          <div>
             <TicketEVPanel
               totalPool={weeklyPoolUSD}
               prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
@@ -550,35 +499,6 @@ export default function Dashboard() {
               historicalDraws={completedDraws}
               currentDrawNumber={lotteryStats.drawNumber}
             />
-
-            {/* Latest Draw Info */}
-            {completedDraws[0] && (
-              <div className="bg-terminal-dark border border-terminal-border rounded-lg p-4">
-                <div className="text-xs text-terminal-textSecondary uppercase tracking-wider mb-2">
-                  Latest Draw #{completedDraws[0].drawNumber}
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-terminal-textMuted">Date</span>
-                    <span className="text-xs text-terminal-text">
-                      {new Date(completedDraws[0].date).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-terminal-textMuted">Pool</span>
-                    <span className="text-xs text-terminal-positive font-medium">
-                      {formatUSD(completedDraws[0].totalPoolUSD)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-terminal-textMuted">NGR Added</span>
-                    <span className="text-xs text-terminal-accent font-medium">
-                      {formatUSD(completedDraws[0].ngrUSD)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
