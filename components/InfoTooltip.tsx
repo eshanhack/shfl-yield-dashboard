@@ -58,8 +58,8 @@ export default function InfoTooltip({
 // Educational content constants
 export const TOOLTIPS = {
   shfl: "SHFL is the native token of Shuffle.com, a cryptocurrency casino. Holding SHFL lets you participate in the weekly lottery and earn passive yield.",
-  staking: "Staking means locking up your SHFL tokens permanently. In return, you receive lottery tickets that enter you into every weekly draw forever.",
-  ticket: "Each ticket costs 50 SHFL to create (permanently locked). Tickets automatically enter every weekly lottery draw and can win prizes across 9 divisions.",
+  staking: "Staking means locking your SHFL tokens to receive lottery tickets. You can unstake anytime, but must wait until the next draw to receive your tokens back. If you unstake, you won't participate in that draw.",
+  ticket: "Each ticket costs 50 SHFL to stake. Tickets automatically enter every weekly lottery draw and can win prizes across 9 divisions. You can unstake anytime (tokens returned after next draw).",
   apy: "Annual Percentage Yield - the estimated yearly return on your staked SHFL based on historical lottery payouts. This excludes jackpot winnings.",
   ngr: "Net Gaming Revenue - the casino's profit after paying out winnings. 15% of Shuffle.com's NGR goes to the lottery prize pool each week.",
   ggr: "Gross Gaming Revenue - total amount wagered minus winnings paid. NGR is roughly half of GGR after operating costs.",
@@ -70,6 +70,6 @@ export const TOOLTIPS = {
   shuffle: "Shuffle.com is a licensed cryptocurrency casino. The SHFL lottery is funded by 15% of the casino's weekly profits.",
   sensitivity: "Shows how your yield changes if NGR (casino revenue) or SHFL price moves up or down from current levels.",
   ev: "Expected Value - the average amount you'd win per ticket over many draws. Negative EV means the lottery favors the house on average.",
-  permanent: "Unlike traditional staking, SHFL staking is one-way. Your tokens are locked forever, but your tickets generate returns indefinitely.",
+  unstaking: "You can unstake your SHFL anytime. Your tokens will be returned after the next lottery draw completes. Note: unstaked tokens won't participate in the upcoming draw.",
 };
 

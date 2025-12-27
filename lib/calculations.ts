@@ -2,7 +2,7 @@
  * SHFL Yield Calculations
  * 
  * Key mechanics:
- * - 1 Ticket = 50 SHFL staked (permanent, non-withdrawable)
+ * - 1 Ticket = 50 SHFL staked (can unstake, tokens returned after next draw)
  * - Lottery: 5 numbers from 1-55, 1 powerball from 1-18
  * - Total combinations = C(55,5) × 18 = 62,617,698
  * - Prize pool split across 9 divisions (Jackpot excluded from yield)
@@ -408,7 +408,7 @@ export function calculatePowerplayTicketEV(
 
 /**
  * Calculate EV for a Staked Ticket (50 SHFL)
- * This is a one-time stake that gives entries forever
+ * Staked tokens give lottery entries each draw (can unstake, tokens returned after next draw)
  */
 export function calculateStakedTicketEV(
   totalPool: number,
