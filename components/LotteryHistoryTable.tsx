@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { HistoricalDraw, formatUSD } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
-import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users } from "lucide-react";
+import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
 
 interface LotteryHistoryTableProps {
@@ -18,6 +18,8 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
       ? draws.reduce((sum, d) => sum + d.yieldPerThousandSHFL, 0) / draws.length
       : 0;
 
+  const jackpotWonCount = draws.filter(d => d.jackpotWon).length;
+
   return (
     <>
       <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow overflow-hidden">
@@ -31,12 +33,25 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                 Click on a draw to view full prize breakdown
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-xs text-terminal-textSecondary">
-                Avg. Yield/1K SHFL
-              </div>
-              <div className="text-sm font-medium text-terminal-accent">
-                {formatUSD(avgYield)}
+            <div className="flex items-center gap-6">
+              {jackpotWonCount > 0 && (
+                <div className="text-right">
+                  <div className="text-xs text-yellow-500 flex items-center gap-1 justify-end">
+                    <Trophy className="w-3 h-3" />
+                    Jackpots Won
+                  </div>
+                  <div className="text-sm font-medium text-yellow-400">
+                    {jackpotWonCount}
+                  </div>
+                </div>
+              )}
+              <div className="text-right">
+                <div className="text-xs text-terminal-textSecondary">
+                  Avg. Yield/1K SHFL
+                </div>
+                <div className="text-sm font-medium text-terminal-accent">
+                  {formatUSD(avgYield)}
+                </div>
               </div>
             </div>
           </div>
@@ -90,20 +105,32 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                 const isAboveAvg = draw.yieldPerThousandSHFL > avgYield;
                 // Estimate jackpot as ~87% of pool (based on typical splits)
                 const estimatedJackpot = draw.totalPoolUSD * 0.87;
+                const isJackpotWon = draw.jackpotWon;
                 
                 return (
                   <tr
                     key={draw.drawNumber}
                     onClick={() => setSelectedDraw(draw.drawNumber)}
                     className={cn(
-                      "border-b border-terminal-border/50 transition-colors cursor-pointer",
-                      "hover:bg-terminal-accent/10",
-                      index === 0 && "bg-terminal-accent/5"
+                      "border-b border-terminal-border/50 transition-all cursor-pointer",
+                      isJackpotWon 
+                        ? "bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-amber-500/20 hover:from-yellow-500/30 hover:via-yellow-400/20 hover:to-amber-500/30 border-l-2 border-l-yellow-500"
+                        : "hover:bg-terminal-accent/10",
+                      index === 0 && !isJackpotWon && "bg-terminal-accent/5"
                     )}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-terminal-text tabular-nums">
+                        {isJackpotWon && (
+                          <div className="relative">
+                            <Trophy className="w-4 h-4 text-yellow-400 animate-pulse" />
+                            <Sparkles className="w-3 h-3 text-yellow-300 absolute -top-1 -right-1 animate-ping" style={{ animationDuration: '2s' }} />
+                          </div>
+                        )}
+                        <span className={cn(
+                          "text-sm font-medium tabular-nums",
+                          isJackpotWon ? "text-yellow-100" : "text-terminal-text"
+                        )}>
                           #{draw.drawNumber}
                         </span>
                         {index === 0 && (
@@ -111,9 +138,17 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                             Latest
                           </span>
                         )}
+                        {isJackpotWon && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase tracking-wider font-bold animate-pulse">
+                            🎉 JACKPOT WON
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-terminal-textSecondary tabular-nums">
+                    <td className={cn(
+                      "px-4 py-3 text-sm tabular-nums",
+                      isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
+                    )}>
                       {new Date(draw.date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -121,23 +156,34 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                       })}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm font-medium text-terminal-text tabular-nums">
+                      <span className={cn(
+                        "text-sm font-medium tabular-nums",
+                        isJackpotWon ? "text-yellow-100" : "text-terminal-text"
+                      )}>
                         {formatUSD(draw.totalPoolUSD)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm font-medium text-yellow-400 tabular-nums">
+                      <span className={cn(
+                        "text-sm font-medium tabular-nums",
+                        isJackpotWon ? "text-yellow-300 font-bold" : "text-yellow-400"
+                      )}>
                         {formatUSD(estimatedJackpot)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-terminal-textSecondary tabular-nums">
+                    <td className={cn(
+                      "px-4 py-3 text-right text-sm tabular-nums",
+                      isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
+                    )}>
                       {(draw.totalTickets / 1000000).toFixed(2)}M
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span
                         className={cn(
                           "text-sm font-medium tabular-nums px-2 py-0.5 rounded",
-                          isAboveAvg
+                          isJackpotWon
+                            ? "text-yellow-200 bg-yellow-500/20"
+                            : isAboveAvg
                             ? "text-terminal-positive bg-terminal-positive/10"
                             : "text-terminal-text"
                         )}
@@ -146,7 +192,10 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <ExternalLink className="w-4 h-4 text-terminal-textMuted hover:text-terminal-accent transition-colors" />
+                      <ExternalLink className={cn(
+                        "w-4 h-4 transition-colors",
+                        isJackpotWon ? "text-yellow-400 hover:text-yellow-300" : "text-terminal-textMuted hover:text-terminal-accent"
+                      )} />
                     </td>
                   </tr>
                 );
@@ -157,8 +206,16 @@ export default function LotteryHistoryTable({ draws }: LotteryHistoryTableProps)
 
         <div className="p-3 bg-terminal-dark/50 border-t border-terminal-border">
           <div className="flex items-center justify-between text-xs text-terminal-textMuted">
-            <span>Showing {draws.length} recent draws • Click any row for details</span>
-            <span>Updated weekly on Sundays</span>
+            <span className="flex items-center gap-4">
+              <span>Showing {draws.length} recent draws</span>
+              {jackpotWonCount > 0 && (
+                <span className="flex items-center gap-1 text-yellow-500">
+                  <Trophy className="w-3 h-3" />
+                  Gold rows = Jackpot Won
+                </span>
+              )}
+            </span>
+            <span>Click any row for details</span>
           </div>
         </div>
       </div>

@@ -44,6 +44,7 @@ export interface LotteryDrawRaw {
   jackpotAmount?: number;
   totalWinners?: number;
   totalPaidOut?: number;
+  jackpotWon?: boolean;
 }
 
 /**
@@ -158,6 +159,8 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         totalTickets,
         yieldPerThousandSHFL: calcYield(draw.totalNGRContribution, totalTickets, draw.prizepoolSplit),
         prizepoolSplit: draw.prizepoolSplit,
+        jackpotWon: draw.jackpotWon,
+        jackpotAmount: draw.jackpotAmount,
       };
     });
   } catch (error) {

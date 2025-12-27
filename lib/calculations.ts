@@ -35,6 +35,8 @@ export interface HistoricalDraw {
   totalTickets: number;
   yieldPerThousandSHFL: number;
   prizepoolSplit?: string;
+  jackpotWon?: boolean;
+  jackpotAmount?: number;
 }
 
 export interface YieldResult {

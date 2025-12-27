@@ -35,6 +35,18 @@ export interface LotteryDrawData {
   jackpotAmount?: number;
   totalWinners?: number;
   totalPaidOut?: number;
+  jackpotWon?: boolean;
+}
+
+/**
+ * Determine if jackpot was won based on jackpotted amount
+ * If jackpotted is very low compared to prize pool, jackpot was likely won
+ */
+function wasJackpotWon(jackpotted: number, prizePool: number): boolean {
+  // If jackpotted is less than 5% of prize pool, jackpot was won
+  // Normal jackpot rollover is typically 80-90% of the pool
+  const ratio = jackpotted / prizePool;
+  return ratio < 0.1; // Less than 10% means jackpot was won
 }
 
 // Real lottery history data from https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history
@@ -111,13 +123,19 @@ export async function GET(request: Request) {
     const prizes = await fetchPrizesForDraw(parseInt(drawId));
     const draw = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === parseInt(drawId));
     
+    // Check if jackpot was won from prize data (winCount > 0) or from jackpotted ratio
+    const jackpotPrize = prizes?.find(p => p.category === "JACKPOT");
+    const jackpotWonFromPrizes = jackpotPrize ? jackpotPrize.winCount > 0 : false;
+    const jackpotWonFromRatio = draw ? wasJackpotWon(draw.jackpotted, draw.prizePool) : false;
+    
     return NextResponse.json({
       success: true,
       draw: draw ? {
         ...draw,
         totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
         prizes,
-        jackpotAmount: prizes?.find(p => p.category === "JACKPOT")?.amount || 0,
+        jackpotAmount: jackpotPrize?.amount || 0,
+        jackpotWon: jackpotWonFromPrizes || jackpotWonFromRatio,
         totalWinners: prizes?.reduce((sum, p) => sum + p.winCount, 0) || 0,
         totalPaidOut: prizes?.reduce((sum, p) => sum + (p.win || 0), 0) || 0,
       } : null,
@@ -125,10 +143,11 @@ export async function GET(request: Request) {
     });
   }
 
-  // Calculate totalNGRContribution for each draw
+  // Calculate totalNGRContribution for each draw and determine jackpot status
   let drawsWithNGR: LotteryDrawData[] = LOTTERY_HISTORY_DATA.map(draw => ({
     ...draw,
     totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
+    jackpotWon: wasJackpotWon(draw.jackpotted, draw.prizePool),
   }));
 
   // Optionally fetch prize data for recent draws (limit to avoid rate limiting)
