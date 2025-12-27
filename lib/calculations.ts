@@ -246,14 +246,26 @@ export function calculateHistoricalEarnings(
 /**
  * Format numbers for display
  */
-export function formatUSD(value: number): string {
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`;
+export function formatUSD(value: number, short: boolean = false): string {
+  if (short) {
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}M`;
+    }
+    if (value >= 1_000) {
+      return `$${(value / 1_000).toFixed(2)}K`;
+    }
   }
-  if (value >= 1_000) {
-    return `$${(value / 1_000).toFixed(2)}K`;
-  }
-  return `$${value.toFixed(2)}`;
+  return `$${new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.round(value))}`;
+}
+
+/**
+ * Format USD with short notation (K, M, B)
+ */
+export function formatUSDShort(value: number): string {
+  return formatUSD(value, true);
 }
 
 export function formatPercent(value: number): string {
