@@ -16,6 +16,18 @@ export interface CurrentLotteryStats {
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
 
+// Query 0: Get prizes and results (for jackpot amount)
+const GET_PRIZES_AND_RESULTS_QUERY = `query getPrizesAndResults($drawId: Float) {
+  prizesAndResults(drawId: $drawId) {
+    category
+    currency
+    amount
+    winCount
+    win
+    __typename
+  }
+}`;
+
 // Query 1: Get latest lottery draw info (prize pool, draw number, status)
 const GET_LATEST_LOTTERY_DRAW_QUERY = `query getLatestLotteryDraw {
   getLatestLotteryDraw {
@@ -69,6 +81,20 @@ const GET_LOTTERY_DRAW_QUERY = `query getLotteryDraw($id: Float) {
   }
 }`;
 
+interface PrizePool {
+  category: string;
+  currency: string;
+  amount: string;
+  winCount: number;
+  win: number;
+}
+
+interface PrizesAndResultsResponse {
+  data: {
+    prizesAndResults: PrizePool[];
+  };
+}
+
 interface LatestLotteryDrawResponse {
   data: {
     getLatestLotteryDraw: {
@@ -92,6 +118,38 @@ interface LotteryDrawResponse {
       drawAt: string;
     };
   };
+}
+
+async function fetchPrizesAndResults(drawId: number): Promise<PrizePool[] | null> {
+  try {
+    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin": "https://shuffle.com",
+        "Referer": "https://shuffle.com/lottery",
+      },
+      body: JSON.stringify({
+        operationName: "getPrizesAndResults",
+        query: GET_PRIZES_AND_RESULTS_QUERY,
+        variables: { drawId },
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("GraphQL request failed:", response.status, response.statusText);
+      return null;
+    }
+
+    const data: PrizesAndResultsResponse = await response.json();
+    return data.data?.prizesAndResults || null;
+  } catch (error) {
+    console.error("Error fetching prizes and results:", error);
+    return null;
+  }
 }
 
 async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data"]["getLatestLotteryDraw"] | null> {
@@ -203,6 +261,18 @@ export async function GET() {
     let totalStaked = drawWithStakedData?.totalStaked ? parseFloat(drawWithStakedData.totalStaked) : 0;
     let totalTickets = totalStaked > 0 ? Math.floor(totalStaked / 50) : 0;
     
+    // Fetch prize divisions to get exact jackpot amount
+    let jackpotAmount = prizePool * 0.30; // Default fallback
+    if (drawNumber > 0) {
+      const prizes = await fetchPrizesAndResults(drawNumber);
+      if (prizes) {
+        const jackpotPrize = prizes.find(p => p.category === "JACKPOT");
+        if (jackpotPrize) {
+          jackpotAmount = parseFloat(jackpotPrize.amount);
+        }
+      }
+    }
+    
     // If we have a drawAt from the API, use it
     if (lotteryData?.drawAt) {
       const drawAtTime = new Date(lotteryData.drawAt).getTime();
@@ -229,7 +299,7 @@ export async function GET() {
       totalSHFLStaked: totalStaked,
       currentPrizePool: prizePool,
       nextDrawTimestamp: nextDrawTime,
-      jackpotAmount: prizePool * 0.30,
+      jackpotAmount,
       ticketPrice: 0.25,
       powerplayPrice: 4.00,
       drawStatus,
