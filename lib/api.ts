@@ -238,6 +238,8 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
       drawStatus: data.stats.drawStatus,
       drawNumber: data.stats.drawNumber,
       jackpotAmount: data.stats.jackpotAmount,
+      priorWeekTickets: data.stats.priorWeekTickets,
+      priorWeekSHFLStaked: data.stats.priorWeekSHFLStaked,
     };
   } catch (error) {
     console.error("Error fetching lottery stats:", error);
