@@ -61,10 +61,13 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-terminal-accent/20 border border-terminal-accent flex items-center justify-center">
-                <span className="text-terminal-accent font-bold text-sm">$</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <img
+                src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                alt="SHFL Token"
+                className="w-9 h-9 animate-spin"
+                style={{ animationDuration: "3s" }}
+              />
               <div>
                 <h1 className="text-lg font-semibold tracking-tight">
                   SHFL<span className="text-terminal-accent">YIELD</span>
