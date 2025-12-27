@@ -24,6 +24,13 @@ export interface NGRHistoryPoint {
   ngr: number;
 }
 
+export interface PrizeData {
+  category: string;
+  amount: number;
+  winCount: number;
+  win: number;
+}
+
 export interface LotteryDrawRaw {
   drawNumber: number;
   date: string;
@@ -33,6 +40,10 @@ export interface LotteryDrawRaw {
   singlesAdded: number;
   prizepoolSplit: string;
   totalNGRContribution: number; // ngrAdded + (singlesAdded * 0.85)
+  prizes?: PrizeData[];
+  jackpotAmount?: number;
+  totalWinners?: number;
+  totalPaidOut?: number;
 }
 
 /**
@@ -415,4 +426,56 @@ function getWeekKey(timestamp: number): string {
   const year = date.getFullYear();
   const week = Math.floor((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
   return `${year}-W${week}`;
+}
+
+/**
+ * Fetch detailed draw data including prizes for a specific draw
+ */
+export async function fetchDrawDetails(drawNumber: number): Promise<LotteryDrawRaw | null> {
+  try {
+    const response = await fetch(`/api/lottery-history?drawId=${drawNumber}`, {
+      cache: "no-store",
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch draw details");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.draw) {
+      return null;
+    }
+    
+    return data.draw;
+  } catch (error) {
+    console.error("Error fetching draw details:", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch lottery history with prize data
+ */
+export async function fetchLotteryHistoryWithPrizes(): Promise<LotteryDrawRaw[]> {
+  try {
+    const response = await fetch("/api/lottery-history?fetchPrizes=true", {
+      cache: "no-store",
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch lottery history with prizes");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.draws) {
+      throw new Error("Invalid response");
+    }
+    
+    return data.draws;
+  } catch (error) {
+    console.error("Error fetching lottery history with prizes:", error);
+    return [];
+  }
 }
