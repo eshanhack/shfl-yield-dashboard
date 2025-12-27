@@ -30,8 +30,9 @@ export interface LotteryDrawRaw {
   prizePool: number;
   jackpotted: number;
   ngrAdded: number;
-  prizepoolSplit: string;
   singlesAdded: number;
+  prizepoolSplit: string;
+  totalNGRContribution: number; // ngrAdded + (singlesAdded * 0.85)
 }
 
 /**
@@ -122,7 +123,7 @@ function generateMockPriceHistory(days: number): PriceHistoryPoint[] {
 export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
   try {
     const response = await fetch("/api/lottery-history", {
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      cache: "no-store",
     });
     
     if (!response.ok) {
@@ -140,13 +141,39 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
       drawNumber: draw.drawNumber,
       date: draw.date,
       totalPoolUSD: draw.prizePool,
-      ngrUSD: draw.ngrAdded,
-      totalTickets: estimateTicketsFromPool(draw.prizePool), // Estimate tickets
-      yieldPerThousandSHFL: calculateYieldPer1KSHFL(draw.prizePool, draw.ngrAdded),
+      ngrUSD: draw.totalNGRContribution, // Use the calculated total NGR contribution
+      totalTickets: estimateTicketsFromPool(draw.prizePool),
+      yieldPerThousandSHFL: calculateYieldPer1KSHFL(draw.prizePool, draw.totalNGRContribution),
     }));
   } catch (error) {
     console.error("Error fetching lottery history:", error);
     return getMockHistoricalDraws(12);
+  }
+}
+
+/**
+ * Fetch 4-week average NGR from lottery history
+ */
+export async function fetchAvgWeeklyNGR(): Promise<number> {
+  try {
+    const response = await fetch("/api/lottery-history", {
+      cache: "no-store",
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch lottery history");
+    }
+    
+    const data = await response.json();
+    
+    if (data.stats?.avgWeeklyNGR_4week) {
+      return data.stats.avgWeeklyNGR_4week;
+    }
+    
+    return 500_000; // Fallback
+  } catch (error) {
+    console.error("Error fetching avg weekly NGR:", error);
+    return 500_000;
   }
 }
 

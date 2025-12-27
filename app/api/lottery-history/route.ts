@@ -6,134 +6,80 @@ export interface LotteryDrawData {
   prizePool: number;
   jackpotted: number;
   ngrAdded: number;
-  prizepoolSplit: string;
   singlesAdded: number;
+  prizepoolSplit: string;
+  // Calculated: Total NGR contribution = ngrAdded + (singlesAdded * 0.85)
+  totalNGRContribution: number;
 }
 
-// Parse dollar amount string to number
-function parseDollarAmount(str: string): number {
-  if (!str || str === "N/A" || str === "$0.00") return 0;
-  // Remove $, commas, and whitespace
-  const cleaned = str.replace(/[$,\s]/g, "");
-  return parseFloat(cleaned) || 0;
-}
-
-// Parse date string to ISO format
-function parseDrawDate(dateStr: string): string {
-  try {
-    // Handle formats like "October 18th 2024", "October 18th, 2024", "Draw 1", etc.
-    const cleaned = dateStr.replace(/,?\s*Draw\s*#?\d+/gi, "").trim();
-    // Remove ordinal suffixes (st, nd, rd, th)
-    const withoutOrdinal = cleaned.replace(/(\d+)(st|nd|rd|th)/gi, "$1");
-    const date = new Date(withoutOrdinal);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split("T")[0];
-    }
-    return new Date().toISOString().split("T")[0];
-  } catch {
-    return new Date().toISOString().split("T")[0];
-  }
-}
+// Real lottery history data from https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history
+const LOTTERY_HISTORY_DATA: LotteryDrawData[] = [
+  // Latest draws first (reversed from the table which shows latest at bottom)
+  { drawNumber: 62, date: "2025-12-19", prizePool: 1263612, jackpotted: 1064670, ngrAdded: 173555, singlesAdded: 29042, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 61, date: "2025-12-12", prizePool: 3103837, jackpotted: 33626, ngrAdded: 1201151, singlesAdded: 53543, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 60, date: "2025-12-05", prizePool: 3333438, jackpotted: 2845173, ngrAdded: 205120, singlesAdded: 55062, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 59, date: "2025-11-28", prizePool: 3259985, jackpotted: 2846781, ngrAdded: 431594, singlesAdded: 48357, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 58, date: "2025-11-21", prizePool: 3187332, jackpotted: 2686090, ngrAdded: 525537, singlesAdded: 59884, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 57, date: "2025-11-14", prizePool: 4474708, jackpotted: 2597636, ngrAdded: 529812, singlesAdded: 728536, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 56, date: "2025-11-07", prizePool: 2985268, jackpotted: 2392337, ngrAdded: 1515179, singlesAdded: 66133, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 55, date: "2025-10-31", prizePool: 2862620, jackpotted: 2161753, ngrAdded: 757382, singlesAdded: 30608, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 54, date: "2025-10-24", prizePool: 2715131, jackpotted: 2156693, ngrAdded: 675318, singlesAdded: 28717, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 53, date: "2025-10-17", prizePool: 2921000, jackpotted: 1939523, ngrAdded: 746891, singlesAdded: 30564, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 52, date: "2025-10-10", prizePool: 2349206, jackpotted: 1766321, ngrAdded: 1124115, singlesAdded: 25551, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 51, date: "2025-10-03", prizePool: 2285434, jackpotted: 1772430, ngrAdded: 551224, singlesAdded: 27957, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 50, date: "2025-09-26", prizePool: 2218722, jackpotted: 1572929, ngrAdded: 684209, singlesAdded: 21593, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 49, date: "2025-09-19", prizePool: 1762270, jackpotted: 1458965, ngrAdded: 738163, singlesAdded: 31651, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 48, date: "2025-09-12", prizePool: 2139778, jackpotted: 1405441, ngrAdded: 325178, singlesAdded: 28020, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 47, date: "2025-09-05", prizePool: 2038851, jackpotted: 1340232, ngrAdded: 771526, singlesAdded: 31859, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 46, date: "2025-08-29", prizePool: 978220, jackpotted: 791317, ngrAdded: 1215675, singlesAdded: 22493, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 45, date: "2025-08-22", prizePool: 965329, jackpotted: 711215, ngrAdded: 244512, singlesAdded: 10931, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 44, date: "2025-08-15", prizePool: 780653, jackpotted: 649242, ngrAdded: 305156, singlesAdded: 17382, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 43, date: "2025-08-08", prizePool: 802680, jackpotted: 545990, ngrAdded: 217282, singlesAdded: 17988, prizepoolSplit: "30-14-8-9-7-6-5-10-11", totalNGRContribution: 0 },
+  { drawNumber: 42, date: "2025-08-01", prizePool: 668791, jackpotted: 500692, ngrAdded: 284000, singlesAdded: 13831, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 41, date: "2025-07-25", prizePool: 2902553, jackpotted: 0, ngrAdded: 205672, singlesAdded: 35583, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 40, date: "2025-07-18", prizePool: 2820005, jackpotted: 2535746, ngrAdded: 331224, singlesAdded: 47513, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 39, date: "2025-07-11", prizePool: 2833794, jackpotted: 2473348, ngrAdded: 299144, singlesAdded: 26343, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 38, date: "2025-07-04", prizePool: 2751679, jackpotted: 2496895, ngrAdded: 310556, singlesAdded: 37576, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 37, date: "2025-06-27", prizePool: 2756108, jackpotted: 2440967, ngrAdded: 273135, singlesAdded: 19726, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 36, date: "2025-06-20", prizePool: 2727721, jackpotted: 2424381, ngrAdded: 312001, singlesAdded: 33795, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 35, date: "2025-06-13", prizePool: 2734011, jackpotted: 2408416, ngrAdded: 285511, singlesAdded: 42539, prizepoolSplit: "5-13-9-10-10-10-15-13-15", totalNGRContribution: 0 },
+  { drawNumber: 34, date: "2025-06-06", prizePool: 2688982, jackpotted: 2410180, ngrAdded: 281291, singlesAdded: 28009, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 33, date: "2025-05-30", prizePool: 2507473, jackpotted: 2301757, ngrAdded: 359216, singlesAdded: 20031, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 32, date: "2025-05-23", prizePool: 2582343, jackpotted: 2265454, ngrAdded: 221987, singlesAdded: 18323, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 31, date: "2025-05-16", prizePool: 2514187, jackpotted: 2262909, ngrAdded: 301111, singlesAdded: 43086, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+  { drawNumber: 30, date: "2025-05-09", prizePool: 2535255, jackpotted: 2165189, ngrAdded: 305912, singlesAdded: 49750, prizepoolSplit: "15-13-9-9-9-9-15-11-10", totalNGRContribution: 0 },
+];
 
 export async function GET() {
-  try {
-    const response = await fetch(
-      "https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history",
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        next: { revalidate: 3600 }, // Cache for 1 hour
-      }
-    );
+  // Calculate totalNGRContribution for each draw
+  // Formula: ngrAdded + (singlesAdded * 0.85)
+  const drawsWithNGR = LOTTERY_HISTORY_DATA.map(draw => ({
+    ...draw,
+    totalNGRContribution: draw.ngrAdded + (draw.singlesAdded * 0.85),
+  }));
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
-    }
+  // Calculate 4-week average NGR (from the latest 4 draws)
+  const last4Draws = drawsWithNGR.slice(0, 4);
+  const avgWeeklyNGR = last4Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last4Draws.length;
 
-    const html = await response.text();
+  // Calculate 12-week average for longer-term view
+  const last12Draws = drawsWithNGR.slice(0, 12);
+  const avg12WeekNGR = last12Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last12Draws.length;
 
-    // Parse the table data from HTML
-    // The table has columns: Draw | Prize Pool | Jackpotted | NGR Added | Prizepool Split | Singles Added
-    const draws: LotteryDrawData[] = [];
-
-    // Match table rows - looking for patterns like "October 18th 2024, Draw 1" followed by dollar amounts
-    const rowPattern = /([A-Za-z]+\s+\d+(?:st|nd|rd|th)?,?\s+\d{4},?\s*Draw\s*#?\d+)\s*\|\s*\$?([\d,.$]+)\s*\|\s*\$?([\d,.$]+)\s*\|\s*\$?([\d,.$]+)\s*\|\s*([\d\-]+)\s*\|\s*([\w$/,.]+)/gi;
-
-    // Alternative: parse looking for the data in a more flexible way
-    // The GitBook page uses markdown tables, so let's look for the pattern differently
-    
-    // Look for lines that contain draw information
-    const lines = html.split(/\n|<tr>|<\/tr>|\|/);
-    
-    let currentDraw: Partial<LotteryDrawData> = {};
-    
-    // Try to find table data by looking for patterns
-    const tableMatch = html.match(/SHFL Lottery History[\s\S]*?(?=Previous|$)/i);
-    
-    if (tableMatch) {
-      const tableContent = tableMatch[0];
-      
-      // Extract draw data using regex patterns
-      // Pattern: Date with Draw # | Prize Pool | Jackpotted | NGR Added | Split | Singles
-      const drawMatches = tableContent.matchAll(
-        /([A-Za-z]+\s+\d+(?:st|nd|rd|th)?,?\s+\d{4}),?\s*Draw\s*#?(\d+)[^\$]*\$([\d,]+(?:\.\d+)?)[^\$]*\$([\d,]+(?:\.\d+)?)[^\$]*\$([\d,]+(?:\.\d+)?)[^|]*\|?\s*([\d\-]+)[^|]*\|?\s*(?:\$?([\d,]+(?:\.\d+)?)|N\/A)/gi
-      );
-
-      for (const match of drawMatches) {
-        const [, dateStr, drawNum, prizePool, jackpotted, ngrAdded, split, singles] = match;
-        draws.push({
-          drawNumber: parseInt(drawNum) || draws.length + 1,
-          date: parseDrawDate(dateStr),
-          prizePool: parseDollarAmount(prizePool),
-          jackpotted: parseDollarAmount(jackpotted),
-          ngrAdded: parseDollarAmount(ngrAdded),
-          prizepoolSplit: split || "15-13-9-9-9-9-15-11-10",
-          singlesAdded: parseDollarAmount(singles),
-        });
-      }
-    }
-
-    // If regex didn't work well, try a simpler approach with known data
-    // This is a fallback with the actual data from the page
-    if (draws.length === 0) {
-      // Hardcoded recent data as fallback (from the actual page content)
-      const knownDraws: LotteryDrawData[] = [
-        { drawNumber: 62, date: "2025-12-19", prizePool: 1263612, jackpotted: 1064670, ngrAdded: 173555, prizepoolSplit: "30-14-8-9-7-6-5-10-11", singlesAdded: 29042 },
-        { drawNumber: 61, date: "2025-12-12", prizePool: 3103837, jackpotted: 33626, ngrAdded: 1201151, prizepoolSplit: "30-14-8-9-7-6-5-10-11", singlesAdded: 53543 },
-        { drawNumber: 60, date: "2025-12-05", prizePool: 3333438, jackpotted: 2845173, ngrAdded: 205120, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 55062 },
-        { drawNumber: 59, date: "2025-11-28", prizePool: 3259985, jackpotted: 2846781, ngrAdded: 431594, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 48357 },
-        { drawNumber: 58, date: "2025-11-21", prizePool: 3187332, jackpotted: 2686090, ngrAdded: 525537, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 59884 },
-        { drawNumber: 57, date: "2025-11-14", prizePool: 4474708, jackpotted: 2597636, ngrAdded: 529812, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 728536 },
-        { drawNumber: 56, date: "2025-11-07", prizePool: 2985268, jackpotted: 2392337, ngrAdded: 1515179, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 66133 },
-        { drawNumber: 55, date: "2025-10-31", prizePool: 2862620, jackpotted: 2161753, ngrAdded: 757382, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 30608 },
-        { drawNumber: 54, date: "2025-10-24", prizePool: 2715131, jackpotted: 2156693, ngrAdded: 675318, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 28717 },
-        { drawNumber: 53, date: "2025-10-17", prizePool: 2921000, jackpotted: 1939523, ngrAdded: 746891, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 30564 },
-        { drawNumber: 52, date: "2025-10-10", prizePool: 2349206, jackpotted: 1766321, ngrAdded: 1124115, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 25551 },
-        { drawNumber: 51, date: "2025-10-03", prizePool: 2285434, jackpotted: 1772430, ngrAdded: 551224, prizepoolSplit: "15-13-9-9-9-9-15-11-10", singlesAdded: 27957 },
-      ];
-      draws.push(...knownDraws);
-    }
-
-    // Sort by draw number descending (most recent first)
-    draws.sort((a, b) => b.drawNumber - a.drawNumber);
-
-    return NextResponse.json({
-      success: true,
-      draws,
-      lastUpdated: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Error fetching lottery history:", error);
-    
-    // Return fallback data on error
-    return NextResponse.json({
-      success: false,
-      error: "Failed to fetch lottery history",
-      draws: [],
-      lastUpdated: new Date().toISOString(),
-    });
-  }
+  return NextResponse.json({
+    success: true,
+    draws: drawsWithNGR,
+    stats: {
+      avgWeeklyNGR_4week: avgWeeklyNGR,
+      avgWeeklyNGR_12week: avg12WeekNGR,
+      last4DrawsNGR: last4Draws.map(d => ({
+        drawNumber: d.drawNumber,
+        ngrAdded: d.ngrAdded,
+        singlesAdded: d.singlesAdded,
+        totalNGRContribution: d.totalNGRContribution,
+      })),
+    },
+    lastUpdated: new Date().toISOString(),
+    source: "https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history",
+  });
 }
-

@@ -25,6 +25,7 @@ import {
   fetchLotteryHistory,
   fetchLotteryStats,
   fetchNGRHistory,
+  fetchAvgWeeklyNGR,
   combineChartData,
   getMockLotteryStats,
   SHFLPrice,
@@ -51,6 +52,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [historicalDraws, setHistoricalDraws] = useState<HistoricalDraw[]>([]);
   const [lotteryStats, setLotteryStats] = useState<LotteryStats>(getMockLotteryStats());
+  const [avgWeeklyNGR, setAvgWeeklyNGR] = useState<number>(500_000);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -63,12 +65,13 @@ export default function Dashboard() {
     
     try {
       // Fetch all data in parallel
-      const [priceData, priceHistory, ngrHistory, draws, stats] = await Promise.all([
+      const [priceData, priceHistory, ngrHistory, draws, stats, avgNGR] = await Promise.all([
         fetchSHFLPrice(),
         fetchPriceHistory(365),
         fetchNGRHistory(),
         fetchLotteryHistory(),
         fetchLotteryStats(),
+        fetchAvgWeeklyNGR(),
       ]);
 
       setPrice(priceData);
@@ -79,6 +82,7 @@ export default function Dashboard() {
 
       setHistoricalDraws(draws);
       setLotteryStats(stats);
+      setAvgWeeklyNGR(avgNGR);
       setLastRefresh(new Date());
     } catch (error) {
       console.error("Error loading data:", error);
@@ -119,13 +123,6 @@ export default function Dashboard() {
 
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats.currentWeekPool;
-  const avgWeeklyNGR = useMemo(() => {
-    if (historicalDraws.length === 0) return lotteryStats.currentWeekNGR;
-    return (
-      historicalDraws.slice(0, 4).reduce((sum, d) => sum + d.ngrUSD, 0) / 
-      Math.min(4, historicalDraws.length)
-    );
-  }, [historicalDraws, lotteryStats.currentWeekNGR]);
 
   // Calculate week-over-week NGR change
   const ngrChange = useMemo(() => {
