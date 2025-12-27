@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --terminal-black: #000000;
+  --terminal-dark: #0a0a0a;
+  --terminal-card: #0d0d0d;
+  --terminal-border: #1a1a1a;
+  --terminal-accent: #8A2BE2;
+  --terminal-accent-dim: #6B21A8;
+  --terminal-text: #FFFFFF;
+  --terminal-text-secondary: #A0A0A0;
+  --terminal-text-muted: #666666;
+  --terminal-positive: #00FF88;
+  --terminal-negative: #FF4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--terminal-black);
+  color: var(--terminal-text);
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--terminal-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--terminal-accent-dim);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--terminal-accent);
+}
+
+/* Terminal grid lines effect */
+.terminal-grid {
+  background-image: 
+    linear-gradient(rgba(138, 43, 226, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 43, 226, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Scanline effect */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* Glow text effect */
+.text-glow {
+  text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+.text-glow-strong {
+  text-shadow: 0 0 20px rgba(138, 43, 226, 0.8), 0 0 40px rgba(138, 43, 226, 0.4);
+}
+
+/* Card glow effect on hover */
+.card-glow {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
+  border-color: var(--terminal-accent);
+}
+
+/* Button styles */
+.btn-terminal {
+  background: transparent;
+  border: 1px solid var(--terminal-accent);
+  color: var(--terminal-accent);
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-terminal:hover {
+  background: rgba(138, 43, 226, 0.1);
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+}
+
+.btn-terminal-solid {
+  background: var(--terminal-accent);
+  border: 1px solid var(--terminal-accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-terminal-solid:hover {
+  background: #9B30FF;
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+}
+
+/* Input styles */
+.input-terminal {
+  background: var(--terminal-dark);
+  border: 1px solid var(--terminal-border);
+  color: var(--terminal-text);
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-terminal:focus {
+  outline: none;
+  border-color: var(--terminal-accent);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+}
+
+/* Pulse animation for price updates */
+@keyframes price-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 20px var(--terminal-accent);
+  }
+}
+
+.price-update {
+  animation: price-pulse 0.5s ease-out;
+}
+
+/* Table styles */
+.table-terminal {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-terminal th,
+.table-terminal td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.table-terminal th {
+  color: var(--terminal-text-secondary);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-terminal tr:hover {
+  background: rgba(138, 43, 226, 0.05);
+}
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--terminal-dark) 0%,
+    var(--terminal-border) 50%,
+    var(--terminal-dark) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Recharts custom styles */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--terminal-border);
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+

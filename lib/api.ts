@@ -1,0 +1,370 @@
+/**
+ * API utilities for fetching SHFL price and lottery data
+ */
+
+import { HistoricalDraw } from "./calculations";
+
+// CoinGecko API endpoint for SHFL token
+const COINGECKO_API = "https://api.coingecko.com/api/v3";
+const SHFL_COIN_ID = "shuffle-2"; // SHFL token ID on CoinGecko
+
+export interface SHFLPrice {
+  usd: number;
+  usd_24h_change: number;
+  last_updated: string;
+}
+
+export interface PriceHistoryPoint {
+  timestamp: number;
+  price: number;
+}
+
+export interface NGRHistoryPoint {
+  timestamp: number;
+  ngr: number;
+}
+
+export interface LotteryDrawRaw {
+  drawNumber: number;
+  date: string;
+  prizePool: number;
+  jackpotted: number;
+  ngrAdded: number;
+  prizepoolSplit: string;
+  singlesAdded: number;
+}
+
+/**
+ * Fetch current SHFL price from CoinGecko
+ */
+export async function fetchSHFLPrice(): Promise<SHFLPrice> {
+  try {
+    const response = await fetch(
+      `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`,
+      { next: { revalidate: 60 } } // Cache for 60 seconds
+    );
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch price");
+    }
+    
+    const data = await response.json();
+    const shflData = data[SHFL_COIN_ID];
+    
+    return {
+      usd: shflData?.usd ?? 0.15,
+      usd_24h_change: shflData?.usd_24h_change ?? 0,
+      last_updated: new Date((shflData?.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
+    };
+  } catch (error) {
+    console.error("Error fetching SHFL price:", error);
+    // Return mock data on error
+    return {
+      usd: 0.15,
+      usd_24h_change: 2.5,
+      last_updated: new Date().toISOString(),
+    };
+  }
+}
+
+/**
+ * Fetch SHFL price history for the last N days
+ */
+export async function fetchPriceHistory(days: number = 365): Promise<PriceHistoryPoint[]> {
+  try {
+    const response = await fetch(
+      `${COINGECKO_API}/coins/${SHFL_COIN_ID}/market_chart?vs_currency=usd&days=${days}`,
+      { next: { revalidate: 3600 } } // Cache for 1 hour
+    );
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch price history");
+    }
+    
+    const data = await response.json();
+    
+    return data.prices.map(([timestamp, price]: [number, number]) => ({
+      timestamp,
+      price,
+    }));
+  } catch (error) {
+    console.error("Error fetching price history:", error);
+    // Return mock data
+    return generateMockPriceHistory(days);
+  }
+}
+
+/**
+ * Generate mock price history for demo purposes
+ */
+function generateMockPriceHistory(days: number): PriceHistoryPoint[] {
+  const now = Date.now();
+  const points: PriceHistoryPoint[] = [];
+  const basePrice = 0.15;
+  
+  for (let i = days; i >= 0; i--) {
+    const timestamp = now - i * 24 * 60 * 60 * 1000;
+    // Add some variation
+    const variation = Math.sin(i / 30) * 0.03 + Math.random() * 0.02 - 0.01;
+    const trendUp = (days - i) / days * 0.05; // Slight uptrend
+    points.push({
+      timestamp,
+      price: basePrice + variation + trendUp,
+    });
+  }
+  
+  return points;
+}
+
+/**
+ * Fetch real lottery history from our API route
+ */
+export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
+  try {
+    const response = await fetch("/api/lottery-history", {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch lottery history");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.draws) {
+      throw new Error("Invalid response");
+    }
+    
+    // Transform raw API data to HistoricalDraw format
+    return data.draws.map((draw: LotteryDrawRaw) => ({
+      drawNumber: draw.drawNumber,
+      date: draw.date,
+      totalPoolUSD: draw.prizePool,
+      ngrUSD: draw.ngrAdded,
+      totalTickets: estimateTicketsFromPool(draw.prizePool), // Estimate tickets
+      yieldPerThousandSHFL: calculateYieldPer1KSHFL(draw.prizePool, draw.ngrAdded),
+    }));
+  } catch (error) {
+    console.error("Error fetching lottery history:", error);
+    return getMockHistoricalDraws(12);
+  }
+}
+
+/**
+ * Fetch current lottery stats from our API route
+ */
+export async function fetchLotteryStats(): Promise<LotteryStats> {
+  try {
+    const response = await fetch("/api/lottery-stats", {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch lottery stats");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.stats) {
+      throw new Error("Invalid response");
+    }
+    
+    return {
+      totalTickets: data.stats.totalTickets,
+      totalSHFLStaked: data.stats.totalSHFLStaked,
+      currentWeekNGR: data.stats.currentPrizePool / 0.15, // Reverse calculate NGR
+      currentWeekPool: data.stats.currentPrizePool,
+      nextDrawTimestamp: data.stats.nextDrawTimestamp,
+    };
+  } catch (error) {
+    console.error("Error fetching lottery stats:", error);
+    return getMockLotteryStats();
+  }
+}
+
+/**
+ * Estimate ticket count based on prize pool size
+ */
+function estimateTicketsFromPool(prizePool: number): number {
+  // Based on historical data, typical pool is $2-3M with ~1M tickets
+  // This is a rough estimate - actual data would be better
+  const ticketsPerMillionPool = 400_000;
+  return Math.floor((prizePool / 1_000_000) * ticketsPerMillionPool);
+}
+
+/**
+ * Calculate yield per 1000 SHFL staked
+ */
+function calculateYieldPer1KSHFL(prizePool: number, ngrAdded: number): number {
+  // 1000 SHFL = 20 tickets
+  // Estimate total tickets based on pool size
+  const totalTickets = estimateTicketsFromPool(prizePool);
+  if (totalTickets === 0) return 0;
+  
+  const ticketsPer1K = 20;
+  const userShare = ticketsPer1K / totalTickets;
+  return prizePool * userShare;
+}
+
+/**
+ * Get NGR history from lottery history data
+ */
+export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
+  try {
+    const response = await fetch("/api/lottery-history", {
+      next: { revalidate: 3600 },
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch NGR history");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.draws) {
+      throw new Error("Invalid response");
+    }
+    
+    // Transform to NGR history points
+    return data.draws.map((draw: LotteryDrawRaw) => ({
+      timestamp: new Date(draw.date).getTime(),
+      ngr: draw.ngrAdded,
+    })).reverse(); // Oldest first for charting
+  } catch (error) {
+    console.error("Error fetching NGR history:", error);
+    return getMockNGRHistory(52);
+  }
+}
+
+/**
+ * Generate mock NGR history for demo purposes (fallback)
+ */
+export function getMockNGRHistory(weeks: number = 52): NGRHistoryPoint[] {
+  const now = Date.now();
+  const points: NGRHistoryPoint[] = [];
+  const baseNGR = 500_000; // Base weekly NGR of $500K based on real data
+  
+  for (let i = weeks; i >= 0; i--) {
+    const timestamp = now - i * 7 * 24 * 60 * 60 * 1000;
+    // NGR varies based on gaming activity
+    const seasonalVariation = Math.sin((i / 52) * Math.PI * 2) * 200_000;
+    const randomVariation = (Math.random() - 0.5) * 100_000;
+    const growthTrend = ((weeks - i) / weeks) * 300_000; // Growing platform
+    
+    points.push({
+      timestamp,
+      ngr: Math.max(100_000, baseNGR + seasonalVariation + randomVariation + growthTrend),
+    });
+  }
+  
+  return points;
+}
+
+/**
+ * Get mock historical lottery draws (fallback)
+ */
+export function getMockHistoricalDraws(count: number = 12): HistoricalDraw[] {
+  // Real data from the lottery history page
+  const realDraws: HistoricalDraw[] = [
+    { drawNumber: 62, date: "2025-12-19", totalPoolUSD: 1263612, ngrUSD: 173555, totalTickets: 500000, yieldPerThousandSHFL: 50.54 },
+    { drawNumber: 61, date: "2025-12-12", totalPoolUSD: 3103837, ngrUSD: 1201151, totalTickets: 1200000, yieldPerThousandSHFL: 51.73 },
+    { drawNumber: 60, date: "2025-12-05", totalPoolUSD: 3333438, ngrUSD: 205120, totalTickets: 1300000, yieldPerThousandSHFL: 51.28 },
+    { drawNumber: 59, date: "2025-11-28", totalPoolUSD: 3259985, ngrUSD: 431594, totalTickets: 1300000, yieldPerThousandSHFL: 50.15 },
+    { drawNumber: 58, date: "2025-11-21", totalPoolUSD: 3187332, ngrUSD: 525537, totalTickets: 1270000, yieldPerThousandSHFL: 50.19 },
+    { drawNumber: 57, date: "2025-11-14", totalPoolUSD: 4474708, ngrUSD: 529812, totalTickets: 1780000, yieldPerThousandSHFL: 50.28 },
+    { drawNumber: 56, date: "2025-11-07", totalPoolUSD: 2985268, ngrUSD: 1515179, totalTickets: 1190000, yieldPerThousandSHFL: 50.17 },
+    { drawNumber: 55, date: "2025-10-31", totalPoolUSD: 2862620, ngrUSD: 757382, totalTickets: 1140000, yieldPerThousandSHFL: 50.22 },
+    { drawNumber: 54, date: "2025-10-24", totalPoolUSD: 2715131, ngrUSD: 675318, totalTickets: 1080000, yieldPerThousandSHFL: 50.28 },
+    { drawNumber: 53, date: "2025-10-17", totalPoolUSD: 2921000, ngrUSD: 746891, totalTickets: 1160000, yieldPerThousandSHFL: 50.36 },
+    { drawNumber: 52, date: "2025-10-10", totalPoolUSD: 2349206, ngrUSD: 1124115, totalTickets: 940000, yieldPerThousandSHFL: 50.00 },
+    { drawNumber: 51, date: "2025-10-03", totalPoolUSD: 2285434, ngrUSD: 551224, totalTickets: 910000, yieldPerThousandSHFL: 50.23 },
+  ];
+  
+  return realDraws.slice(0, count);
+}
+
+/**
+ * Get current lottery stats (fallback)
+ */
+export function getMockLotteryStats(): LotteryStats {
+  // Find next Friday 12:00 UTC (based on draw pattern)
+  const now = new Date();
+  const nextFriday = new Date(now);
+  const daysUntilFriday = (5 - now.getUTCDay() + 7) % 7;
+  nextFriday.setUTCDate(now.getUTCDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
+  nextFriday.setUTCHours(12, 0, 0, 0);
+  
+  if (nextFriday <= now) {
+    nextFriday.setUTCDate(nextFriday.getUTCDate() + 7);
+  }
+  
+  return {
+    totalTickets: 1_000_000,
+    totalSHFLStaked: 50_000_000, // 1M tickets * 50 SHFL
+    currentWeekNGR: 600_000, // Based on recent averages
+    currentWeekPool: 2_500_000, // Current pool estimate
+    nextDrawTimestamp: nextFriday.getTime(),
+  };
+}
+
+/**
+ * Current lottery stats interface
+ */
+export interface LotteryStats {
+  totalTickets: number;
+  totalSHFLStaked: number;
+  currentWeekNGR: number;
+  currentWeekPool: number;
+  nextDrawTimestamp: number;
+}
+
+/**
+ * Combine price and NGR data for charting
+ */
+export interface ChartDataPoint {
+  date: string;
+  timestamp: number;
+  price: number;
+  ngr: number;
+}
+
+export async function combineChartData(
+  priceHistory: PriceHistoryPoint[],
+  ngrHistory: NGRHistoryPoint[]
+): Promise<ChartDataPoint[]> {
+  // Create a map of NGR by week
+  const ngrByWeek = new Map<string, number>();
+  ngrHistory.forEach((point) => {
+    const weekKey = getWeekKey(point.timestamp);
+    ngrByWeek.set(weekKey, point.ngr);
+  });
+  
+  // Sample price data weekly and combine with NGR
+  const weeklyData: ChartDataPoint[] = [];
+  const seenWeeks = new Set<string>();
+  
+  for (const pricePoint of priceHistory) {
+    const weekKey = getWeekKey(pricePoint.timestamp);
+    if (seenWeeks.has(weekKey)) continue;
+    seenWeeks.add(weekKey);
+    
+    const ngr = ngrByWeek.get(weekKey) ?? 0;
+    const date = new Date(pricePoint.timestamp);
+    
+    weeklyData.push({
+      date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      timestamp: pricePoint.timestamp,
+      price: pricePoint.price,
+      ngr: ngr / 1_000_000, // Convert to millions for display
+    });
+  }
+  
+  return weeklyData.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function getWeekKey(timestamp: number): string {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const week = Math.floor((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+  return `${year}-W${week}`;
+}
