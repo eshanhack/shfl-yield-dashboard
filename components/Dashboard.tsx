@@ -255,22 +255,48 @@ export default function Dashboard() {
       <div className="min-h-screen bg-terminal-black flex items-center justify-center">
         <div className="text-center">
           {/* 3D Flipping SHFL Token */}
-          <div className="perspective-1000 mx-auto mb-6">
-            <div className="w-24 h-24 relative animate-flip-3d transform-style-3d animate-glow-pulse">
+          <div 
+            className="mx-auto mb-6"
+            style={{ perspective: "1000px" }}
+          >
+            <div 
+              className="relative"
+              style={{ 
+                width: "96px", 
+                height: "96px",
+                transformStyle: "preserve-3d",
+                animation: "coinFlip 2s linear infinite",
+              }}
+            >
               {/* Front face */}
-              <div className="absolute inset-0 backface-hidden flex items-center justify-center">
+              <div 
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ backfaceVisibility: "hidden" }}
+              >
                 <img
                   src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
                   alt="SHFL Token"
                   className="w-20 h-20"
+                  style={{ 
+                    filter: "drop-shadow(0 0 20px rgba(138, 43, 226, 0.6))",
+                  }}
                 />
               </div>
               {/* Back face */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center">
+              <div 
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ 
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              >
                 <img
                   src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
                   alt="SHFL Token"
                   className="w-20 h-20"
+                  style={{ 
+                    filter: "drop-shadow(0 0 20px rgba(138, 43, 226, 0.6))",
+                  }}
                 />
               </div>
             </div>
