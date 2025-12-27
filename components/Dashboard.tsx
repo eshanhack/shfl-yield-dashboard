@@ -488,14 +488,14 @@ export default function Dashboard() {
         />
 
         {/* Charts and Ticket EV Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-stretch">
           {/* NGR vs Price Chart */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 h-full">
             <YieldChart data={chartData} />
           </div>
 
           {/* Ticket Expected Value */}
-          <div>
+          <div className="h-full">
             <TicketEVPanel
               totalPool={weeklyPoolUSD}
               prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}

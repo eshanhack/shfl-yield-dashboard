@@ -49,7 +49,7 @@ export default function YieldChart({ data }: YieldChartProps) {
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-medium text-terminal-text">
@@ -71,7 +71,7 @@ export default function YieldChart({ data }: YieldChartProps) {
         </div>
       </div>
 
-      <div className="h-[300px]">
+      <div className="flex-1 min-h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={formattedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid

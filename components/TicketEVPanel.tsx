@@ -90,7 +90,7 @@ export default function TicketEVPanel({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
@@ -124,7 +124,7 @@ export default function TicketEVPanel({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1">
         {/* Standard Ticket */}
         <div className="bg-terminal-dark border border-terminal-border rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
