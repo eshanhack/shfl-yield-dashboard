@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
+import { HistoricalDraw, formatUSD, formatNumber, calculateYieldPer1KSHFL } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
+import CurrencyAmount from "./CurrencyAmount";
 
 interface UpcomingDraw {
   drawNumber: number;
@@ -12,6 +13,7 @@ interface UpcomingDraw {
   totalPoolUSD: number;
   jackpotAmount: number;
   totalTickets: number;
+  prizeSplit: string;
 }
 
 interface LotteryHistoryTableProps {
@@ -90,6 +92,17 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
     setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)));
   };
 
+  // Calculate estimated yield for upcoming draw
+  const upcomingYield = useMemo(() => {
+    if (!upcomingDraw) return 0;
+    const yieldPer1K = calculateYieldPer1KSHFL(
+      upcomingDraw.totalPoolUSD,
+      upcomingDraw.totalTickets,
+      upcomingDraw.prizeSplit
+    );
+    return yieldPer1K * yieldMultiplier;
+  }, [upcomingDraw, yieldMultiplier]);
+
   return (
     <>
       <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow overflow-hidden">
@@ -120,7 +133,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   Avg. Yield/{stakedLabel} SHFL
                 </div>
                 <div className="text-sm font-medium text-terminal-accent">
-                  {formatUSD(avgYield)}
+                  <CurrencyAmount amount={avgYield} />
                 </div>
               </div>
             </div>
@@ -198,12 +211,12 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="text-sm font-medium tabular-nums text-cyan-100">
-                      {formatUSD(upcomingDraw.totalPoolUSD)}
+                      <CurrencyAmount amount={upcomingDraw.totalPoolUSD} />
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="text-sm font-medium tabular-nums text-yellow-300">
-                      {formatUSD(upcomingDraw.jackpotAmount)}
+                      <CurrencyAmount amount={upcomingDraw.jackpotAmount} />
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right text-sm tabular-nums text-cyan-200">
@@ -214,8 +227,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                       : upcomingDraw.totalTickets}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-medium tabular-nums px-2 py-0.5 rounded text-cyan-300/70 bg-cyan-500/10">
-                      —
+                    <span className="text-sm font-medium tabular-nums px-2 py-0.5 rounded text-cyan-300 bg-cyan-500/20">
+                      <CurrencyAmount amount={upcomingYield} />
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -289,7 +302,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         "text-sm font-medium tabular-nums",
                         isJackpotWon ? "text-yellow-100" : "text-terminal-text"
                       )}>
-                        {formatUSD(draw.totalPoolUSD)}
+                        <CurrencyAmount amount={draw.totalPoolUSD} />
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -297,7 +310,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         "text-sm font-medium tabular-nums",
                         isJackpotWon ? "text-yellow-300 font-bold" : "text-yellow-400"
                       )}>
-                        {formatUSD(estimatedJackpot)}
+                        <CurrencyAmount amount={estimatedJackpot} />
                       </span>
                     </td>
                     <td className={cn(
@@ -321,7 +334,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                             : "text-terminal-text"
                         )}
                       >
-                        {formatUSD(userYield)}
+                        <CurrencyAmount amount={userYield} />
                       </span>
                     </td>
                     <td className="px-4 py-3">
