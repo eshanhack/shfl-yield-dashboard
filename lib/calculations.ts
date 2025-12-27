@@ -37,6 +37,7 @@ export interface HistoricalDraw {
   prizepoolSplit?: string;
   jackpotWon?: boolean;
   jackpotAmount?: number;
+  singlesAdded?: number;
 }
 
 export interface YieldResult {
