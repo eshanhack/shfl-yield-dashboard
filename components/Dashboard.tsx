@@ -6,15 +6,12 @@ import {
   DollarSign,
   Users,
   TrendingUp,
-  Calculator,
   Zap,
   Ticket,
   RefreshCw,
-  Trophy,
 } from "lucide-react";
 
 import Header from "./Header";
-import KPICard from "./KPICard";
 import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
 import LotteryHistoryTable from "./LotteryHistoryTable";
@@ -44,6 +41,21 @@ import {
   HistoricalDraw,
   SHFL_PER_TICKET,
 } from "@/lib/calculations";
+
+// Helper function to format relative time in words
+function formatTimeAgo(weeksAgo: number): string {
+  if (weeksAgo === 0) return "this week";
+  if (weeksAgo === 1) return "1 week ago";
+  if (weeksAgo < 4) return `${weeksAgo} weeks ago`;
+  
+  const months = Math.floor(weeksAgo / 4);
+  if (months === 1) return "1 month ago";
+  if (months < 12) return `${months} months ago`;
+  
+  const years = Math.floor(months / 12);
+  if (years === 1) return "1 year ago";
+  return `${years} years ago`;
+}
 
 export default function Dashboard() {
   // State
@@ -147,6 +159,85 @@ export default function Dashboard() {
     return ((currentTickets - priorTickets) / priorTickets) * 100;
   }, [lotteryStats.totalTickets, lotteryStats.priorWeekTickets]);
 
+  // Calculate last week's APY (from the most recent completed draw)
+  const lastWeekAPY = useMemo(() => {
+    if (historicalDraws.length === 0) return 0;
+    const lastDraw = historicalDraws[0];
+    const ngrContribution = lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85;
+    const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
+    return calculateGlobalAPY(ngrContribution, totalTickets, price.usd, lastDraw.prizepoolSplit);
+  }, [historicalDraws, lotteryStats.totalTickets, price.usd]);
+
+  // Calculate APY change from last week vs current 4-week avg
+  const apyChange = useMemo(() => {
+    if (currentAPY === 0) return 0;
+    return ((currentAPY - lastWeekAPY) / lastWeekAPY) * 100;
+  }, [currentAPY, lastWeekAPY]);
+
+  // Find highest APY draw
+  const highestAPYData = useMemo(() => {
+    if (historicalDraws.length === 0) return { apy: 0, weeksAgo: 0 };
+    
+    let highest = { apy: 0, weeksAgo: 0 };
+    
+    historicalDraws.forEach((draw, index) => {
+      const ngrContribution = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
+      const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
+      const drawAPY = calculateGlobalAPY(ngrContribution, totalTickets, price.usd, draw.prizepoolSplit);
+      
+      if (drawAPY > highest.apy) {
+        highest = { apy: drawAPY, weeksAgo: index };
+      }
+    });
+    
+    return highest;
+  }, [historicalDraws, lotteryStats.totalTickets, price.usd]);
+
+  // Find highest prize pool
+  const highestPrizePoolData = useMemo(() => {
+    if (historicalDraws.length === 0) return { pool: 0, weeksAgo: 0 };
+    
+    let highest = { pool: 0, weeksAgo: 0 };
+    
+    historicalDraws.forEach((draw, index) => {
+      if (draw.totalPoolUSD > highest.pool) {
+        highest = { pool: draw.totalPoolUSD, weeksAgo: index };
+      }
+    });
+    
+    return highest;
+  }, [historicalDraws]);
+
+  // Calculate prize pool change vs last week
+  const prizePoolChange = useMemo(() => {
+    if (historicalDraws.length === 0) return 0;
+    const lastPool = historicalDraws[0]?.totalPoolUSD || 0;
+    if (lastPool === 0) return 0;
+    return ((weeklyPoolUSD - lastPool) / lastPool) * 100;
+  }, [weeklyPoolUSD, historicalDraws]);
+
+  // Current week's NGR (from API or latest draw)
+  const currentWeekNGR = useMemo(() => {
+    // The current draw's NGR is the live data we're showing
+    return historicalDraws[0]?.ngrUSD || 0;
+  }, [historicalDraws]);
+
+  // Find highest NGR week
+  const highestNGRData = useMemo(() => {
+    if (historicalDraws.length === 0) return { ngr: 0, weeksAgo: 0 };
+    
+    let highest = { ngr: 0, weeksAgo: 0 };
+    
+    historicalDraws.forEach((draw, index) => {
+      const ngrTotal = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
+      if (ngrTotal > highest.ngr) {
+        highest = { ngr: ngrTotal, weeksAgo: index };
+      }
+    });
+    
+    return highest;
+  }, [historicalDraws]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-terminal-black flex items-center justify-center">
@@ -178,14 +269,50 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Main APY Card - Large */}
           <div className="md:col-span-2 lg:col-span-1">
-            <KPICard
-              title="Global Yield APY"
-              value={formatPercent(currentAPY)}
-              subtitle="4-week moving average"
-              icon={Percent}
-              variant="accent"
-              size="large"
-            />
+            <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                    <Percent className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Annual Yield
+                  </span>
+                </div>
+                {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
+                  <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                    apyChange > 0 
+                      ? "text-terminal-positive bg-terminal-positive/10" 
+                      : "text-terminal-negative bg-terminal-negative/10"
+                  }`}>
+                    {apyChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                    <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(2)}%</span>
+                  </div>
+                )}
+              </div>
+              <div className="mb-2">
+                <span className="text-3xl font-bold text-terminal-accent tabular-nums">
+                  {formatPercent(currentAPY)}
+                </span>
+              </div>
+              <div className="text-xs text-terminal-textMuted mb-1">
+                4-week moving average
+              </div>
+              <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-terminal-textMuted">Last Week APY</span>
+                  <span className="font-medium text-terminal-text tabular-nums">
+                    {formatPercent(lastWeekAPY)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-terminal-textMuted">Highest APY</span>
+                  <span className="font-medium text-terminal-positive tabular-nums">
+                    {formatPercent(highestAPYData.apy)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestAPYData.weeksAgo)})</span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
@@ -195,24 +322,41 @@ export default function Dashboard() {
                   <DollarSign className="w-4 h-4 text-terminal-accent" />
                 </div>
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                  Current Prize Pool
+                  Upcoming Draw
                 </span>
               </div>
-              {/* Compact Jackpot badge */}
-              <div className="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1">
-                <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                <span className="text-xs font-bold text-yellow-400 tabular-nums">
-                  ${((lotteryStats.jackpotAmount || weeklyPoolUSD * 0.30) / 1_000_000).toFixed(2)}M
-                </span>
-              </div>
+              {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
+                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                  prizePoolChange > 0 
+                    ? "text-terminal-positive bg-terminal-positive/10" 
+                    : "text-terminal-negative bg-terminal-negative/10"
+                }`}>
+                  {prizePoolChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                  <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
+                </div>
+              )}
             </div>
             <div className="mb-1">
               <span className="text-2xl font-bold text-terminal-text tabular-nums">
                 {formatUSD(weeklyPoolUSD)}
               </span>
             </div>
-            <div className="text-xs text-terminal-textMuted">
+            <div className="text-xs text-terminal-textMuted mb-2">
               Draw #{lotteryStats.drawNumber || 64}
+            </div>
+            <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">Last Week Pool</span>
+                <span className="font-medium text-terminal-text tabular-nums">
+                  {formatUSD(historicalDraws[0]?.totalPoolUSD || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">Highest Pool</span>
+                <span className="font-medium text-terminal-positive tabular-nums">
+                  {formatUSD(highestPrizePoolData.pool)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -262,13 +406,50 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <KPICard
-            title="Avg. Weekly NGR"
-            value={formatUSD(ngrStats.current4WeekAvg)}
-            subtitle={`Prior 4wk: ${formatUSD(ngrStats.prior4WeekAvg)}`}
-            icon={TrendingUp}
-            change={ngrChange}
-          />
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                  <TrendingUp className="w-4 h-4 text-terminal-accent" />
+                </div>
+                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                  Avg. Weekly NGR
+                </span>
+              </div>
+              {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
+                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                  ngrChange > 0 
+                    ? "text-terminal-positive bg-terminal-positive/10" 
+                    : "text-terminal-negative bg-terminal-negative/10"
+                }`}>
+                  {ngrChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                  <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
+                </div>
+              )}
+            </div>
+            <div className="mb-1">
+              <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                {formatUSD(ngrStats.current4WeekAvg)}
+              </span>
+            </div>
+            <div className="text-xs text-terminal-textMuted mb-2">
+              Prior 4wk: {formatUSD(ngrStats.prior4WeekAvg)}
+            </div>
+            <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">This Week NGR</span>
+                <span className="font-medium text-terminal-accent tabular-nums">
+                  {formatUSD(currentWeekNGR + (historicalDraws[0]?.singlesAdded || 0) * 0.85)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-terminal-textMuted">Highest NGR</span>
+                <span className="font-medium text-terminal-positive tabular-nums">
+                  {formatUSD(highestNGRData.ngr)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Action Button Row */}
