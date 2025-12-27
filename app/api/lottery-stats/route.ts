@@ -26,11 +26,13 @@ async function scrapeLotteryPage(): Promise<Partial<CurrentLotteryStats>> {
   
   try {
     // Configure browser for Vercel serverless
+    const executablePath = await chromium.executablePath();
+    
     browser = await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      defaultViewport: { width: 1280, height: 720 },
+      executablePath,
+      headless: true,
     });
 
     const page = await browser.newPage();
