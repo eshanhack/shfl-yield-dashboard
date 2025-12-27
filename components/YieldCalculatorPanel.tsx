@@ -17,6 +17,7 @@ import {
   HistoricalDraw,
   SHFL_PER_TICKET
 } from "@/lib/calculations";
+import CurrencyAmount from "./CurrencyAmount";
 
 interface YieldCalculatorPanelProps {
   shflPrice: number;
@@ -153,8 +154,8 @@ export default function YieldCalculatorPanel({
             </div>
             <div className="text-center">
               <div className="text-xs text-terminal-textMuted mb-1">Value</div>
-              <div className="text-lg font-bold text-terminal-text tabular-nums">
-                {formatUSD(stakingValueUSD)}
+              <div className="text-lg font-bold text-terminal-text">
+                <CurrencyAmount amount={stakingValueUSD} />
               </div>
             </div>
             <button
@@ -182,16 +183,14 @@ export default function YieldCalculatorPanel({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5" />
-                <span className="text-xl font-bold text-terminal-text tabular-nums">
-                  {formatUSD(thisWeekYield.weeklyExpectedUSD)}
-                </span>
+                <CurrencyAmount amount={thisWeekYield.weeklyExpectedUSD} className="text-xl font-bold text-terminal-text" />
               </div>
               <div className="text-sm font-medium text-yellow-400 tabular-nums">
                 {((thisWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100).toFixed(3)}% weekly
               </div>
             </div>
             <div className="text-[10px] text-terminal-textMuted mt-2">
-              Based on current NGR: {formatUSD(currentWeekNGR)}
+              Based on current NGR: <CurrencyAmount amount={currentWeekNGR} />
             </div>
           </div>
 
@@ -204,16 +203,14 @@ export default function YieldCalculatorPanel({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5" />
-                <span className="text-xl font-bold text-terminal-text tabular-nums">
-                  {formatUSD(avgWeekYield.weeklyExpectedUSD)}
-                </span>
+                <CurrencyAmount amount={avgWeekYield.weeklyExpectedUSD} className="text-xl font-bold text-terminal-text" />
               </div>
               <div className="text-sm font-medium text-terminal-accent tabular-nums">
                 {((avgWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100).toFixed(3)}% weekly
               </div>
             </div>
             <div className="text-[10px] text-terminal-textMuted mt-2">
-              4-week avg NGR: {formatUSD(avgWeeklyNGR)}
+              4-week avg NGR: <CurrencyAmount amount={avgWeeklyNGR} />
             </div>
           </div>
 
@@ -226,9 +223,7 @@ export default function YieldCalculatorPanel({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5" />
-                <span className="text-xl font-bold text-terminal-text tabular-nums">
-                  {formatUSD(monthlyYield)}
-                </span>
+                <CurrencyAmount amount={monthlyYield} className="text-xl font-bold text-terminal-text" />
               </div>
               <div className="text-sm font-medium text-green-400 tabular-nums">
                 {((monthlyYield / stakingValueUSD) * 100).toFixed(2)}% monthly
@@ -248,9 +243,7 @@ export default function YieldCalculatorPanel({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5" />
-                <span className="text-xl font-bold text-terminal-text tabular-nums">
-                  {formatUSD(annualYield)}
-                </span>
+                <CurrencyAmount amount={annualYield} className="text-xl font-bold text-terminal-text" />
               </div>
               <div className="text-lg font-bold text-terminal-accent tabular-nums">
                 {formatPercent(annualAPY)} APY
@@ -315,15 +308,13 @@ export default function YieldCalculatorPanel({
                         day: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-2 text-right text-sm text-terminal-textMuted tabular-nums">
-                      {formatUSD(draw.ngrUSD)}
+                    <td className="px-4 py-2 text-right text-sm text-terminal-textMuted">
+                      <CurrencyAmount amount={draw.ngrUSD} />
                     </td>
                     <td className="px-4 py-2 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4" />
-                        <span className="text-sm font-medium text-terminal-text tabular-nums">
-                          {formatUSD(weeklyUSD)}
-                        </span>
+                        <CurrencyAmount amount={weeklyUSD} className="text-sm font-medium text-terminal-text" />
                       </div>
                     </td>
                     <td className="px-4 py-2 text-right">
