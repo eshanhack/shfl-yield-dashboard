@@ -392,6 +392,8 @@ export interface LotteryStats {
   drawStatus?: string;
   drawNumber?: number;
   jackpotAmount?: number;
+  priorWeekTickets?: number;
+  priorWeekSHFLStaked?: number;
 }
 
 /**

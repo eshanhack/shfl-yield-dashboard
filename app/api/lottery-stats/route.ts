@@ -12,6 +12,8 @@ export interface CurrentLotteryStats {
   powerplayPrice: number;
   drawStatus: string;
   drawNumber: number;
+  priorWeekTickets?: number;
+  priorWeekSHFLStaked?: number;
 }
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
@@ -184,7 +186,7 @@ async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data
   }
 }
 
-async function fetchLotteryDrawWithStaked(): Promise<LotteryDrawResponse["data"]["lotteryDraw"] | null> {
+async function fetchLotteryDrawWithStaked(drawId?: number): Promise<LotteryDrawResponse["data"]["lotteryDraw"] | null> {
   try {
     const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
@@ -198,7 +200,7 @@ async function fetchLotteryDrawWithStaked(): Promise<LotteryDrawResponse["data"]
       body: JSON.stringify({
         operationName: "getLotteryDraw",
         query: GET_LOTTERY_DRAW_QUERY,
-        variables: {},
+        variables: drawId ? { id: drawId } : {},
       }),
       cache: "no-store",
     });
@@ -261,6 +263,17 @@ export async function GET() {
     let totalStaked = drawWithStakedData?.totalStaked ? parseFloat(drawWithStakedData.totalStaked) : 0;
     let totalTickets = totalStaked > 0 ? Math.floor(totalStaked / 50) : 0;
     
+    // Fetch prior week's staked data (previous draw)
+    let priorWeekTickets = 0;
+    let priorWeekSHFLStaked = 0;
+    if (drawNumber > 1) {
+      const priorDrawData = await fetchLotteryDrawWithStaked(drawNumber - 1);
+      if (priorDrawData?.totalStaked) {
+        priorWeekSHFLStaked = parseFloat(priorDrawData.totalStaked);
+        priorWeekTickets = Math.floor(priorWeekSHFLStaked / 50);
+      }
+    }
+    
     // Fetch prize divisions to get exact jackpot amount
     let jackpotAmount = prizePool * 0.30; // Default fallback
     if (drawNumber > 0) {
@@ -304,6 +317,8 @@ export async function GET() {
       powerplayPrice: 4.00,
       drawStatus,
       drawNumber,
+      priorWeekTickets,
+      priorWeekSHFLStaked,
     };
 
     return NextResponse.json({
@@ -328,6 +343,8 @@ export async function GET() {
         powerplayPrice: 4.00,
         drawStatus: "unknown",
         drawNumber: 64,
+        priorWeekTickets: 0,
+        priorWeekSHFLStaked: 0,
       },
       lastUpdated: new Date().toISOString(),
     });

@@ -138,14 +138,13 @@ export default function Dashboard() {
     return ((current - prior) / prior) * 100;
   }, [ngrStats]);
 
-  // Calculate week-over-week staked change (current vs prior week from history)
+  // Calculate week-over-week staked change (current vs prior week from GraphQL)
   const stakedChange = useMemo(() => {
-    if (historicalDraws.length < 2) return 0;
     const currentTickets = lotteryStats.totalTickets;
-    const priorWeekTickets = historicalDraws[0]?.totalTickets || 0;
-    if (priorWeekTickets === 0) return 0;
-    return ((currentTickets - priorWeekTickets) / priorWeekTickets) * 100;
-  }, [lotteryStats.totalTickets, historicalDraws]);
+    const priorTickets = lotteryStats.priorWeekTickets || 0;
+    if (priorTickets === 0) return 0;
+    return ((currentTickets - priorTickets) / priorTickets) * 100;
+  }, [lotteryStats.totalTickets, lotteryStats.priorWeekTickets]);
 
   if (isLoading) {
     return (
