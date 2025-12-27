@@ -5,6 +5,7 @@ import { Building2, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { HistoricalDraw, formatNumber } from "@/lib/calculations";
 import CurrencyAmount from "./CurrencyAmount";
 import { cn } from "@/lib/utils";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface ShuffleRevenueCardProps {
   historicalDraws: HistoricalDraw[];
@@ -86,9 +87,12 @@ export default function ShuffleRevenueCard({
               <Building2 className="w-4 h-4 text-green-400" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-terminal-text">
-                Shuffle.com Revenue
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-medium text-terminal-text">
+                  Shuffle.com Revenue
+                </h3>
+                <InfoTooltip content={TOOLTIPS.shuffle} title="About Shuffle.com" />
+              </div>
               <p className="text-[10px] text-terminal-textMuted">
                 Estimated from lottery NGR allocation
               </p>
@@ -119,8 +123,9 @@ export default function ShuffleRevenueCard({
         {/* Main GGR Display */}
         <div className="bg-gradient-to-br from-green-500/10 to-emerald-900/20 border border-green-500/30 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-xs text-terminal-textSecondary uppercase tracking-wider">
               {periodLabels[timePeriod]} GGR (Est.)
+              <InfoTooltip content={TOOLTIPS.ggr} title="Gross Gaming Revenue" />
             </span>
             {timePeriod === "7d" && (
               <div className={cn(

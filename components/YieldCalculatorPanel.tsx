@@ -17,6 +17,7 @@ import {
   SHFL_PER_TICKET
 } from "@/lib/calculations";
 import CurrencyAmount from "./CurrencyAmount";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface YieldCalculatorPanelProps {
   shflPrice: number;
@@ -117,11 +118,14 @@ export default function YieldCalculatorPanel({
               <Calculator className="w-4 h-4 text-terminal-accent" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-terminal-text">
-                Yield Calculator
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-terminal-text">
+                  Yield Calculator
+                </h3>
+                <InfoTooltip content={TOOLTIPS.yield} title="How Yield Works" />
+              </div>
               <p className="text-xs text-terminal-textMuted">
-                Expected returns based on your stake
+                See how much you could earn from lottery prizes
               </p>
             </div>
           </div>
@@ -151,7 +155,10 @@ export default function YieldCalculatorPanel({
           </div>
           <div className="flex items-end gap-4">
             <div className="text-center min-w-[70px]">
-              <div className="text-xs text-terminal-textMuted mb-1">Tickets</div>
+              <div className="flex items-center justify-center gap-1 text-xs text-terminal-textMuted mb-1">
+                Tickets
+                <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
+              </div>
               <div className="text-lg font-bold text-terminal-accent tabular-nums h-[46px] flex items-center justify-center">
                 {formatNumber(ticketCount)}
               </div>

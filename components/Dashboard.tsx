@@ -19,6 +19,7 @@ import TicketEVPanel from "./TicketEVPanel";
 import CurrencyAmount from "./CurrencyAmount";
 import ShuffleRevenueCard from "./ShuffleRevenueCard";
 import ShuffleRevenueChart from "./ShuffleRevenueChart";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 import {
   fetchSHFLPrice,
@@ -287,6 +288,7 @@ export default function Dashboard() {
                   <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
                     Annual Yield
                   </span>
+                  <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                 </div>
                 {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
                   <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
@@ -333,6 +335,7 @@ export default function Dashboard() {
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
                   Upcoming Draw
                 </span>
+                <InfoTooltip content={TOOLTIPS.prizePool} title="Prize Pool" />
               </div>
               {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
                 <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
@@ -380,6 +383,7 @@ export default function Dashboard() {
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
                   Total Staked
                 </span>
+                <InfoTooltip content={TOOLTIPS.staking} title="What is Staking?" />
               </div>
               {stakedChange !== 0 && (
                 <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
@@ -426,6 +430,7 @@ export default function Dashboard() {
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
                   Avg. Weekly NGR
                 </span>
+                <InfoTooltip content={TOOLTIPS.ngr} title="What is NGR?" />
               </div>
               {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
                 <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${

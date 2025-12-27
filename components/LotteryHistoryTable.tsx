@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
 import CurrencyAmount from "./CurrencyAmount";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface UpcomingDraw {
   drawNumber: number;
@@ -110,11 +111,14 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
         <div className="p-4 border-b border-terminal-border">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-terminal-text">
-                Lottery History
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-terminal-text">
+                  Lottery History
+                </h3>
+                <InfoTooltip content={TOOLTIPS.lottery} title="How the Lottery Works" />
+              </div>
               <p className="text-xs text-terminal-textMuted">
-                {draws.length} total draws • Click on a draw to view full prize breakdown
+                {draws.length} completed draws • Click on a draw to view full prize breakdown
               </p>
             </div>
             <div className="flex items-center gap-6">
@@ -167,6 +171,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   <div className="flex items-center gap-1.5 justify-end">
                     <Trophy className="w-3 h-3" />
                     Jackpot
+                    <InfoTooltip content={TOOLTIPS.jackpot} title="Division 1 Prize" />
                   </div>
                 </th>
                 <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">

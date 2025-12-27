@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { SensitivityCell, generateSensitivityTable, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface SensitivityTableProps {
   baseNGR: number;
@@ -87,11 +88,14 @@ export default function SensitivityTable({
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow overflow-x-auto">
       <div className="mb-4">
-        <h3 className="text-sm font-medium text-terminal-text">
-          Yield Sensitivity Matrix
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium text-terminal-text">
+            Yield Sensitivity Matrix
+          </h3>
+          <InfoTooltip content={TOOLTIPS.sensitivity} title="What-If Analysis" />
+        </div>
         <p className="text-xs text-terminal-textMuted">
-          APY % based on NGR and SHFL price fluctuations (per {stakedLabel} SHFL staked)
+          How your APY changes with casino revenue and token price (per {stakedLabel} SHFL)
         </p>
       </div>
 

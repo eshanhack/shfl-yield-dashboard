@@ -20,6 +20,7 @@ import {
   EVResult
 } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface TicketEVPanelProps {
   totalPool: number;
@@ -97,9 +98,12 @@ export default function TicketEVPanel({
             <TrendingUp className="w-4 h-4 text-terminal-accent" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-terminal-text">
-              Ticket Expected Value
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-sm font-medium text-terminal-text">
+                Ticket Expected Value
+              </h3>
+              <InfoTooltip content={TOOLTIPS.ev} title="Expected Value (EV)" />
+            </div>
             <p className="text-[10px] text-terminal-textMuted">
               Pool: {formatUSD(drawData.pool)} • {drawData.tickets.toLocaleString()} tickets
             </p>

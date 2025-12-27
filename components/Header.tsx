@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Activity, Clock, TrendingUp, TrendingDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CurrencySelector from "./CurrencySelector";
+import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
 interface HeaderProps {
   price: number;
@@ -70,11 +71,14 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                 style={{ animationDuration: "3s" }}
               />
               <div>
-                <h1 className="text-lg font-semibold tracking-tight">
-                  SHFL<span className="text-terminal-accent">YIELD</span>
-                </h1>
-                <p className="text-[10px] text-terminal-textSecondary uppercase tracking-widest">
-                  Terminal v1.0
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-semibold tracking-tight">
+                    SHFL<span className="text-terminal-accent">YIELD</span>
+                  </h1>
+                  <InfoTooltip content={TOOLTIPS.shfl} title="What is SHFL?" />
+                </div>
+                <p className="text-[10px] text-terminal-textSecondary tracking-wide">
+                  Shuffle.com Staking Analytics
                 </p>
               </div>
             </div>
@@ -132,6 +136,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
                   Next Draw
                 </span>
+                <InfoTooltip content={TOOLTIPS.lottery} title="Weekly Lottery" />
               </div>
               <span
                 className={cn(
