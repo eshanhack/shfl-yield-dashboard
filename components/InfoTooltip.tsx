@@ -69,7 +69,7 @@ export const TOOLTIPS = {
   yield: "Expected winnings from divisions 2-9 (excluding jackpot). Based on your share of total tickets and the prize pool distribution.",
   shuffle: "Shuffle.com is a licensed cryptocurrency casino. The SHFL lottery is funded by 15% of the casino's weekly profits.",
   sensitivity: "Shows how your yield changes if NGR (casino revenue) or SHFL price moves up or down from current levels.",
-  ev: "Expected Value - the average amount you'd win per ticket over many draws. Negative EV means the lottery favors the house on average.",
+  ev: "Expected Value - the average return per ticket. For purchased tickets, 85% of sales go to the prize pool (15% house edge). Negative EV is expected. Staked tickets have no ongoing cost, so EV represents pure expected winnings.",
   unstaking: "You can unstake your SHFL anytime. Your tokens will be returned after the next lottery draw completes. Note: unstaked tokens won't participate in the upcoming draw.",
 };
 

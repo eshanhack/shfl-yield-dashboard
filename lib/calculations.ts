@@ -318,6 +318,10 @@ export function calculatePrizeAllocation(
 
 /**
  * Calculate EV for a Standard Ticket ($0.25)
+ * 
+ * Note: 85% of ticket sales go to the prize pool (15% house edge).
+ * The totalPool parameter already reflects this - it's the actual prize money available.
+ * This means purchased tickets inherently have negative EV due to the house edge.
  */
 export function calculateStandardTicketEV(
   totalPool: number,

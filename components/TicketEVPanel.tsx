@@ -241,9 +241,10 @@ export default function TicketEVPanel({
         <div className="flex items-start gap-2">
           <Info className="w-3 h-3 text-terminal-textMuted mt-0.5 flex-shrink-0" />
           <p className="text-[10px] text-terminal-textMuted leading-relaxed">
-            EV calculated using prize pool distribution and lottery probabilities. 
-            Staked tickets generate returns every draw. You can unstake anytime (tokens returned after next draw).
-            Standard: $0.25 | Powerplay: $4 (guarantees powerball) | Staked: 50 × ${shflPrice.toFixed(3)}
+            <span className="text-terminal-accent">85% of ticket sales</span> go to the prize pool (15% house edge).
+            Staked tickets have no ongoing cost — you can unstake anytime (tokens returned after next draw).
+            <br />
+            Standard: $0.25 | Powerplay: $4 (guarantees powerball) | Staked: 50 SHFL × ${shflPrice.toFixed(3)}
           </p>
         </div>
       </div>
