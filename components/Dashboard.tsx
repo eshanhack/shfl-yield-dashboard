@@ -22,6 +22,7 @@ import ShuffleRevenueChart from "./ShuffleRevenueChart";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 import TokenReturnsChart from "./TokenReturnsChart";
 import TokenValuationTable from "./TokenValuationTable";
+import Loader from "./Loader";
 
 import {
   fetchSHFLPrice,
@@ -251,74 +252,7 @@ export default function Dashboard() {
   }, [completedDraws]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-terminal-black flex items-center justify-center">
-        <div className="text-center">
-          {/* 3D Flipping SHFL Token */}
-          <div 
-            className="mx-auto mb-6"
-            style={{ perspective: "1000px" }}
-          >
-            <div 
-              className="relative"
-              style={{ 
-                width: "96px", 
-                height: "96px",
-                transformStyle: "preserve-3d",
-                animation: "coinFlip 2s linear infinite",
-              }}
-            >
-              {/* Front face */}
-              <div 
-                className="absolute inset-0 flex items-center justify-center"
-                style={{ backfaceVisibility: "hidden" }}
-              >
-                <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
-                  alt="SHFL Token"
-                  className="w-20 h-20"
-                  style={{ 
-                    filter: "drop-shadow(0 0 20px rgba(138, 43, 226, 0.6))",
-                  }}
-                />
-              </div>
-              {/* Back face */}
-              <div 
-                className="absolute inset-0 flex items-center justify-center"
-                style={{ 
-                  backfaceVisibility: "hidden",
-                  transform: "rotateY(180deg)",
-                }}
-              >
-                <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
-                  alt="SHFL Token"
-                  className="w-20 h-20"
-                  style={{ 
-                    filter: "drop-shadow(0 0 20px rgba(138, 43, 226, 0.6))",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          <p className="text-terminal-accent text-xl font-bold mb-1">
-            SHFL<span className="text-terminal-text">YIELD</span>
-          </p>
-          <p className="text-terminal-textSecondary text-sm">
-            Initializing terminal...
-          </p>
-          <p className="text-terminal-textMuted text-xs mt-2">
-            Fetching live data from CoinGecko & Shuffle.com
-          </p>
-          {/* Loading dots animation */}
-          <div className="flex items-center justify-center gap-1.5 mt-4">
-            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 bg-terminal-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-          </div>
-        </div>
-      </div>
-    );
+    return <Loader />;
   }
 
   return (
