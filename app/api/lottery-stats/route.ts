@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 30; // Allow up to 30 seconds for Puppeteer
 
 export interface CurrentLotteryStats {
   totalTickets: number;
@@ -6,141 +11,110 @@ export interface CurrentLotteryStats {
   currentPrizePool: number;
   nextDrawTimestamp: number;
   jackpotAmount: number;
-  ticketPrice: number; // in USD
-  powerplayPrice: number; // in USD
+  ticketPrice: number;
+  powerplayPrice: number;
 }
 
 function parseNumber(str: string): number {
   if (!str) return 0;
-  // Remove commas, $, and other non-numeric chars except decimal
   const cleaned = str.replace(/[^0-9.]/g, "");
   return parseFloat(cleaned) || 0;
 }
 
-function parseShortNumber(str: string): number {
-  if (!str) return 0;
-  const cleaned = str.trim().toUpperCase();
+async function scrapeLotteryPage(): Promise<Partial<CurrentLotteryStats>> {
+  let browser = null;
   
-  // Handle formats like "2.5M", "125M", "1.2B", etc.
-  const multipliers: { [key: string]: number } = {
-    K: 1_000,
-    M: 1_000_000,
-    B: 1_000_000_000,
-  };
-  
-  for (const [suffix, multiplier] of Object.entries(multipliers)) {
-    if (cleaned.endsWith(suffix)) {
-      const num = parseFloat(cleaned.replace(suffix, ""));
-      return num * multiplier;
+  try {
+    // Configure browser for Vercel serverless
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+
+    const page = await browser.newPage();
+    
+    // Set a reasonable timeout
+    page.setDefaultTimeout(15000);
+    
+    // Navigate to the lottery page
+    await page.goto("https://shuffle.com/lottery", {
+      waitUntil: "networkidle2",
+      timeout: 15000,
+    });
+
+    // Wait a bit for dynamic content to load
+    await page.waitForTimeout(3000);
+
+    // Get the page content
+    const content = await page.content();
+    
+    // Try to extract prize pool from the rendered page
+    // Look for large dollar amounts that could be the jackpot/prize pool
+    const prizePoolData = await page.evaluate(() => {
+      const bodyText = document.body.innerText;
+      
+      // Look for patterns like "$1,234,567" or amounts with M/K suffix
+      const dollarMatches = bodyText.match(/\$\s*([\d,]+(?:\.\d{2})?)/g) || [];
+      
+      // Filter and find the largest amount (likely the prize pool)
+      const amounts = dollarMatches
+        .map(match => {
+          const numStr = match.replace(/[$,\s]/g, "");
+          return parseFloat(numStr) || 0;
+        })
+        .filter(amt => amt > 1000); // Only consider amounts > $1000
+      
+      // Get the largest amount (most likely the jackpot)
+      const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
+      
+      // Also try to find ticket-related info
+      const ticketMatch = bodyText.match(/([\d,]+)\s*tickets?/i);
+      const tickets = ticketMatch ? parseInt(ticketMatch[1].replace(/,/g, "")) : 0;
+      
+      return {
+        prizePool: maxAmount,
+        tickets: tickets,
+      };
+    });
+
+    await browser.close();
+    
+    return {
+      currentPrizePool: prizePoolData.prizePool,
+      totalTickets: prizePoolData.tickets,
+      totalSHFLStaked: prizePoolData.tickets * 50,
+      jackpotAmount: prizePoolData.prizePool * 0.30,
+    };
+  } catch (error) {
+    console.error("Puppeteer scraping error:", error);
+    if (browser) {
+      await browser.close();
     }
+    throw error;
   }
-  
-  return parseNumber(cleaned);
 }
 
 export async function GET() {
   try {
-    // Fetch from shuffle.com/lottery page
-    const response = await fetch("https://shuffle.com/lottery", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
-    }
-
-    const html = await response.text();
-
-    let stats: CurrentLotteryStats = {
-      totalTickets: 0,
-      totalSHFLStaked: 0,
-      currentPrizePool: 0,
+    // Try to scrape the live data
+    const scrapedData = await scrapeLotteryPage();
+    
+    const stats: CurrentLotteryStats = {
+      totalTickets: scrapedData.totalTickets || 1_000_000,
+      totalSHFLStaked: scrapedData.totalSHFLStaked || 50_000_000,
+      currentPrizePool: scrapedData.currentPrizePool || 1_500_000,
       nextDrawTimestamp: getNextDrawTimestamp(),
-      jackpotAmount: 0,
+      jackpotAmount: scrapedData.jackpotAmount || 450_000,
       ticketPrice: 0.25,
       powerplayPrice: 4.00,
     };
 
-    // Try to find prize pool / jackpot amount
-    // Look for patterns like "$1,234,567" or "1.2M" near keywords like "jackpot", "prize", "pool"
-    
-    // Pattern 1: Look for large dollar amounts (likely the jackpot)
-    const dollarAmounts = html.matchAll(/\$\s*([\d,]+(?:\.\d{2})?)\s*(?:M|K|B)?/gi);
-    const amounts: number[] = [];
-    
-    for (const match of dollarAmounts) {
-      const amount = parseShortNumber(match[1]);
-      if (amount > 10000) { // Only consider amounts > $10k as potential prize pools
-        amounts.push(amount);
-      }
-    }
-    
-    // Pattern 2: Look for jackpot/prize pool specific patterns
-    const jackpotMatch = html.match(/(?:jackpot|prize\s*pool|total\s*prize)[:\s]*\$?\s*([\d,]+(?:\.\d+)?)\s*(?:M|K|B)?/i);
-    if (jackpotMatch) {
-      stats.currentPrizePool = parseShortNumber(jackpotMatch[1]);
-    }
-    
-    // Pattern 3: Look for JSON data embedded in the page
-    const jsonMatch = html.match(/"prizePool"\s*:\s*([\d.]+)/i) ||
-                      html.match(/"jackpot"\s*:\s*([\d.]+)/i) ||
-                      html.match(/"totalPrize"\s*:\s*([\d.]+)/i);
-    if (jsonMatch) {
-      const value = parseFloat(jsonMatch[1]);
-      if (value > stats.currentPrizePool) {
-        stats.currentPrizePool = value;
-      }
-    }
-
-    // Pattern 4: Look for formatted amounts like "1,234,567.89"
-    const formattedMatch = html.match(/(?:jackpot|prize)[^$]*\$\s*([\d,]+(?:\.\d{2})?)/i);
-    if (formattedMatch) {
-      const value = parseNumber(formattedMatch[1]);
-      if (value > stats.currentPrizePool) {
-        stats.currentPrizePool = value;
-      }
-    }
-
-    // Try to find total tickets
-    const ticketMatch = html.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:M|K)?\s*tickets/i) ||
-                        html.match(/tickets[:\s]+(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:M|K)?/i);
-    if (ticketMatch) {
-      stats.totalTickets = parseShortNumber(ticketMatch[1]);
-      stats.totalSHFLStaked = stats.totalTickets * 50;
-    }
-
-    // If we found amounts but no specific jackpot, use the largest one
-    if (stats.currentPrizePool === 0 && amounts.length > 0) {
-      stats.currentPrizePool = Math.max(...amounts);
-    }
-
-    // Calculate jackpot (typically 30% of prize pool based on recent split)
-    if (stats.currentPrizePool > 0) {
-      stats.jackpotAmount = stats.currentPrizePool * 0.30;
-    }
-
-    // If we still don't have data, use estimates based on recent lottery history
-    if (stats.currentPrizePool === 0) {
-      // Based on Draw #62: ~$1.26M pool
-      stats.currentPrizePool = 1_500_000;
-      stats.jackpotAmount = 450_000;
-    }
-
-    if (stats.totalTickets === 0) {
-      // Estimate based on typical participation
-      stats.totalTickets = 1_000_000;
-      stats.totalSHFLStaked = 50_000_000;
-    }
-
     return NextResponse.json({
       success: true,
       stats,
-      source: "shuffle.com/lottery",
+      source: "shuffle.com/lottery (live scrape)",
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {
@@ -149,11 +123,11 @@ export async function GET() {
     // Return fallback data based on recent draw history
     return NextResponse.json({
       success: false,
-      error: "Failed to fetch current stats",
+      error: "Failed to fetch current stats - using estimates",
       stats: {
         totalTickets: 1_000_000,
         totalSHFLStaked: 50_000_000,
-        currentPrizePool: 1_500_000, // Based on recent Draw #62
+        currentPrizePool: 1_500_000,
         nextDrawTimestamp: getNextDrawTimestamp(),
         jackpotAmount: 450_000,
         ticketPrice: 0.25,
@@ -171,23 +145,19 @@ function getNextDrawTimestamp(): number {
   const now = new Date();
   const nextFriday = new Date(now);
   
-  // Get current day (0 = Sunday, 5 = Friday)
   const currentDay = now.getUTCDay();
-  
-  // Calculate days until Friday
   let daysUntilFriday = (5 - currentDay + 7) % 7;
   
-  // If it's Friday, check if we're past the draw time (7:00 UTC = 6pm AEDT)
   if (daysUntilFriday === 0) {
     const drawTimeToday = new Date(now);
     drawTimeToday.setUTCHours(7, 0, 0, 0);
     if (now >= drawTimeToday) {
-      daysUntilFriday = 7; // Next Friday
+      daysUntilFriday = 7;
     }
   }
   
   nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
-  nextFriday.setUTCHours(7, 0, 0, 0); // 7am UTC = 6pm AEDT
+  nextFriday.setUTCHours(7, 0, 0, 0);
   
   return nextFriday.getTime();
 }
