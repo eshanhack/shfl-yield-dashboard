@@ -50,6 +50,13 @@ export default function ShuffleRevenueCard({
     const lastWeekNGR = draws[1]?.ngrUSD || thisWeekNGR;
     const wowChange = lastWeekNGR > 0 ? ((thisWeekNGR - lastWeekNGR) / lastWeekNGR) * 100 : 0;
 
+    // Month over month change (current 4 weeks vs previous 4 weeks)
+    const prior4Weeks = draws.slice(4, 8);
+    const priorMonthlyLotteryNGR = prior4Weeks.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0);
+    const momChange = priorMonthlyLotteryNGR > 0 
+      ? ((monthlyLotteryNGR - priorMonthlyLotteryNGR) / priorMonthlyLotteryNGR) * 100 
+      : 0;
+
     return {
       "7d": {
         shuffleNGR: weeklyShuffleNGR,
@@ -67,6 +74,7 @@ export default function ShuffleRevenueCard({
         lotteryNGR: annualLotteryNGR,
       },
       wowChange,
+      momChange,
     };
   }, [historicalDraws, currentWeekNGR]);
 
@@ -227,6 +235,19 @@ export default function ShuffleRevenueCard({
                   <TrendingDown className="w-3 h-3" />
                 )}
                 {revenueData.wowChange >= 0 ? "+" : ""}{revenueData.wowChange.toFixed(1)}% WoW
+              </div>
+            )}
+            {timePeriod === "30d" && (
+              <div className={cn(
+                "flex items-center gap-1 text-xs font-medium",
+                revenueData.momChange >= 0 ? "text-terminal-positive" : "text-terminal-negative"
+              )}>
+                {revenueData.momChange >= 0 ? (
+                  <TrendingUp className="w-3 h-3" />
+                ) : (
+                  <TrendingDown className="w-3 h-3" />
+                )}
+                {revenueData.momChange >= 0 ? "+" : ""}{revenueData.momChange.toFixed(1)}% MoM
               </div>
             )}
           </div>
