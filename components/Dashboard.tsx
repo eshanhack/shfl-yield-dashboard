@@ -425,7 +425,7 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8 overflow-safe">
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6 overflow-safe">
         {/* Section Selector */}
         <SectionSelector 
           activeSection={activeSection} 
@@ -433,54 +433,54 @@ export default function Dashboard() {
         />
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
-        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
-          <div className="flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-terminal-textMuted">
+        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 text-xs text-terminal-textMuted">
             <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             <button
               onClick={() => loadData(true)}
               disabled={isRefreshing}
-              className="p-2 lg:p-2.5 hover:text-terminal-accent hover:bg-terminal-accent/10 rounded-lg transition-all disabled:opacity-50 touch-target"
+              className="p-2 hover:text-terminal-accent hover:bg-terminal-accent/10 rounded-lg transition-all disabled:opacity-50 touch-target"
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
         {/* ==================== UNIFIED KPI ROW ==================== */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-5 xl:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-5">
           {/* Card 1 - Primary (highlighted) */}
-          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 shadow-glow-sm h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 shadow-glow-sm h-full min-h-[140px] sm:min-h-[160px]">
             <div key={`card1-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-3 lg:mb-4">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                        <Percent className="w-4 h-4 lg:w-5 lg:h-5 text-terminal-accent" />
+                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Percent className="w-4 h-4 text-terminal-accent" />
                       </div>
-                      <span className="text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Annual Yield
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
                     {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm font-medium px-1.5 sm:px-2 lg:px-2.5 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 ${apyChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${apyChange < 0 ? "rotate-180" : ""}`} />
                         <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
+                  <div className="mb-1 sm:mb-2">
+                    <span className="text-xl sm:text-2xl lg:text-2xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
+                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week avg</div>
+                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
                       <span className="text-terminal-textMuted">Highest</span>
                       <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
                     </div>
@@ -500,7 +500,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent" />
+                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-accent" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Gross Gaming Revenue</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -528,7 +528,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
+                    <span className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Circulating</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -547,7 +547,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 card-glow h-full min-h-[140px] sm:min-h-[160px]">
             <div key={`card2-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -568,7 +568,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text" />
+                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-text" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Draw #{lotteryStats.drawNumber || 64}</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -596,8 +596,8 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl">{overallBusinessHealth.emoji}</span>
-                    <span className={`text-base sm:text-2xl lg:text-3xl font-bold ${overallBusinessHealth.color}`}>{overallBusinessHealth.label}</span>
+                    <span className="text-xl sm:text-3xl lg:text-2xl">{overallBusinessHealth.emoji}</span>
+                    <span className={`text-base sm:text-2xl lg:text-2xl font-bold ${overallBusinessHealth.color}`}>{overallBusinessHealth.label}</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Weekly & monthly trends</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -625,7 +625,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M</span>
+                    <span className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Circulating</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -644,7 +644,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4  card-glow h-full min-h-[140px] sm:min-h-[160px]">
             <div key={`card3-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -665,7 +665,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
+                    <span className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">SHFL staked</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -693,8 +693,8 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl">{businessGrowth.emoji}</span>
-                    <span className={`text-base sm:text-2xl lg:text-3xl font-bold ${businessGrowth.color}`}>{businessGrowth.label}</span>
+                    <span className="text-xl sm:text-3xl lg:text-2xl">{businessGrowth.emoji}</span>
+                    <span className={`text-base sm:text-2xl lg:text-2xl font-bold ${businessGrowth.color}`}>{businessGrowth.label}</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week trend</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -722,7 +722,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={tokenMetrics.annualLotteryNGR} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-positive" />
+                    <CurrencyAmount amount={tokenMetrics.annualLotteryNGR} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-positive" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Lottery NGR</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -741,7 +741,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4  card-glow h-full min-h-[140px] sm:min-h-[160px]">
             <div key={`card4-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -762,7 +762,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text" />
+                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-text" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -791,7 +791,7 @@ export default function Dashboard() {
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3 flex items-center gap-1.5 sm:gap-2 lg:gap-3">
                     <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5 sm:w-7 sm:h-7 lg:w-9 lg:h-9" />
-                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-positive" />
+                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-positive" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Lifetime</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -819,7 +819,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={liquidityData.volume24h} className="text-xl sm:text-3xl lg:text-4xl font-bold text-blue-400" />
+                    <CurrencyAmount amount={liquidityData.volume24h} className="text-xl sm:text-3xl lg:text-2xl font-bold text-blue-400" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">24h volume</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -861,7 +861,7 @@ export default function Dashboard() {
             />
 
             {/* Charts and Ticket EV Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5 items-stretch">
               {/* NGR vs Price Chart */}
               <div className="lg:col-span-2 h-full">
                 <YieldChart data={chartData} />
@@ -881,7 +881,7 @@ export default function Dashboard() {
             </div>
 
             {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <SensitivityTable
                 baseNGR={ngrStats.current4WeekAvg}
                 basePrice={price.usd}
@@ -916,7 +916,7 @@ export default function Dashboard() {
         {activeSection === "revenue" && (
           <div className="section-content">
             {/* Revenue Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
                 // For current week, use the latest completed draw's POSTED NGR
@@ -937,7 +937,7 @@ export default function Dashboard() {
         {activeSection === "token" && (
           <div className="section-content">
             {/* Token Comparison Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <TokenReturnsChart />
               <TokenValuationTable />
             </div>
