@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   Calendar, 
   History,
-  Coins
+  Coins,
+  ArrowLeftRight
 } from "lucide-react";
 import { 
   calculateYield, 
@@ -47,9 +48,16 @@ export default function YieldCalculatorPanel({
   upcomingDraw,
 }: YieldCalculatorPanelProps) {
   const [inputValue, setInputValue] = useState<string>("100000");
+  const [inputMode, setInputMode] = useState<"shfl" | "tickets">("shfl");
 
-  // Parse the input value to number
-  const shflAmount = parseFloat(inputValue) || 0;
+  // Parse the input value to number and calculate SHFL amount based on mode
+  const rawInputValue = parseFloat(inputValue) || 0;
+  const shflAmount = inputMode === "shfl" 
+    ? rawInputValue 
+    : rawInputValue * SHFL_PER_TICKET;
+  const ticketCount = inputMode === "tickets" 
+    ? rawInputValue 
+    : Math.floor(rawInputValue / SHFL_PER_TICKET);
 
   // Load saved amount from localStorage on mount
   useEffect(() => {
@@ -61,17 +69,16 @@ export default function YieldCalculatorPanel({
 
   // Auto-save whenever the input value changes (debounced)
   useEffect(() => {
-    const amount = parseFloat(inputValue) || 0;
-    if (amount > 0) {
+    if (shflAmount > 0) {
       const timeoutId = setTimeout(() => {
-        localStorage.setItem("shfl-staked-amount", amount.toString());
+        localStorage.setItem("shfl-staked-amount", shflAmount.toString());
         // Dispatch custom event to notify other components
-        window.dispatchEvent(new CustomEvent("shfl-staked-changed", { detail: amount }));
+        window.dispatchEvent(new CustomEvent("shfl-staked-changed", { detail: shflAmount }));
       }, 300); // 300ms debounce
       
       return () => clearTimeout(timeoutId);
     }
-  }, [inputValue]);
+  }, [shflAmount]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -81,7 +88,22 @@ export default function YieldCalculatorPanel({
     }
   };
 
-  const ticketCount = Math.floor(shflAmount / SHFL_PER_TICKET);
+  // Toggle between SHFL and Tickets input mode
+  const handleFlipMode = () => {
+    const currentShfl = shflAmount;
+    const currentTickets = ticketCount;
+    
+    if (inputMode === "shfl") {
+      // Switching to tickets mode - show current ticket count
+      setInputMode("tickets");
+      setInputValue(currentTickets.toString());
+    } else {
+      // Switching to SHFL mode - show current SHFL amount
+      setInputMode("shfl");
+      setInputValue(currentShfl.toString());
+    }
+  };
+
   const stakingValueUSD = shflAmount * shflPrice;
 
   // This week's expected yield (using current week NGR estimate)
@@ -163,9 +185,22 @@ export default function YieldCalculatorPanel({
         {/* Input Section */}
         <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-terminal-border">
           <div className="w-full">
-            <label className="block text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider mb-1.5 sm:mb-2">
-              SHFL Staked Amount
-            </label>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <label className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">
+                {inputMode === "shfl" ? "SHFL Staked Amount" : "Number of Tickets"}
+              </label>
+              <button
+                onClick={handleFlipMode}
+                className="flex items-center gap-1.5 px-2 py-1 text-[10px] sm:text-xs text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-md transition-all"
+                title={inputMode === "shfl" ? "Switch to ticket input" : "Switch to SHFL input"}
+              >
+                <ArrowLeftRight className="w-3 h-3" />
+                <span className="hidden sm:inline">
+                  {inputMode === "shfl" ? "Enter Tickets" : "Enter SHFL"}
+                </span>
+                <span className="sm:hidden">Flip</span>
+              </button>
+            </div>
             <div className="relative">
               <input
                 type="text"
@@ -173,23 +208,26 @@ export default function YieldCalculatorPanel({
                 value={inputValue}
                 onChange={handleInputChange}
                 className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
-                placeholder="100000"
+                placeholder={inputMode === "shfl" ? "100000" : "2000"}
               />
               <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-terminal-textMuted text-xs sm:text-sm">
-                SHFL
+                {inputMode === "shfl" ? "SHFL" : "Tickets"}
               </span>
             </div>
           </div>
           
-          {/* Stats row */}
+          {/* Stats row - shows the opposite of what user input */}
           <div className="flex items-center justify-between sm:justify-start sm:gap-6">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1">
-                Tickets
+                {inputMode === "shfl" ? "Tickets" : "SHFL"}
                 <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
               </div>
               <div className="text-base sm:text-lg font-bold text-terminal-accent tabular-nums">
-                {formatNumber(ticketCount)}
+                {inputMode === "shfl" 
+                  ? formatNumber(ticketCount)
+                  : formatNumber(shflAmount)
+                }
               </div>
             </div>
             <div className="text-center">
