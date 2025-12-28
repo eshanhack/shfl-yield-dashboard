@@ -312,11 +312,46 @@ export async function GET() {
     let drawNumber = lotteryData?.id || 0;
     let nextDrawTime = getNextDrawTimestamp();
     
-    // Get totalStaked from the second query and calculate tickets
-    let totalStaked = drawWithStakedData?.totalStaked ? parseFloat(drawWithStakedData.totalStaked) : 0;
-    let totalTickets = totalStaked > 0 ? Math.floor(totalStaked / 50) : 0;
+    // Check if the latest draw is completed - if so, the upcoming draw is drawNumber + 1
+    // A draw is completed if its drawAt time has passed
+    const isDrawCompleted = lotteryData?.drawAt 
+      ? new Date(lotteryData.drawAt).getTime() < Date.now()
+      : drawStatus === "COMPLETED" || drawStatus === "DRAWN";
     
-    // Fetch prior week's staked data (previous draw)
+    if (isDrawCompleted && drawNumber > 0) {
+      // The API returned a completed draw, so upcoming is the next one
+      drawNumber = drawNumber + 1;
+      // Reset prize pool since we don't have data for the upcoming draw yet
+      // Try to fetch the upcoming draw's data
+      const upcomingDrawData = await fetchLotteryDrawWithStaked(drawNumber);
+      if (upcomingDrawData) {
+        prizePool = parseFloat(upcomingDrawData.prizePoolAmount) || prizePool;
+        drawStatus = upcomingDrawData.status || "PENDING";
+      } else {
+        drawStatus = "PENDING";
+      }
+    }
+    
+    // Fetch the current/upcoming draw's staked data
+    let totalStaked = 0;
+    let totalTickets = 0;
+    
+    // Try to get staked data for the upcoming draw
+    const currentDrawStakedData = await fetchLotteryDrawWithStaked(drawNumber);
+    if (currentDrawStakedData?.totalStaked) {
+      totalStaked = parseFloat(currentDrawStakedData.totalStaked);
+      totalTickets = Math.floor(totalStaked / 50);
+      // Also update prize pool if we got better data
+      if (currentDrawStakedData.prizePoolAmount) {
+        prizePool = parseFloat(currentDrawStakedData.prizePoolAmount);
+      }
+    } else if (drawWithStakedData?.totalStaked) {
+      // Fallback to original query data
+      totalStaked = parseFloat(drawWithStakedData.totalStaked);
+      totalTickets = Math.floor(totalStaked / 50);
+    }
+    
+    // Fetch prior week's staked data (previous draw = drawNumber - 1)
     let priorWeekTickets = 0;
     let priorWeekSHFLStaked = 0;
     if (drawNumber > 1) {
@@ -327,8 +362,8 @@ export async function GET() {
       }
     }
     
-    // Fetch prize divisions to get exact jackpot amount
-    let jackpotAmount = prizePool * 0.30; // Default fallback
+    // Fetch prize divisions to get exact jackpot amount for the upcoming draw
+    let jackpotAmount = prizePool * 0.30; // Default fallback (30% for jackpot)
     if (drawNumber > 0) {
       const prizes = await fetchPrizesAndResults(drawNumber);
       if (prizes) {
