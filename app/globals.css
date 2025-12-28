@@ -433,6 +433,142 @@ button:disabled,
   }
 }
 
+/* ==================== MOBILE OPTIMIZATIONS ==================== */
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  /* Reduce base font sizes */
+  .text-3xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+  .text-2xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+  .text-xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+  
+  /* Tighter padding for cards on mobile */
+  .mobile-compact-padding {
+    padding: 0.75rem !important;
+  }
+  
+  /* Hide less important info on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Mobile table improvements */
+.mobile-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.mobile-table-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.mobile-table-container::-webkit-scrollbar-thumb {
+  background: var(--terminal-accent-dim);
+  border-radius: 2px;
+}
+
+/* Mobile card improvements */
+@media (max-width: 640px) {
+  .mobile-card {
+    border-radius: 0.5rem;
+    padding: 0.875rem;
+  }
+  
+  .mobile-card-header {
+    padding: 0.75rem;
+  }
+  
+  /* Stack KPI card content vertically on very small screens */
+  .kpi-value {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* Improve touch scroll on mobile */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Mobile dropdown menu animation */
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdownSlide 0.2s ease-out forwards;
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-x {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Better tap highlighting on mobile */
+@media (hover: none) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(138, 43, 226, 0.2);
+  }
+}
+
+/* Prevent horizontal overflow */
+.overflow-safe {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Mobile-friendly modal */
+@media (max-width: 640px) {
+  .modal-mobile-full {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+}
+
+/* Compact table cells on mobile */
+@media (max-width: 640px) {
+  .table-compact th,
+  .table-compact td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;

@@ -109,36 +109,37 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
   return (
     <>
       <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow overflow-hidden">
-        <div className="p-4 border-b border-terminal-border">
-          <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="p-3 sm:p-4 border-b border-terminal-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-terminal-text">
+                <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
                   Lottery History
                 </h3>
                 <InfoTooltip content={TOOLTIPS.lottery} title="How the Lottery Works" />
               </div>
-              <p className="text-xs text-terminal-textMuted">
-                {draws.length} completed draws • Click on a draw to view full prize breakdown
+              <p className="text-[10px] sm:text-xs text-terminal-textMuted">
+                {draws.length} draws • Tap to view details
               </p>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
               {jackpotWonCount > 0 && (
-                <div className="text-right">
-                  <div className="text-xs text-yellow-500 flex items-center gap-1 justify-end">
+                <div className="text-left sm:text-right">
+                  <div className="text-[10px] sm:text-xs text-yellow-500 flex items-center gap-1">
                     <Trophy className="w-3 h-3" />
                     Jackpots Won
                   </div>
-                  <div className="text-sm font-medium text-yellow-400">
+                  <div className="text-xs sm:text-sm font-medium text-yellow-400">
                     {jackpotWonCount}
                   </div>
                 </div>
               )}
-              <div className="text-right">
-                <div className="text-xs text-terminal-textSecondary">
-                  Avg. Yield/{stakedLabel} SHFL
+              <div className="text-left sm:text-right">
+                <div className="text-[10px] sm:text-xs text-terminal-textSecondary">
+                  Avg/{stakedLabel}
                 </div>
-                <div className="text-sm font-medium text-terminal-accent">
+                <div className="text-xs sm:text-sm font-medium text-terminal-accent">
                   <CurrencyAmount amount={avgYield} />
                 </div>
               </div>
@@ -146,48 +147,48 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-          <table className="w-full sticky-header">
+        {/* Table with horizontal scroll on mobile */}
+        <div className="overflow-x-auto touch-scroll max-h-[500px] sm:max-h-[600px] overflow-y-auto">
+          <table className="w-full min-w-[600px] sticky-header">
             <thead className="bg-terminal-card">
               <tr className="border-b border-terminal-border">
-                <th className="px-4 py-3 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                  <div className="flex items-center gap-1">
                     <Ticket className="w-3 h-3" />
-                    Draw #
+                    <span className="hidden sm:inline">Draw</span> #
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                  <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     Date
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5 justify-end">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                  <div className="flex items-center gap-1 justify-end">
                     <DollarSign className="w-3 h-3" />
-                    Total Pool
+                    Pool
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5 justify-end">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden sm:table-cell">
+                  <div className="flex items-center gap-1 justify-end">
                     <Trophy className="w-3 h-3" />
                     Jackpot
-                    <InfoTooltip content={TOOLTIPS.jackpot} title="Division 1 Prize" />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5 justify-end">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden md:table-cell">
+                  <div className="flex items-center gap-1 justify-end">
                     <Users className="w-3 h-3" />
                     Tickets
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
-                  <div className="flex items-center gap-1.5 justify-end">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                  <div className="flex items-center gap-1 justify-end">
                     <TrendingUp className="w-3 h-3" />
-                    Yield/{stakedLabel} SHFL
+                    Yield
                   </div>
                 </th>
-                <th className="px-4 py-3 w-10"></th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 w-8 sm:w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -198,7 +199,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                     <EmptyState
                       icon={<Inbox className="w-8 h-8 text-terminal-accent" />}
                       title="No lottery data available"
-                      description="Lottery history will appear here once draws are completed. Check back after the next weekly draw."
+                      description="Lottery history will appear here once draws are completed."
                     />
                   </td>
                 </tr>
@@ -209,49 +210,48 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                 <tr
                   className="border-b border-terminal-border/50 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10 hover:from-cyan-500/20 hover:via-blue-500/20 hover:to-cyan-500/20 border-l-2 border-l-cyan-500"
                 >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <div className="relative">
-                        <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
+                        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse" />
                       </div>
-                      <span className="text-sm font-medium tabular-nums text-cyan-100">
+                      <span className="text-xs sm:text-sm font-medium tabular-nums text-cyan-100">
                         #{upcomingDraw.drawNumber}
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase tracking-wider font-bold animate-pulse">
-                        ⏳ UPCOMING
+                      <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase tracking-wider font-bold">
+                        ⏳ NEXT
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm tabular-nums text-cyan-200">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums text-cyan-200">
                     {new Date(upcomingDraw.date).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
-                      year: "numeric",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-medium tabular-nums text-cyan-100">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                    <span className="text-xs sm:text-sm font-medium tabular-nums text-cyan-100">
                       <CurrencyAmount amount={upcomingDraw.totalPoolUSD} />
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-medium tabular-nums text-yellow-300">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden sm:table-cell">
+                    <span className="text-xs sm:text-sm font-medium tabular-nums text-yellow-300">
                       <CurrencyAmount amount={upcomingDraw.jackpotAmount} />
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm tabular-nums text-cyan-200">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums text-cyan-200 hidden md:table-cell">
                     {upcomingDraw.totalTickets >= 1000000 
-                      ? `${(upcomingDraw.totalTickets / 1000000).toFixed(2)}M`
+                      ? `${(upcomingDraw.totalTickets / 1000000).toFixed(1)}M`
                       : upcomingDraw.totalTickets >= 1000
                       ? `${(upcomingDraw.totalTickets / 1000).toFixed(0)}K`
                       : upcomingDraw.totalTickets}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-sm font-medium tabular-nums px-2 py-0.5 rounded text-cyan-300 bg-cyan-500/20">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                    <span className="text-xs sm:text-sm font-medium tabular-nums px-1.5 sm:px-2 py-0.5 rounded text-cyan-300 bg-cyan-500/20">
                       <CurrencyAmount amount={upcomingYield} />
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3">
                     {/* No external link for upcoming draw */}
                   </td>
                 </tr>
@@ -274,79 +274,70 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                     key={draw.drawNumber}
                     onClick={() => setSelectedDraw(draw.drawNumber)}
                     className={cn(
-                      "border-b border-terminal-border/50 transition-all cursor-pointer",
+                      "border-b border-terminal-border/50 transition-all cursor-pointer active:bg-terminal-accent/20",
                       isJackpotWon 
                         ? "bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-amber-500/20 hover:from-yellow-500/30 hover:via-yellow-400/20 hover:to-amber-500/30 border-l-2 border-l-yellow-500"
                         : "hover:bg-terminal-accent/10",
                       isLatest && !isJackpotWon && "bg-terminal-accent/5"
                     )}
                   >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         {isJackpotWon && (
-                          <div className="relative">
-                            <Trophy className="w-4 h-4 text-yellow-400 animate-pulse" />
-                            <Sparkles className="w-3 h-3 text-yellow-300 absolute -top-1 -right-1 animate-ping" style={{ animationDuration: '2s' }} />
-                          </div>
+                          <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0" />
                         )}
                         <span className={cn(
-                          "text-sm font-medium tabular-nums",
+                          "text-xs sm:text-sm font-medium tabular-nums",
                           isJackpotWon ? "text-yellow-100" : "text-terminal-text"
                         )}>
                           #{draw.drawNumber}
                         </span>
                         {isLatest && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase tracking-wider">
+                          <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
-                          </span>
-                        )}
-                        {isJackpotWon && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase tracking-wider font-bold animate-pulse">
-                            🎉 JACKPOT WON
                           </span>
                         )}
                       </div>
                     </td>
                     <td className={cn(
-                      "px-4 py-3 text-sm tabular-nums",
+                      "px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums",
                       isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
                     )}>
                       {new Date(draw.date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
-                        year: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
                       <span className={cn(
-                        "text-sm font-medium tabular-nums",
+                        "text-xs sm:text-sm font-medium tabular-nums",
                         isJackpotWon ? "text-yellow-100" : "text-terminal-text"
                       )}>
                         <CurrencyAmount amount={draw.totalPoolUSD} />
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden sm:table-cell">
                       <span className={cn(
-                        "text-sm font-medium tabular-nums",
+                        "text-xs sm:text-sm font-medium tabular-nums",
                         isJackpotWon ? "text-yellow-300 font-bold" : "text-yellow-400"
                       )}>
                         <CurrencyAmount amount={estimatedJackpot} />
                       </span>
                     </td>
                     <td className={cn(
-                      "px-4 py-3 text-right text-sm tabular-nums",
+                      "px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums hidden md:table-cell",
                       isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
                     )}>
                       {draw.totalTickets >= 1000000 
-                        ? `${(draw.totalTickets / 1000000).toFixed(2)}M`
+                        ? `${(draw.totalTickets / 1000000).toFixed(1)}M`
                         : draw.totalTickets >= 1000
                         ? `${(draw.totalTickets / 1000).toFixed(0)}K`
                         : draw.totalTickets}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
                       <span
                         className={cn(
-                          "text-sm font-medium tabular-nums px-2 py-0.5 rounded",
+                          "text-xs sm:text-sm font-medium tabular-nums px-1.5 sm:px-2 py-0.5 rounded",
                           isJackpotWon
                             ? "text-yellow-200 bg-yellow-500/20"
                             : isAboveAvg
@@ -357,9 +348,9 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         <CurrencyAmount amount={userYield} />
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 sm:px-4 py-2 sm:py-3">
                       <ExternalLink className={cn(
-                        "w-4 h-4 transition-colors",
+                        "w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors",
                         isJackpotWon ? "text-yellow-400 hover:text-yellow-300" : "text-terminal-textMuted hover:text-terminal-accent"
                       )} />
                     </td>
@@ -370,53 +361,52 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="p-3 bg-terminal-dark/50 border-t border-terminal-border">
+        {/* Pagination - Simplified on mobile */}
+        <div className="p-2 sm:p-3 bg-terminal-dark/50 border-t border-terminal-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-xs text-terminal-textMuted">
-              <span>
-                Showing {startIndex + 1}-{Math.min(endIndex, draws.length)} of {draws.length} draws
-              </span>
-              {jackpotWonCount > 0 && (
-                <span className="flex items-center gap-1 text-yellow-500">
-                  <Trophy className="w-3 h-3" />
-                  Gold rows = Jackpot Won
-                </span>
-              )}
+            <div className="text-[10px] sm:text-xs text-terminal-textMuted">
+              {startIndex + 1}-{Math.min(endIndex, draws.length)} of {draws.length}
             </div>
             
             {totalPages > 1 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 0}
                   className={cn(
-                    "p-1.5 rounded transition-colors",
+                    "p-1.5 sm:p-2 rounded transition-colors touch-target",
                     currentPage === 0 
                       ? "text-terminal-textMuted/50 cursor-not-allowed" 
-                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10 active:bg-terminal-accent/20"
                   )}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 
-                <div className="flex items-center gap-1">
+                {/* Page numbers - fewer on mobile */}
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i).map((page) => {
-                    // Show first, last, current, and adjacent pages
+                    // On mobile, only show current, first, and last
+                    const isMobileVisible = page === 0 || page === totalPages - 1 || page === currentPage;
+                    const showEllipsis = page === 1 && currentPage > 2 && totalPages > 3;
+                    
+                    if (!isMobileVisible && window.innerWidth < 640) return null;
+                    
+                    // Desktop logic
                     const showPage = 
                       page === 0 || 
                       page === totalPages - 1 || 
                       Math.abs(page - currentPage) <= 1;
                     
-                    const showEllipsis = 
+                    const showDesktopEllipsis = 
                       (page === 1 && currentPage > 2) ||
                       (page === totalPages - 2 && currentPage < totalPages - 3);
                     
-                    if (!showPage && !showEllipsis) return null;
+                    if (!showPage && !showDesktopEllipsis) return null;
                     
-                    if (showEllipsis && !showPage) {
+                    if (showDesktopEllipsis && !showPage) {
                       return (
-                        <span key={page} className="px-1 text-terminal-textMuted">
+                        <span key={page} className="px-1 text-terminal-textMuted text-xs">
                           ...
                         </span>
                       );
@@ -427,10 +417,10 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         key={page}
                         onClick={() => goToPage(page)}
                         className={cn(
-                          "min-w-[28px] h-7 px-2 rounded text-xs font-medium transition-colors",
+                          "min-w-[28px] sm:min-w-[32px] h-7 sm:h-8 px-1.5 sm:px-2 rounded text-xs font-medium transition-colors touch-target",
                           currentPage === page
                             ? "bg-terminal-accent text-black"
-                            : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                            : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10 active:bg-terminal-accent/20"
                         )}
                       >
                         {page + 1}
@@ -443,13 +433,13 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages - 1}
                   className={cn(
-                    "p-1.5 rounded transition-colors",
+                    "p-1.5 sm:p-2 rounded transition-colors touch-target",
                     currentPage === totalPages - 1 
                       ? "text-terminal-textMuted/50 cursor-not-allowed" 
-                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10"
+                      : "text-terminal-textMuted hover:text-terminal-accent hover:bg-terminal-accent/10 active:bg-terminal-accent/20"
                   )}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             )}

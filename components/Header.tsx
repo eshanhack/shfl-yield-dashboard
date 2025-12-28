@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, Clock, TrendingUp, TrendingDown, HelpCircle } from "lucide-react";
+import { Activity, Clock, TrendingUp, TrendingDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CurrencySelector from "./CurrencySelector";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
@@ -16,6 +16,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
   const [timeToNextDraw, setTimeToNextDraw] = useState("");
   const [isPriceUpdating, setIsPriceUpdating] = useState(false);
   const [displayPrice, setDisplayPrice] = useState(price);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Update countdown timer
   useEffect(() => {
@@ -59,8 +60,112 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
 
   return (
     <header className="border-b border-terminal-border bg-terminal-dark/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-[1800px] mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="max-w-[1800px] mx-auto px-3 sm:px-4 py-2 sm:py-3">
+        {/* Mobile Layout */}
+        <div className="flex items-center justify-between lg:hidden">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <img
+              src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+              alt="SHFL Token"
+              className="w-7 h-7 sm:w-8 sm:h-8 animate-spin"
+              style={{ animationDuration: "3s" }}
+            />
+            <div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight">
+                SHFL<span className="text-terminal-accent">Pro</span>
+              </h1>
+              <p className="text-[9px] text-terminal-textSecondary tracking-wide hidden sm:block">
+                TERMINAL v1.0
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile Stats Row */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Compact Price */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  "text-sm sm:text-base font-bold tabular-nums",
+                  isPriceUpdating && "price-update text-terminal-accent"
+                )}
+              >
+                ${displayPrice.toFixed(4)}
+              </span>
+              <div
+                className={cn(
+                  "flex items-center text-[10px] sm:text-xs font-medium px-1 sm:px-1.5 py-0.5 rounded",
+                  isPositive
+                    ? "text-terminal-positive bg-terminal-positive/10"
+                    : "text-terminal-negative bg-terminal-negative/10"
+                )}
+              >
+                {isPositive ? "+" : ""}{priceChange24h.toFixed(1)}%
+              </div>
+            </div>
+
+            {/* Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 hover:bg-terminal-border/50 rounded-lg touch-target"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden mt-3 pt-3 border-t border-terminal-border space-y-3 animate-dropdown">
+            {/* Next Draw */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-terminal-textMuted" />
+                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
+                  Next Draw
+                </span>
+              </div>
+              <span
+                className={cn(
+                  "text-base font-bold tabular-nums",
+                  timeToNextDraw === "DRAW LIVE" && "text-terminal-positive animate-pulse"
+                )}
+              >
+                {timeToNextDraw}
+              </span>
+            </div>
+
+            {/* Currency Selector */}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-xs text-terminal-textSecondary">Currency</span>
+              <CurrencySelector />
+            </div>
+
+            {/* Live Status */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terminal-positive opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-terminal-positive"></span>
+                </span>
+                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
+                  Live Data
+                </span>
+              </div>
+              <div className="text-xs text-terminal-textMuted">
+                {new Date().toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -175,4 +280,3 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
     </header>
   );
 }
-
