@@ -421,14 +421,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ==================== LOTTERY SECTION ==================== */}
-        {activeSection === "lottery" && (
-          <>
-            {/* Top KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {/* Main APY Card - Large */}
-              <div className="md:col-span-2 lg:col-span-1">
-                <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
+        {/* ==================== UNIFIED KPI ROW ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Card 1 - Primary (highlighted) */}
+          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full min-h-[180px]">
+            <div key={`card1-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
+              {activeSection === "lottery" && (
+                <>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
@@ -440,184 +439,385 @@ export default function Dashboard() {
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
                     {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                        apyChange > 0 
-                          ? "text-terminal-positive bg-terminal-positive/10" 
-                          : "text-terminal-negative bg-terminal-negative/10"
-                      }`}>
-                        {apyChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-3 h-3 ${apyChange < 0 ? "rotate-180" : ""}`} />
                         <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(2)}%</span>
                       </div>
                     )}
                   </div>
                   <div className="mb-2">
-                    <span className="text-3xl font-bold text-terminal-accent tabular-nums">
-                      {formatPercent(currentAPY)}
-                    </span>
+                    <span className="text-3xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
                   </div>
-                  <div className="text-xs text-terminal-textMuted mb-1">
-                    4-week moving average
-                  </div>
-                  <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="text-xs text-terminal-textMuted mb-1">4-week moving average</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-terminal-textMuted">Last Week APY</span>
-                      <span className="font-medium text-terminal-text tabular-nums">
-                        {formatPercent(lastWeekAPY)}
-                      </span>
+                      <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-terminal-textMuted">Highest APY</span>
-                      <span className="font-medium text-terminal-positive tabular-nums">
-                        {formatPercent(highestAPYData.apy)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestAPYData.weeksAgo)})</span>
+                      <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestAPYData.weeksAgo)})</span></span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "revenue" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Building2 className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Annual GGR
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                      <DollarSign className="w-4 h-4 text-terminal-accent" />
+                  <div className="mb-2">
+                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-3xl font-bold text-terminal-accent" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Estimated Gross Gaming Revenue</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Annual NGR</span>
+                      <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text" />
                     </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Upcoming Draw
-                    </span>
-                    <InfoTooltip content={TOOLTIPS.prizePool} title="Prize Pool" />
-                  </div>
-                  {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
-                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                      prizePoolChange > 0 
-                        ? "text-terminal-positive bg-terminal-positive/10" 
-                        : "text-terminal-negative bg-terminal-negative/10"
-                    }`}>
-                      {prizePoolChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                      <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Lottery NGR</span>
+                      <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive" />
                     </div>
-                  )}
-                </div>
-                <div className="mb-1">
-                  <CurrencyAmount 
-                    amount={weeklyPoolUSD} 
-                    className="text-2xl font-bold text-terminal-text"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-2">
-                  Draw #{lotteryStats.drawNumber || 64}
-                </div>
-                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Last Week Pool</span>
-                    <CurrencyAmount 
-                      amount={completedDraws[0]?.totalPoolUSD || 0} 
-                      className="font-medium text-terminal-text"
-                    />
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Highest Pool</span>
-                    <span className="font-medium text-terminal-positive tabular-nums">
-                      <CurrencyAmount amount={highestPrizePoolData.pool} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                      <Users className="w-4 h-4 text-terminal-accent" />
+                </>
+              )}
+              {activeSection === "token" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Coins className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Market Cap
+                      </span>
                     </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Total Staked
-                    </span>
-                    <InfoTooltip content={TOOLTIPS.staking} title="What is Staking?" />
                   </div>
-                  {stakedChange !== 0 && (
-                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                      stakedChange > 0 
-                        ? "text-terminal-positive bg-terminal-positive/10" 
-                        : "text-terminal-negative bg-terminal-negative/10"
-                    }`}>
-                      {stakedChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                      <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(2)}%</span>
+                  <div className="mb-2">
+                    <span className="text-3xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Circulating market cap</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">FDV</span>
+                      <span className="font-medium text-terminal-text tabular-nums">${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M</span>
                     </div>
-                  )}
-                </div>
-                <div className="mb-2">
-                  <span className="text-2xl font-bold text-terminal-text tabular-nums">
-                    {formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Circulating Supply</span>
-                    <span className="font-bold text-terminal-accent tabular-nums">
-                      {lotteryStats.circulatingSupply 
-                        ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(2)
-                        : "0"}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Total Supply</span>
-                    <span className="font-bold text-purple-400 tabular-nums">
-                      {lotteryStats.totalSupply 
-                        ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(2)
-                        : "0"}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                      <TrendingUp className="w-4 h-4 text-terminal-accent" />
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Price</span>
+                      <span className="font-medium text-terminal-text tabular-nums">${price.usd.toFixed(4)}</span>
                     </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Avg. Weekly NGR
-                    </span>
-                    <InfoTooltip content={TOOLTIPS.ngr} title="What is NGR?" />
                   </div>
-                  {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
-                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                      ngrChange > 0 
-                        ? "text-terminal-positive bg-terminal-positive/10" 
-                        : "text-terminal-negative bg-terminal-negative/10"
-                    }`}>
-                      {ngrChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                      <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
-                    </div>
-                  )}
-                </div>
-                <div className="mb-1">
-                  <CurrencyAmount 
-                    amount={ngrStats.current4WeekAvg} 
-                    className="text-2xl font-bold text-terminal-text"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-2">
-                  Prior 4wk: <CurrencyAmount amount={ngrStats.prior4WeekAvg} />
-                </div>
-                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Last Week NGR</span>
-                    <CurrencyAmount 
-                      amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} 
-                      className="font-medium text-terminal-accent"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Highest NGR</span>
-                    <span className="font-medium text-terminal-positive tabular-nums">
-                      <CurrencyAmount amount={highestNGRData.ngr} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full min-h-[180px]">
+            <div key={`card2-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
+              {activeSection === "lottery" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <DollarSign className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Upcoming Draw
+                      </span>
+                      <InfoTooltip content={TOOLTIPS.prizePool} title="Prize Pool" />
+                    </div>
+                    {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
+                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${prizePoolChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-3 h-3 ${prizePoolChange < 0 ? "rotate-180" : ""}`} />
+                        <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-2">
+                    <CurrencyAmount amount={weeklyPoolUSD} className="text-3xl font-bold text-terminal-text" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Draw #{lotteryStats.drawNumber || 64}</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Last Week Pool</span>
+                      <CurrencyAmount amount={completedDraws[0]?.totalPoolUSD || 0} className="font-medium text-terminal-text" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Highest Pool</span>
+                      <span className="font-medium text-terminal-positive tabular-nums"><CurrencyAmount amount={highestPrizePoolData.pool} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span></span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "revenue" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded border ${overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" : overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" : "bg-terminal-accent/10 border-terminal-accent/20"}`}>
+                        <Activity className={`w-4 h-4 ${overallBusinessHealth.color}`} />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Business Health
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-3xl">{overallBusinessHealth.emoji}</span>
+                    <span className={`text-2xl font-bold ${overallBusinessHealth.color}`}>{overallBusinessHealth.label}</span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Based on weekly & monthly trends</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Weekly NGR Δ</span>
+                      <span className={`font-medium ${revenueStats.weeklyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{revenueStats.weeklyNGRGrowth >= 0 ? "+" : ""}{revenueStats.weeklyNGRGrowth.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Monthly NGR Δ</span>
+                      <span className={`font-medium ${revenueStats.monthlyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{revenueStats.monthlyNGRGrowth >= 0 ? "+" : ""}{revenueStats.monthlyNGRGrowth.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "token" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Wallet className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Supply
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-3xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M</span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Circulating supply</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Total Supply</span>
+                      <span className="font-medium text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Burned</span>
+                      <span className="font-medium text-terminal-negative tabular-nums">{formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full min-h-[180px]">
+            <div key={`card3-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
+              {activeSection === "lottery" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Users className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Total Staked
+                      </span>
+                      <InfoTooltip content={TOOLTIPS.staking} title="What is Staking?" />
+                    </div>
+                    {stakedChange !== 0 && (
+                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${stakedChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-3 h-3 ${stakedChange < 0 ? "rotate-180" : ""}`} />
+                        <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(2)}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-3xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL</span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Currently staked</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">% of Circulating</span>
+                      <span className="font-bold text-terminal-accent tabular-nums">{lotteryStats.circulatingSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(2) : "0"}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">% of Total Supply</span>
+                      <span className="font-bold text-purple-400 tabular-nums">{lotteryStats.totalSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(2) : "0"}%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "revenue" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Rocket className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Business Growth
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-3xl">{businessGrowth.emoji}</span>
+                    <span className={`text-2xl font-bold ${businessGrowth.color}`}>{businessGrowth.label}</span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">4-week growth trend</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Growth Rate</span>
+                      <span className={`font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Avg Pool Size</span>
+                      <CurrencyAmount amount={revenueStats.avgPoolSize} className="font-medium text-terminal-text" />
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "token" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                        <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Annual Value to Holders
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <CurrencyAmount amount={tokenMetrics.annualLotteryNGR} className="text-3xl font-bold text-terminal-positive" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Lottery NGR distributed</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">P/E Ratio</span>
+                      <span className={`font-medium tabular-nums ${tokenMetrics.peRatio < 10 ? "text-terminal-positive" : tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"}`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Staked %</span>
+                      <span className="font-medium text-purple-400 tabular-nums">{tokenMetrics.stakedPercent.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Card 4 */}
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full min-h-[180px]">
+            <div key={`card4-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
+              {activeSection === "lottery" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <TrendingUp className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Avg. Weekly NGR
+                      </span>
+                      <InfoTooltip content={TOOLTIPS.ngr} title="What is NGR?" />
+                    </div>
+                    {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
+                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${ngrChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-3 h-3 ${ngrChange < 0 ? "rotate-180" : ""}`} />
+                        <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-2">
+                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-3xl font-bold text-terminal-text" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Prior 4wk: <CurrencyAmount amount={ngrStats.prior4WeekAvg} /></div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Last Week NGR</span>
+                      <CurrencyAmount amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} className="font-medium text-terminal-accent" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Highest NGR</span>
+                      <span className="font-medium text-terminal-positive tabular-nums"><CurrencyAmount amount={highestNGRData.ngr} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span></span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "revenue" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                        <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        USDC Awarded (Lifetime)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-7 h-7" />
+                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-3xl font-bold text-terminal-positive" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">Distributed to stakers</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Total Draws</span>
+                      <span className="font-medium text-terminal-text">{completedDraws.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Avg per Draw</span>
+                      <CurrencyAmount amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} className="font-medium text-terminal-text" />
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeSection === "token" && (
+                <>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
+                        <Droplets className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Liquidity
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <CurrencyAmount amount={liquidityData.volume24h} className="text-3xl font-bold text-blue-400" />
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">24h trading volume</div>
+                  <div className="space-y-1 mt-auto pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">MC/Vol Ratio</span>
+                      <span className="font-medium text-terminal-text tabular-nums">{liquidityData.marketCapToVolume > 0 ? `${liquidityData.marketCapToVolume.toFixed(1)}x` : "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Daily Turnover</span>
+                      <span className="font-medium text-terminal-text tabular-nums">{tokenMetrics.marketCap > 0 && liquidityData.volume24h > 0 ? `${((liquidityData.volume24h / tokenMetrics.marketCap) * 100).toFixed(2)}%` : "-"}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ==================== LOTTERY SECTION ==================== */}
+        {activeSection === "lottery" && (
+          <div className="section-content">
 
             {/* Yield Calculator Panel */}
             <YieldCalculatorPanel
@@ -672,169 +872,12 @@ export default function Dashboard() {
                 ngrUSD: completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
               }}
             />
-          </>
+          </div>
         )}
 
         {/* ==================== REVENUE SECTION ==================== */}
         {activeSection === "revenue" && (
-          <>
-            {/* Revenue KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {/* Annual GGR */}
-              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                      <Building2 className="w-4 h-4 text-terminal-accent" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Annual GGR
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <CurrencyAmount 
-                    amount={revenueStats.annualGGR} 
-                    className="text-3xl font-bold text-terminal-accent"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Estimated Gross Gaming Revenue
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Annual NGR</span>
-                    <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text" />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Lottery NGR</span>
-                    <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Business Health */}
-              <div className={`bg-terminal-card border rounded-lg p-4 card-glow h-full ${
-                overallBusinessHealth.status === "hot" ? "border-orange-500/30" :
-                overallBusinessHealth.status === "cold" ? "border-blue-500/30" :
-                "border-terminal-border"
-              }`}>
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded border ${
-                      overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" :
-                      overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" :
-                      "bg-terminal-accent/10 border-terminal-accent/20"
-                    }`}>
-                      <Activity className={`w-4 h-4 ${overallBusinessHealth.color}`} />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Business Health
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-3xl">{overallBusinessHealth.emoji}</span>
-                  <span className={`text-2xl font-bold ${overallBusinessHealth.color}`}>
-                    {overallBusinessHealth.label}
-                  </span>
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Based on weekly & monthly trends
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Weekly NGR Δ</span>
-                    <span className={`font-medium ${revenueStats.weeklyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
-                      {revenueStats.weeklyNGRGrowth >= 0 ? "+" : ""}{revenueStats.weeklyNGRGrowth.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Monthly NGR Δ</span>
-                    <span className={`font-medium ${revenueStats.monthlyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
-                      {revenueStats.monthlyNGRGrowth >= 0 ? "+" : ""}{revenueStats.monthlyNGRGrowth.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Business Growth */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                      <Rocket className="w-4 h-4 text-terminal-accent" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Business Growth
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-3xl">{businessGrowth.emoji}</span>
-                  <span className={`text-2xl font-bold ${businessGrowth.color}`}>
-                    {businessGrowth.label}
-                  </span>
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  4-week growth trend
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Growth Rate</span>
-                    <span className={`font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
-                      {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Avg Pool Size</span>
-                    <CurrencyAmount amount={revenueStats.avgPoolSize} className="font-medium text-terminal-text" />
-                  </div>
-                </div>
-              </div>
-
-              {/* USDC Awarded to Stakers */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                      <PiggyBank className="w-4 h-4 text-terminal-positive" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      USDC Awarded (Lifetime)
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2 flex items-center gap-2">
-                  <img 
-                    src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" 
-                    alt="USDC" 
-                    className="w-7 h-7"
-                  />
-                  <CurrencyAmount 
-                    amount={revenueStats.totalLotteryNGRAdded} 
-                    className="text-3xl font-bold text-terminal-positive"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Distributed to stakers
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Total Draws</span>
-                    <span className="font-medium text-terminal-text">{completedDraws.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Avg per Draw</span>
-                    <CurrencyAmount 
-                      amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} 
-                      className="font-medium text-terminal-text" 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          <div className="section-content">
             {/* Revenue Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <ShuffleRevenueCard
@@ -849,164 +892,12 @@ export default function Dashboard() {
 
             {/* Revenue History Chart */}
             <ShuffleRevenueChart historicalDraws={completedDraws} />
-          </>
+          </div>
         )}
 
         {/* ==================== TOKEN SECTION ==================== */}
         {activeSection === "token" && (
-          <>
-            {/* Token KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {/* Market Cap */}
-              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                      <Coins className="w-4 h-4 text-terminal-accent" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Market Cap
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <span className="text-3xl font-bold text-terminal-accent tabular-nums">
-                    ${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M
-                  </span>
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Circulating market cap
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">FDV</span>
-                    <span className="font-medium text-terminal-text tabular-nums">
-                      ${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Price</span>
-                    <span className="font-medium text-terminal-text tabular-nums">
-                      ${price.usd.toFixed(4)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Supply */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                      <Wallet className="w-4 h-4 text-terminal-accent" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Supply
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <span className="text-3xl font-bold text-terminal-text tabular-nums">
-                    {formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M
-                  </span>
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Circulating supply
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Total Supply</span>
-                    <span className="font-medium text-terminal-text tabular-nums">
-                      {formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Burned</span>
-                    <span className="font-medium text-terminal-negative tabular-nums">
-                      {formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Value to Tokenholders */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                      <PiggyBank className="w-4 h-4 text-terminal-positive" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Annual Value to Holders
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <CurrencyAmount 
-                    amount={tokenMetrics.annualLotteryNGR} 
-                    className="text-3xl font-bold text-terminal-positive"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  Lottery NGR distributed
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">P/E Ratio</span>
-                    <span className={`font-medium tabular-nums ${
-                      tokenMetrics.peRatio < 10 ? "text-terminal-positive" : 
-                      tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"
-                    }`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Staked %</span>
-                    <span className="font-medium text-purple-400 tabular-nums">
-                      {tokenMetrics.stakedPercent.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Liquidity */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
-                      <Droplets className="w-4 h-4 text-blue-400" />
-                    </div>
-                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                      Liquidity
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <CurrencyAmount 
-                    amount={liquidityData.volume24h} 
-                    className="text-3xl font-bold text-blue-400"
-                  />
-                </div>
-                <div className="text-xs text-terminal-textMuted mb-1">
-                  24h trading volume
-                </div>
-                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">MC/Vol Ratio</span>
-                    <span className="font-medium text-terminal-text tabular-nums">
-                      {liquidityData.marketCapToVolume > 0 ? `${liquidityData.marketCapToVolume.toFixed(1)}x` : "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-terminal-textMuted">Daily Turnover</span>
-                    <span className="font-medium text-terminal-text tabular-nums">
-                      {tokenMetrics.marketCap > 0 && liquidityData.volume24h > 0 
-                        ? `${((liquidityData.volume24h / tokenMetrics.marketCap) * 100).toFixed(2)}%` 
-                        : "-"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          <div className="section-content">
             {/* Token Price Bar - Simplified */}
             <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 mb-6">
               <div className="flex flex-wrap items-center gap-6">
@@ -1038,7 +929,7 @@ export default function Dashboard() {
               <TokenReturnsChart />
               <TokenValuationTable />
             </div>
-          </>
+          </div>
         )}
 
         {/* Disclaimer & Footer */}

@@ -236,3 +236,44 @@ body {
   }
 }
 
+/* KPI Card Content Transitions */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.kpi-content-enter {
+  animation: fadeSlideIn 0.3s ease-out forwards;
+}
+
+.kpi-content-exit {
+  animation: fadeSlideOut 0.2s ease-in forwards;
+}
+
+/* Section transitions */
+.section-content {
+  animation: fadeSlideIn 0.4s ease-out;
+}
+
+/* Smooth value transitions */
+.value-transition {
+  transition: all 0.3s ease-out;
+}
+
