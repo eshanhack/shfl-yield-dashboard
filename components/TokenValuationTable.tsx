@@ -107,17 +107,15 @@ export default function TokenValuationTable() {
     fetchData();
   }, [viewMode]);
 
-  // Get color based on ratio (lower = greener = cheaper)
-  const getRatioColor = (ratio: number, allRatios: number[]) => {
-    const sorted = [...allRatios].sort((a, b) => a - b);
-    const rank = sorted.indexOf(ratio);
-    
-    if (rank === 0) return "text-green-400 bg-green-500/20";
-    if (rank === 1) return "text-yellow-400 bg-yellow-500/20";
+  // Get color based on ratio thresholds
+  // < 1x = Cheap (green), 1-10x = Fair (yellow), > 10x = Expensive (red)
+  const getRatioColor = (ratio: number) => {
+    if (ratio < 1) return "text-green-400 bg-green-500/20";
+    if (ratio <= 10) return "text-yellow-400 bg-yellow-500/20";
     return "text-red-400 bg-red-500/20";
   };
 
-  const currentRatios = tokens.map(t => viewMode === "revenue" ? t.psRatio : t.peRatio);
+  // No longer needed - using absolute thresholds instead of relative ranking
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
@@ -191,15 +189,15 @@ export default function TokenValuationTable() {
             <div className="flex items-center gap-4 mb-4 text-[10px]">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/30" />
-                <span className="text-terminal-textMuted">Cheap</span>
+                <span className="text-terminal-textMuted">Cheap (&lt;1x)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-yellow-500/20 border border-yellow-500/30" />
-                <span className="text-terminal-textMuted">Fair</span>
+                <span className="text-terminal-textMuted">Fair (1-10x)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/30" />
-                <span className="text-terminal-textMuted">Expensive</span>
+                <span className="text-terminal-textMuted">Expensive (&gt;10x)</span>
               </div>
             </div>
 
@@ -303,7 +301,7 @@ export default function TokenValuationTable() {
                         <td className="px-4 py-4 text-right">
                           <span className={cn(
                             "text-sm font-bold tabular-nums px-2.5 py-1 rounded-md",
-                            getRatioColor(ratio, currentRatios)
+                            getRatioColor(ratio)
                           )}>
                             {ratio.toFixed(1)}x
                           </span>
