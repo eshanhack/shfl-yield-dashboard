@@ -1,0 +1,16 @@
+{
+  "name": "shfl-revenue-scraper",
+  "version": "1.0.0",
+  "description": "Scraping server for token revenue data",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "puppeteer": "^21.6.1",
+    "cors": "^2.8.5"
+  }
+}
+

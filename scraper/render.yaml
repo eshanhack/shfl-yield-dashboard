@@ -1,0 +1,12 @@
+# Render.com Blueprint for auto-deployment
+services:
+  - type: web
+    name: shfl-revenue-scraper
+    env: node
+    buildCommand: npm install && npx puppeteer browsers install chrome
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome
+

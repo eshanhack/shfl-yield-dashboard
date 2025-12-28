@@ -66,6 +66,44 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
   };
 }
 
+// Fetch from dedicated scraper server
+async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
+  const scraperUrl = process.env.SCRAPER_URL;
+  
+  if (!scraperUrl) {
+    console.log("No SCRAPER_URL configured, using estimates");
+    return null;
+  }
+  
+  try {
+    console.log("Fetching from scraper:", scraperUrl);
+    
+    const response = await fetch(`${scraperUrl}/api/revenue`, {
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+    
+    if (!response.ok) {
+      console.error("Scraper response not ok:", response.status);
+      return null;
+    }
+    
+    const result = await response.json();
+    
+    if (result.success && Array.isArray(result.data)) {
+      console.log("Scraper returned data:", result.data.length, "tokens");
+      return result.data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error fetching from scraper:", error);
+    return null;
+  }
+}
+
 // Estimated data for other tokens based on public information
 function getEstimatedRevenues(): TokenRevenue[] {
   return [
@@ -111,11 +149,12 @@ function getEstimatedRevenues(): TokenRevenue[] {
 export async function GET(request: Request) {
   // Check cache first
   if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
-    const hasLive = cache.data.some(t => t.source === "live");
+    const liveCount = cache.data.filter(t => t.source === "live").length;
     return NextResponse.json({
       success: true,
       data: cache.data,
-      source: hasLive ? "live" : "estimated",
+      source: liveCount > 0 ? "live" : "estimated",
+      liveCount: `${liveCount}/${cache.data.length}`,
       cached: true,
       cacheAge: Math.round((Date.now() - cache.timestamp) / 1000 / 60) + " minutes",
     });
@@ -125,20 +164,32 @@ export async function GET(request: Request) {
     // Fetch SHFL revenue (live from our own API)
     const shflData = await fetchSHFLRevenue(request);
     
-    // Get estimated data for other tokens
-    const otherTokens = getEstimatedRevenues();
+    // Try to get live data from scraper for other tokens
+    const scraperData = await fetchFromScraper();
     
-    const revenues: TokenRevenue[] = [shflData, ...otherTokens];
+    let revenues: TokenRevenue[];
+    
+    if (scraperData && scraperData.length > 0) {
+      // Use scraper data for PUMP, RLB, HYPE
+      revenues = [
+        shflData,
+        ...scraperData.filter(t => t.symbol !== "SHFL"),
+      ];
+    } else {
+      // Fall back to estimates
+      revenues = [shflData, ...getEstimatedRevenues()];
+    }
     
     // Cache results
     cache = { data: revenues, timestamp: Date.now() };
     
-    const hasLive = revenues.some(t => t.source === "live");
+    const liveCount = revenues.filter(t => t.source === "live").length;
     
     return NextResponse.json({
       success: true,
       data: revenues,
-      source: hasLive ? "live" : "estimated",
+      source: liveCount > 0 ? "live" : "estimated",
+      liveCount: `${liveCount}/${revenues.length}`,
       cached: false,
       details: revenues.map(r => ({ symbol: r.symbol, source: r.source })),
     });
@@ -163,6 +214,7 @@ export async function GET(request: Request) {
       success: true,
       data: fallbackData,
       source: "estimated",
+      liveCount: "0/4",
       cached: false,
       error: String(error),
     });
