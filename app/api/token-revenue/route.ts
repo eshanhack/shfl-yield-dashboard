@@ -22,7 +22,7 @@ const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 async function getBrowser() {
   return puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: { width: 1280, height: 720 },
     executablePath: await chromium.executablePath(),
     headless: true,
   });
