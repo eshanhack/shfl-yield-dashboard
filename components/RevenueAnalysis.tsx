@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
 import { HistoricalDraw } from "@/lib/calculations";
@@ -196,22 +196,17 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
               const varianceNum = parseFloat(health.variance);
               
               return (
-                <div key={key} className={cn("rounded-lg p-3 border", health.bgColor, health.borderColor)}>
-                  <div className="flex items-center justify-between mb-2.5">
+                <div key={key} className={cn("rounded-lg p-3 border-2", health.bgColor, health.borderColor)}>
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-terminal-text">{label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded font-medium",
-                        varianceNum > 0 ? "bg-orange-500/20 text-orange-400" : 
-                        varianceNum < 0 ? "bg-blue-500/20 text-blue-400" : 
-                        "bg-terminal-border/50 text-terminal-textMuted"
-                      )}>
-                        {varianceNum > 0 ? "+" : ""}{health.variance}% vs expected
-                      </span>
-                      <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1", health.color)}>
-                        <span>{health.emoji}</span>
-                        <span>{health.label}</span>
-                      </div>
+                    <div className={cn(
+                      "px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg",
+                      health.status === "hot" && "bg-orange-500/30 text-orange-300 border border-orange-500/50",
+                      health.status === "cold" && "bg-blue-500/30 text-blue-300 border border-blue-500/50",
+                      health.status === "neutral" && "bg-terminal-border/50 text-terminal-textSecondary border border-terminal-border"
+                    )}>
+                      <span className="text-sm">{health.emoji}</span>
+                      <span>{health.label}</span>
                     </div>
                   </div>
                   
@@ -253,7 +248,7 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
                         </span>
                       </div>
                       <div className={cn(
-                        "text-[9px] mt-0.5",
+                        "text-[9px] mt-0.5 font-medium",
                         varianceNum > 5 ? "text-orange-400" : varianceNum < -5 ? "text-blue-400" : "text-terminal-textMuted"
                       )}>
                         {varianceNum > 0 ? "↑" : varianceNum < 0 ? "↓" : "="} {Math.abs(varianceNum).toFixed(1)}% {varianceNum > 0 ? "above" : varianceNum < 0 ? "below" : "at"} expected
@@ -267,22 +262,32 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
 
           {/* Legend */}
           <div className="pt-3 mt-3 border-t border-terminal-border/50">
-            <div className="text-[9px] text-terminal-textMuted mb-2">
-              Expected NGR = Deposits ÷ 40 (based on GGR/NGR ratios)
+            <div className="text-[10px] text-terminal-textSecondary font-medium mb-2">
+              Business Health Indicators
             </div>
             <div className="grid grid-cols-3 gap-2 text-[9px]">
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-orange-500/10 border border-orange-500/20">
                 <span>🔥</span>
-                <span className="text-orange-400 font-medium">NGR &gt; expected</span>
+                <span className="text-orange-400 font-medium">Running hot (casino winning)</span>
               </div>
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-blue-500/10 border border-blue-500/20">
                 <span>🥶</span>
-                <span className="text-blue-400 font-medium">NGR &lt; expected</span>
+                <span className="text-blue-400 font-medium">Running cold (players winning)</span>
               </div>
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-terminal-border/30 border border-terminal-border/50">
                 <span>📊</span>
-                <span className="text-terminal-textSecondary font-medium">Within ±10%</span>
+                <span className="text-terminal-textSecondary font-medium">Running as expected</span>
               </div>
+            </div>
+            <div className="mt-3 pt-2 border-t border-terminal-border/30">
+              <a 
+                href="https://terminal.tanzanite.xyz/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[9px] text-terminal-textMuted hover:text-terminal-accent transition-colors flex items-center gap-1"
+              >
+                Data provided by Tanzanite <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           </div>
         </div>
