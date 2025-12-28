@@ -92,8 +92,12 @@ export interface LotteryDrawData {
   date: string;
   prizePool: number;
   jackpotted: number;
+  // ngrAdded = the actual NGR that contributed to THIS draw (from previous draw's row)
   ngrAdded: number;
   singlesAdded: number;
+  // postedNgrAdded = what's shown in this draw's row (goes to NEXT draw)
+  postedNgrAdded?: number;
+  postedSinglesAdded?: number;
   prizepoolSplit: string;
   totalNGRContribution: number;
   totalStaked?: number;
@@ -263,15 +267,24 @@ export async function GET(request: Request) {
     
     const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
     
+    // IMPORTANT: The ngrAdded in a draw's row is added to the NEXT draw's prize pool
+    // So Draw N's actual NGR contribution comes from Draw (N-1)'s ngrAdded field
+    const previousDrawData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum - 1);
+    
     // Check if jackpot was won from prize data (winCount > 0)
     const jackpotPrize = prizes?.find(p => p.category === "JACKPOT");
     const jackpotWonFromPrizes = jackpotPrize ? jackpotPrize.winCount > 0 : false;
     const jackpotWonFromRatio = staticData ? wasJackpotWon(staticData.jackpotted, staticData.prizePool) : false;
     
-    // Calculate total NGR from prize data if no static data
     const totalPool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
-    const ngrAdded = staticData?.ngrAdded || totalPool * 0.15; // Estimate 15% if no data
-    const singlesAdded = staticData?.singlesAdded || 0;
+    
+    // The actual NGR that contributed to THIS draw came from the PREVIOUS draw's ngrAdded
+    const actualNgrForThisDraw = previousDrawData?.ngrAdded || (drawNum === 1 ? 0 : totalPool * 0.15);
+    const actualSinglesForThisDraw = previousDrawData?.singlesAdded || 0;
+    
+    // Posted values (what's shown in this draw's row - goes to NEXT draw)
+    const postedNgrAdded = staticData?.ngrAdded || totalPool * 0.15;
+    const postedSinglesAdded = staticData?.singlesAdded || 0;
     
     return NextResponse.json({
       success: true,
@@ -280,10 +293,14 @@ export async function GET(request: Request) {
         date: apiData?.drawAt || staticData?.date || "",
         prizePool: totalPool,
         jackpotted: staticData?.jackpotted || 0,
-        ngrAdded,
-        singlesAdded,
+        // ngrAdded = actual NGR that contributed to THIS draw
+        ngrAdded: actualNgrForThisDraw,
+        singlesAdded: actualSinglesForThisDraw,
+        // Posted values for reference
+        postedNgrAdded,
+        postedSinglesAdded,
         prizepoolSplit: staticData?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-        totalNGRContribution: ngrAdded + (singlesAdded * 0.85),
+        totalNGRContribution: actualNgrForThisDraw + (actualSinglesForThisDraw * 0.85),
         totalStaked: apiData?.totalStaked || 0,
         totalTickets: apiData?.totalStaked ? Math.floor(apiData.totalStaked / 50) : 0,
         prizes,
@@ -313,13 +330,26 @@ export async function GET(request: Request) {
   }
 
   // Build draws list combining API data with static data
+  // IMPORTANT: The ngrAdded in a draw's row is added to the NEXT draw's prize pool
+  // So Draw N's actual NGR contribution comes from Draw (N-1)'s ngrAdded field
   let drawsWithData: LotteryDrawData[] = allDrawNumbers.map((drawNum, index) => {
     const apiData = allDrawsData[index];
     const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
     
+    // Get the PREVIOUS draw's data for the actual NGR contribution to this draw
+    const previousDrawData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum - 1);
+    
     const prizePool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
-    const ngrAdded = staticData?.ngrAdded || prizePool * 0.15;
-    const singlesAdded = staticData?.singlesAdded || 0;
+    
+    // The actual NGR that contributed to THIS draw came from the PREVIOUS draw's ngrAdded
+    // For Draw 1, there's no previous draw, so we estimate based on the prize pool
+    const actualNgrForThisDraw = previousDrawData?.ngrAdded || (drawNum === 1 ? 0 : prizePool * 0.15);
+    const actualSinglesForThisDraw = previousDrawData?.singlesAdded || 0;
+    
+    // Also store the "posted" NGR (what's shown in this draw's row - goes to NEXT draw)
+    const postedNgrAdded = staticData?.ngrAdded || prizePool * 0.15;
+    const postedSinglesAdded = staticData?.singlesAdded || 0;
+    
     const jackpotted = staticData?.jackpotted || prizePool * 0.85;
     
     return {
@@ -327,10 +357,14 @@ export async function GET(request: Request) {
       date: apiData?.drawAt?.split('T')[0] || staticData?.date || "",
       prizePool,
       jackpotted,
-      ngrAdded,
-      singlesAdded,
+      // ngrAdded represents the NGR that actually contributed to THIS draw (from previous draw's row)
+      ngrAdded: actualNgrForThisDraw,
+      singlesAdded: actualSinglesForThisDraw,
+      // Also include posted values for reference
+      postedNgrAdded,
+      postedSinglesAdded,
       prizepoolSplit: staticData?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-      totalNGRContribution: ngrAdded + (singlesAdded * 0.85),
+      totalNGRContribution: actualNgrForThisDraw + (actualSinglesForThisDraw * 0.85),
       totalStaked: apiData?.totalStaked || 0,
       totalTickets: apiData?.totalStaked ? Math.floor(apiData.totalStaked / 50) : 0,
       jackpotWon: staticData ? wasJackpotWon(staticData.jackpotted, staticData.prizePool) : false,

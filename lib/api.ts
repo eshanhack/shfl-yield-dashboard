@@ -36,8 +36,12 @@ export interface LotteryDrawRaw {
   date: string;
   prizePool: number;
   jackpotted: number;
+  // ngrAdded = the actual NGR that contributed to THIS draw (from previous draw's row)
   ngrAdded: number;
   singlesAdded: number;
+  // postedNgrAdded = what's shown in this draw's row (goes to NEXT draw)
+  postedNgrAdded?: number;
+  postedSinglesAdded?: number;
   prizepoolSplit: string;
   totalNGRContribution: number; // ngrAdded + (singlesAdded * 0.85)
   totalStaked?: number;
@@ -213,12 +217,16 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         drawNumber: draw.drawNumber,
         date: draw.date,
         totalPoolUSD: draw.prizePool,
-        ngrUSD: draw.totalNGRContribution, // NGR + (singles * 0.85)
+        // ngrUSD = actual NGR that contributed to THIS draw (from previous draw's posted NGR)
+        ngrUSD: draw.totalNGRContribution, // ngrAdded + (singlesAdded * 0.85)
         totalTickets,
         yieldPerThousandSHFL: calcYield(draw.totalNGRContribution, totalTickets, draw.prizepoolSplit),
         prizepoolSplit: draw.prizepoolSplit,
         jackpotWon: draw.jackpotWon,
         jackpotAmount: draw.jackpotAmount,
+        // Posted values (what's shown in this draw's row - goes to NEXT draw)
+        postedNgrUSD: (draw.postedNgrAdded || 0) + (draw.postedSinglesAdded || 0) * 0.85,
+        postedSinglesAdded: draw.postedSinglesAdded,
       };
     });
   } catch {

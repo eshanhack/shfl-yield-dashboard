@@ -6,6 +6,15 @@
  * - Lottery: 5 numbers from 1-55, 1 powerball from 1-18
  * - Total combinations = C(55,5) × 18 = 62,617,698
  * - Prize pool split across 9 divisions (Jackpot excluded from yield)
+ * 
+ * IMPORTANT - NGR Data Interpretation:
+ * The "NGR Added" shown in a draw's row on the lottery history page 
+ * (https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history)
+ * is added to the NEXT draw's prize pool, not that draw's.
+ * Example: Draw 1's NGR Added ($100k) → Goes to Draw 2's prize pool
+ * 
+ * In our data, ngrUSD for a draw represents the actual NGR that was 
+ * contributed to that draw's prize pool (from the previous draw's row).
  */
 
 // Constants
@@ -31,6 +40,7 @@ export interface HistoricalDraw {
   drawNumber: number;
   date: string;
   totalPoolUSD: number;
+  // ngrUSD = the actual NGR that contributed to THIS draw (from previous draw's row)
   ngrUSD: number;
   totalTickets: number;
   yieldPerThousandSHFL: number;
@@ -38,6 +48,9 @@ export interface HistoricalDraw {
   jackpotWon?: boolean;
   jackpotAmount?: number;
   singlesAdded?: number;
+  // postedNgrUSD = what's shown in this draw's row (goes to NEXT draw)
+  postedNgrUSD?: number;
+  postedSinglesAdded?: number;
 }
 
 export interface YieldResult {

@@ -844,7 +844,8 @@ export default function Dashboard() {
             {/* Yield Calculator Panel */}
             <YieldCalculatorPanel
               shflPrice={price.usd}
-              currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+              // For upcoming draw, use the latest completed draw's POSTED NGR
+              currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
               avgWeeklyNGR={ngrStats.current4WeekAvg}
               totalTickets={lotteryStats.totalTickets}
               historicalDraws={completedDraws}
@@ -891,7 +892,8 @@ export default function Dashboard() {
                 jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
                 totalTickets: lotteryStats.totalTickets,
                 prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-                ngrUSD: completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
+                // For upcoming draw, use the latest completed draw's POSTED NGR (what goes to next draw)
+                ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
               }}
             />
           </div>
@@ -904,11 +906,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
-                currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                // For current week, use the latest completed draw's POSTED NGR
+                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
               />
               <RevenueAnalysis
                 historicalDraws={completedDraws}
-                currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
               />
             </div>
 
