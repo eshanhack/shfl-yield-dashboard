@@ -12,9 +12,9 @@ interface TokenRevenue {
   source: "live" | "estimated";
 }
 
-// Cache results
+// Disable cache temporarily to ensure fresh data
 let cache: { data: TokenRevenue[]; timestamp: number } | null = null;
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 0; // Disabled - always fetch fresh
 
 // Fetch SHFL revenue from lottery history API
 // EXACT SAME calculation as ShuffleRevenueCard for consistency
@@ -188,18 +188,55 @@ export async function GET(request: Request) {
     
     // Try to get live data from scraper for other tokens
     const scraperData = await fetchFromScraper();
+    const estimates = getEstimatedRevenues();
     
-    let revenues: TokenRevenue[];
+    let revenues: TokenRevenue[] = [shflData];
     
-    if (scraperData && scraperData.length > 0) {
-      // Use scraper data for PUMP, RLB, HYPE
-      revenues = [
-        shflData,
-        ...scraperData.filter(t => t.symbol !== "SHFL"),
-      ];
-    } else {
-      // Fall back to estimates
-      revenues = [shflData, ...getEstimatedRevenues()];
+    // For each token, use scraper data ONLY if it looks valid
+    // SPECIAL HANDLING: Always use estimates for correct accrual rates
+    for (const estimate of estimates) {
+      const scraped = scraperData?.find(s => s.symbol === estimate.symbol);
+      
+      // For RLB: Use scraped revenue but ALWAYS use our calculated accrual (13.55%)
+      // because the scraper doesn't reliably get the breakdown
+      if (estimate.symbol === "RLB" && scraped && scraped.annualRevenue > 100000000) {
+        const annualRevenue = scraped.annualRevenue;
+        // Known accrual breakdown: Casino 10%, Trading 30%, Sports 20%
+        // Based on Dec 2025 data: ~77% Casino, 12.5% Trading, 10.5% Sports
+        // Weighted average: 0.77*0.10 + 0.125*0.30 + 0.105*0.20 = 0.1355
+        const accrualPct = 0.1355;
+        const annualEarnings = annualRevenue * accrualPct;
+        
+        revenues.push({
+          ...scraped,
+          annualEarnings,
+          weeklyEarnings: annualEarnings / 52,
+          revenueAccrualPct: accrualPct,
+        });
+        console.log(`RLB: Using scraped revenue $${(annualRevenue/1e6).toFixed(0)}M with calculated accrual 13.55%`);
+      }
+      // For HYPE: Use scraped but override accrual to 99%
+      else if (estimate.symbol === "HYPE" && scraped && scraped.annualRevenue > 100000000) {
+        const accrualPct = 0.99;
+        revenues.push({
+          ...scraped,
+          annualEarnings: scraped.annualRevenue * accrualPct,
+          weeklyEarnings: scraped.weeklyRevenue * accrualPct,
+          revenueAccrualPct: accrualPct,
+        });
+        console.log(`HYPE: Using scraped revenue with 99% accrual`);
+      }
+      // For PUMP: Use scraped data if looks valid
+      else if (scraped && 
+          scraped.annualRevenue > 10000000 && 
+          scraped.revenueAccrualPct >= 0.50 && // PUMP should be close to 100%
+          scraped.revenueAccrualPct <= 1.0) {
+        revenues.push(scraped);
+        console.log(`${estimate.symbol}: Using scraped data - accrual ${(scraped.revenueAccrualPct * 100).toFixed(1)}%`);
+      } else {
+        revenues.push(estimate);
+        console.log(`${estimate.symbol}: Using estimate - scraped accrual was ${scraped ? (scraped.revenueAccrualPct * 100).toFixed(1) + '%' : 'N/A'}`);
+      }
     }
     
     // Cache results
