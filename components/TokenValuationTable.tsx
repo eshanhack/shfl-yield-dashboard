@@ -8,54 +8,30 @@ import InfoTooltip from "./InfoTooltip";
 
 type ViewMode = "revenue" | "earnings";
 
-interface TokenMetrics {
+interface TokenBase {
   symbol: string;
   name: string;
   color: string;
-  // Weekly figures
-  weeklyRevenue: number; // Total platform revenue
-  revenueAccrualPct: number; // % of revenue that goes to token holders
 }
 
-// Token data with revenue accrual percentages
-const TOKEN_DATA: TokenMetrics[] = [
-  {
-    symbol: "SHFL",
-    name: "Shuffle",
-    color: "#8A2BE2",
-    weeklyRevenue: 2000000, // Shuffle.com total weekly NGR (estimated)
-    revenueAccrualPct: 0.15, // 15% goes to lottery/stakers
-  },
-  {
-    symbol: "HYPE",
-    name: "Hyperliquid",
-    color: "#00D4AA",
-    weeklyRevenue: 2500000, // Weekly trading fees
-    revenueAccrualPct: 0.54, // 54% to assistance fund + buybacks
-  },
-  {
-    symbol: "PUMP",
-    name: "Pump.fun",
-    color: "#FF6B6B",
-    weeklyRevenue: 3000000, // Token launch fees
-    revenueAccrualPct: 0.50, // ~50% to buybacks/holders
-  },
-  {
-    symbol: "RLB",
-    name: "Rollbit",
-    color: "#FFD700",
-    weeklyRevenue: 1500000, // Rollbit total NGR
-    revenueAccrualPct: 0.30, // ~30% to lottery/buybacks
-  },
+// Base token info (static)
+const TOKEN_INFO: TokenBase[] = [
+  { symbol: "SHFL", name: "Shuffle", color: "#8A2BE2" },
+  { symbol: "HYPE", name: "Hyperliquid", color: "#00D4AA" },
+  { symbol: "PUMP", name: "Pump.fun", color: "#FF6B6B" },
+  { symbol: "RLB", name: "Rollbit", color: "#FFD700" },
 ];
 
-interface TokenWithCalculations extends TokenMetrics {
+interface TokenWithCalculations extends TokenBase {
   marketCap: number;
-  weeklyEarnings: number; // Revenue * accrual %
+  weeklyRevenue: number;
+  revenueAccrualPct: number;
+  weeklyEarnings: number;
   annualRevenue: number;
   annualEarnings: number;
-  psRatio: number; // Price/Sales (based on revenue)
-  peRatio: number; // Price/Earnings (based on earnings to holders)
+  psRatio: number;
+  peRatio: number;
+  revenueSource: "live" | "estimated";
 }
 
 export default function TokenValuationTable() {
@@ -68,27 +44,45 @@ export default function TokenValuationTable() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/market-caps");
-        const json = await response.json();
+        // Fetch both market caps and revenue data in parallel
+        const [mcResponse, revResponse] = await Promise.all([
+          fetch("/api/market-caps"),
+          fetch("/api/token-revenue"),
+        ]);
         
-        setDataSource(json.source === "live" ? "live" : "demo");
+        const mcJson = await mcResponse.json();
+        const revJson = await revResponse.json();
         
-        const marketCaps = json.data || {};
+        const marketCaps = mcJson.data || {};
+        const revenues = revJson.data || [];
         
-        const tokensWithCalcs: TokenWithCalculations[] = TOKEN_DATA.map(token => {
+        // Determine if we have live data
+        const hasLiveMarketCap = mcJson.source === "live";
+        const hasLiveRevenue = revJson.source === "live";
+        setDataSource(hasLiveMarketCap || hasLiveRevenue ? "live" : "demo");
+        
+        const tokensWithCalcs: TokenWithCalculations[] = TOKEN_INFO.map(token => {
           const marketCap = marketCaps[token.symbol] || 100000000;
-          const weeklyEarnings = token.weeklyRevenue * token.revenueAccrualPct;
-          const annualRevenue = token.weeklyRevenue * 52;
+          const revData = revenues.find((r: any) => r.symbol === token.symbol);
+          const weeklyRevenue = revData?.weeklyRevenue || 1000000;
+          const revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
+          const revenueSource = revData?.source || "estimated";
+          
+          const weeklyEarnings = weeklyRevenue * revenueAccrualPct;
+          const annualRevenue = weeklyRevenue * 52;
           const annualEarnings = weeklyEarnings * 52;
           
           return {
             ...token,
             marketCap,
+            weeklyRevenue,
+            revenueAccrualPct,
             weeklyEarnings,
             annualRevenue,
             annualEarnings,
             psRatio: marketCap / annualRevenue,
             peRatio: marketCap / annualEarnings,
+            revenueSource,
           };
         });
         
