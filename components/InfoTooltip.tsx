@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,87 +23,103 @@ export default function InfoTooltip({
   children 
 }: InfoTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<{ vertical: "top" | "bottom"; horizontal: "center" | "left" | "right" }>({
-    vertical: "bottom",
-    horizontal: "center"
-  });
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
+  const [mounted, setMounted] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isVisible && triggerRef.current) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isVisible && triggerRef.current && mounted) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const tooltipWidth = 256; // w-64 = 16rem = 256px
+      const tooltipWidth = 256;
+      const tooltipHeight = 100; // Approximate height
+      const padding = 12;
       
-      // Vertical position
-      let vertical: "top" | "bottom" = "bottom";
-      if (position === "top") {
-        vertical = "top";
-      } else if (position === "bottom") {
-        vertical = "bottom";
-      } else if (position === "auto") {
-        vertical = rect.top < 150 ? "bottom" : "top";
+      // Calculate vertical position
+      let top: number;
+      let arrowTop: number;
+      let arrowRotation: string;
+      
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      const preferTop = position === "top" || (position === "auto" && spaceAbove > tooltipHeight + padding);
+      const preferBottom = position === "bottom" || (position === "auto" && spaceBelow > spaceAbove);
+      
+      if (preferTop && spaceAbove > tooltipHeight + padding) {
+        top = rect.top - tooltipHeight - padding;
+        arrowTop = rect.top - padding - 6;
+        arrowRotation = "rotate(225deg)";
+      } else {
+        top = rect.bottom + padding;
+        arrowTop = rect.bottom + padding - 6;
+        arrowRotation = "rotate(45deg)";
       }
       
-      // Horizontal position - check if tooltip would be cut off
-      let horizontal: "center" | "left" | "right" = "center";
-      const spaceOnRight = window.innerWidth - rect.right;
-      const spaceOnLeft = rect.left;
+      // Calculate horizontal position
+      let left: number;
+      let arrowLeft: number;
       
-      if (spaceOnRight < tooltipWidth / 2 + 20) {
-        // Not enough space on right, align to right edge
-        horizontal = "right";
-      } else if (spaceOnLeft < tooltipWidth / 2 + 20) {
-        // Not enough space on left, align to left edge
-        horizontal = "left";
+      const centerX = rect.left + rect.width / 2;
+      const spaceOnRight = window.innerWidth - centerX;
+      const spaceOnLeft = centerX;
+      
+      if (spaceOnRight < tooltipWidth / 2 + padding) {
+        // Align to right edge
+        left = window.innerWidth - tooltipWidth - padding;
+        arrowLeft = rect.left + rect.width / 2 - 6;
+      } else if (spaceOnLeft < tooltipWidth / 2 + padding) {
+        // Align to left edge
+        left = padding;
+        arrowLeft = rect.left + rect.width / 2 - 6;
+      } else {
+        // Center
+        left = centerX - tooltipWidth / 2;
+        arrowLeft = centerX - 6;
       }
       
-      setTooltipPosition({ vertical, horizontal });
+      setTooltipStyle({
+        position: "fixed",
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${tooltipWidth}px`,
+        zIndex: 9999,
+      });
+      
+      setArrowStyle({
+        position: "fixed",
+        top: `${arrowTop}px`,
+        left: `${arrowLeft}px`,
+        width: "12px",
+        height: "12px",
+        transform: arrowRotation,
+        zIndex: 9999,
+      });
     }
-  }, [isVisible, position]);
+  }, [isVisible, position, mounted]);
 
-  const getTooltipClasses = () => {
-    const classes = ["absolute z-[100] w-64 pointer-events-none"];
-    
-    // Vertical positioning
-    if (tooltipPosition.vertical === "bottom") {
-      classes.push("top-full mt-2");
-    } else {
-      classes.push("bottom-full mb-2");
-    }
-    
-    // Horizontal positioning
-    if (tooltipPosition.horizontal === "center") {
-      classes.push("left-1/2 -translate-x-1/2");
-    } else if (tooltipPosition.horizontal === "right") {
-      classes.push("right-0");
-    } else {
-      classes.push("left-0");
-    }
-    
-    return classes.join(" ");
-  };
-
-  const getArrowClasses = () => {
-    const classes = ["absolute w-3 h-3 bg-terminal-dark border-terminal-accent/30"];
-    
-    if (tooltipPosition.vertical === "bottom") {
-      classes.push("-top-1.5 border-l border-t rotate-45");
-    } else {
-      classes.push("-bottom-1.5 border-r border-b rotate-45");
-    }
-    
-    // Arrow horizontal position
-    if (tooltipPosition.horizontal === "center") {
-      classes.push("left-1/2 -translate-x-1/2");
-    } else if (tooltipPosition.horizontal === "right") {
-      classes.push("right-4");
-    } else {
-      classes.push("left-4");
-    }
-    
-    return classes.join(" ");
-  };
+  const tooltipContent = isVisible && mounted ? (
+    <>
+      <div style={tooltipStyle} className="pointer-events-none">
+        <div className="bg-terminal-dark border border-terminal-accent/30 rounded-lg p-3 shadow-xl shadow-terminal-accent/10">
+          {title && (
+            <div className="text-xs font-medium text-terminal-accent mb-1">{title}</div>
+          )}
+          <p className="text-[11px] text-terminal-textSecondary leading-relaxed">
+            {content}
+          </p>
+        </div>
+      </div>
+      <div 
+        style={arrowStyle} 
+        className="bg-terminal-dark border-l border-t border-terminal-accent/30 pointer-events-none"
+      />
+    </>
+  ) : null;
 
   return (
     <span 
@@ -121,20 +138,7 @@ export default function InfoTooltip({
         </span>
       )}
       
-      {isVisible && (
-        <div ref={tooltipRef} className={getTooltipClasses()}>
-          <div className="bg-terminal-dark border border-terminal-accent/30 rounded-lg p-3 shadow-xl shadow-terminal-accent/10">
-            {title && (
-              <div className="text-xs font-medium text-terminal-accent mb-1">{title}</div>
-            )}
-            <p className="text-[11px] text-terminal-textSecondary leading-relaxed">
-              {content}
-            </p>
-          </div>
-          {/* Arrow */}
-          <div className={getArrowClasses()} />
-        </div>
-      )}
+      {mounted && typeof document !== "undefined" && createPortal(tooltipContent, document.body)}
     </span>
   );
 }

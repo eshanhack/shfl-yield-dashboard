@@ -340,8 +340,8 @@ export default function TokenValuationTable() {
                 <Info className="w-3.5 h-3.5 text-terminal-textMuted mt-0.5 flex-shrink-0" />
                 <p className="text-[10px] text-terminal-textMuted leading-relaxed">
                   {viewMode === "revenue" 
-                    ? "P/S compares market cap to total platform revenue. SHFL's revenue is Shuffle.com's full NGR."
-                    : "P/E compares market cap to earnings accrued to holders. SHFL stakers receive 15% of NGR through the lottery. HYPE holders receive 54% through buybacks & assistance fund."
+                    ? "P/S compares market cap to total platform revenue."
+                    : "P/E compares market cap to earnings accrued to holders."
                   }
                 </p>
               </div>
