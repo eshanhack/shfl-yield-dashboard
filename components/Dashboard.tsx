@@ -912,32 +912,6 @@ export default function Dashboard() {
         {/* ==================== TOKEN SECTION ==================== */}
         {activeSection === "token" && (
           <div className="section-content">
-            {/* Token Price Bar - Simplified */}
-            <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 mb-6">
-              <div className="flex flex-wrap items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <img 
-                    src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
-                    alt="SHFL"
-                    className="w-10 h-10"
-                  />
-                  <div>
-                    <div className="text-sm text-terminal-textMuted">SHFL Price</div>
-                    <div className="text-2xl font-bold text-terminal-text">${price.usd.toFixed(4)}</div>
-                  </div>
-                </div>
-                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-                  price.usd_24h_change >= 0 
-                    ? "bg-terminal-positive/10 text-terminal-positive" 
-                    : "bg-terminal-negative/10 text-terminal-negative"
-                }`}>
-                  <TrendingUp className={`w-4 h-4 ${price.usd_24h_change < 0 ? "rotate-180" : ""}`} />
-                  <span className="font-medium">{price.usd_24h_change >= 0 ? "+" : ""}{price.usd_24h_change.toFixed(2)}%</span>
-                  <span className="text-xs opacity-70">24h</span>
-                </div>
-              </div>
-            </div>
-
             {/* Token Comparison Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <TokenReturnsChart />
