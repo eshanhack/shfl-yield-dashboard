@@ -20,6 +20,7 @@ import Header from "./Header";
 import SectionSelector, { DashboardSection } from "./SectionSelector";
 import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
+import JackpotFrequencyPanel from "./JackpotFrequencyPanel";
 import LotteryHistoryTable from "./LotteryHistoryTable";
 import PersonalCalculator from "./Calculator";
 import YieldCalculatorPanel from "./YieldCalculatorPanel";
@@ -879,13 +880,18 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Sensitivity Table */}
-            <div className="mb-4 sm:mb-6">
+            {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               <SensitivityTable
                 baseNGR={ngrStats.current4WeekAvg}
                 basePrice={price.usd}
                 totalTickets={lotteryStats.totalTickets}
                 prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+              />
+              <JackpotFrequencyPanel
+                historicalDraws={completedDraws}
+                currentTickets={lotteryStats.totalTickets}
+                currentJackpot={lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87}
               />
             </div>
 
