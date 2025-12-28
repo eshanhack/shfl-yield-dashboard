@@ -425,7 +425,10 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8 overflow-safe">
+      <main
+        id="main-content"
+        className="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-5 xl:px-6 py-4 sm:py-6 lg:py-6 overflow-safe"
+      >
         {/* Section Selector */}
         <SectionSelector 
           activeSection={activeSection} 
@@ -433,7 +436,7 @@ export default function Dashboard() {
         />
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
-        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
+        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-6 lg:mb-6">
           <div className="flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-terminal-textMuted">
             <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             <button
@@ -448,13 +451,13 @@ export default function Dashboard() {
         </div>
 
         {/* ==================== UNIFIED KPI ROW ==================== */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-5 xl:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-4 xl:gap-5 mb-4 sm:mb-6 lg:mb-6">
           {/* Card 1 - Primary (highlighted) */}
-          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 shadow-glow-sm h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 lg:p-4 xl:p-5 shadow-glow-sm h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[180px]">
             <div key={`card1-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-3 lg:mb-4">
+                  <div className="flex items-start justify-between mb-3 lg:mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
                         <Percent className="w-4 h-4 lg:w-5 lg:h-5 text-terminal-accent" />
@@ -472,10 +475,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
+                    <span className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
@@ -500,10 +503,10 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent" />
+                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-accent" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Gross Gaming Revenue</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Annual NGR</span>
                       <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
@@ -528,10 +531,10 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
+                    <span className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Circulating</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">FDV</span>
                       <span className="font-medium text-terminal-text tabular-nums">${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M</span>
@@ -547,7 +550,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-4 xl:p-5 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[180px]">
             <div key={`card2-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -568,10 +571,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text" />
+                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-text" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Draw #{lotteryStats.drawNumber || 64}</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <CurrencyAmount amount={completedDraws[0]?.totalPoolUSD || 0} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
@@ -644,7 +647,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-4 xl:p-5 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[180px]">
             <div key={`card3-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -665,10 +668,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
+                    <span className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">SHFL staked</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Circulating</span>
                       <span className="font-bold text-terminal-accent tabular-nums">{lotteryStats.circulatingSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(1) : "0"}%</span>
@@ -741,7 +744,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-6 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-4 xl:p-5 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[180px]">
             <div key={`card4-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
@@ -762,10 +765,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl lg:text-4xl font-bold text-terminal-text" />
+                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl lg:text-3xl xl:text-4xl font-bold text-terminal-text" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1 mt-auto pt-1.5 sm:pt-2 lg:pt-2 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <CurrencyAmount amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} className="font-medium text-terminal-accent text-[10px] sm:text-xs lg:text-sm" />
@@ -861,7 +864,7 @@ export default function Dashboard() {
             />
 
             {/* Charts and Ticket EV Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 mb-4 sm:mb-6 lg:mb-6 items-stretch">
               {/* NGR vs Price Chart */}
               <div className="lg:col-span-2 h-full">
                 <YieldChart data={chartData} />
@@ -881,7 +884,7 @@ export default function Dashboard() {
             </div>
 
             {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-6 mb-4 sm:mb-6 lg:mb-6">
               <SensitivityTable
                 baseNGR={ngrStats.current4WeekAvg}
                 basePrice={price.usd}
@@ -916,7 +919,7 @@ export default function Dashboard() {
         {activeSection === "revenue" && (
           <div className="section-content">
             {/* Revenue Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-6 mb-4 sm:mb-6 lg:mb-6">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
                 // For current week, use the latest completed draw's POSTED NGR
@@ -937,7 +940,7 @@ export default function Dashboard() {
         {activeSection === "token" && (
           <div className="section-content">
             {/* Token Comparison Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-6 mb-4 sm:mb-6 lg:mb-6">
               <TokenReturnsChart />
               <TokenValuationTable />
             </div>
@@ -945,7 +948,7 @@ export default function Dashboard() {
         )}
 
         {/* Disclaimer & Footer */}
-        <footer className="mt-6 sm:mt-8 lg:mt-10 pt-4 sm:pt-6 lg:pt-8 border-t border-terminal-border">
+        <footer className="mt-6 sm:mt-8 lg:mt-8 pt-4 sm:pt-6 lg:pt-6 border-t border-terminal-border">
           {/* Global Disclaimer */}
           <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-terminal-dark rounded border border-yellow-500/30 text-[10px] sm:text-xs text-terminal-textMuted">
             <p className="mb-1">

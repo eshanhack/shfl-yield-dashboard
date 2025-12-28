@@ -168,9 +168,9 @@ export default function YieldCalculatorPanel({
   }, [shflAmount, shflPrice, historicalDraws, prizeSplit, stakingValueUSD]);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-6 lg:mb-8">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-6 lg:mb-6">
       {/* Header */}
-      <div className="p-3 sm:p-4 lg:p-5 border-b border-terminal-border">
+      <div className="p-3 sm:p-4 lg:p-4 border-b border-terminal-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="p-1.5 lg:p-2 rounded bg-terminal-accent/10 border border-terminal-accent/20">
@@ -191,10 +191,10 @@ export default function YieldCalculatorPanel({
         </div>
       </div>
 
-      <div className="p-3 sm:p-4 lg:p-6">
+      <div className="p-3 sm:p-4 lg:p-5">
         {/* ===== DESKTOP BENTO LAYOUT (xl+) ===== */}
         {/* On desktop: Input on left, Projections grid on right */}
-        <div className="hidden xl:grid xl:grid-cols-[1fr_auto] xl:gap-6 mb-6 pb-6 border-b border-terminal-border">
+        <div className="hidden xl:grid xl:grid-cols-[1fr_auto] xl:gap-5 mb-5 pb-5 border-b border-terminal-border">
           {/* Left: Input Section */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-2">
@@ -203,7 +203,7 @@ export default function YieldCalculatorPanel({
               </label>
               <button
                 onClick={handleFlipMode}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-lg transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-sm text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-lg transition-all"
                 title={inputMode === "shfl" ? "Switch to ticket input" : "Switch to SHFL input"}
               >
                 <ArrowLeftRight className="w-4 h-4" />
@@ -216,7 +216,7 @@ export default function YieldCalculatorPanel({
                 inputMode="numeric"
                 value={inputValue}
                 onChange={handleInputChange}
-                className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-4 py-3 text-2xl font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
+                className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-4 py-2.5 text-xl font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
                 placeholder={inputMode === "shfl" ? "100000" : "2000"}
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-terminal-textMuted text-base">
@@ -231,13 +231,13 @@ export default function YieldCalculatorPanel({
                   {inputMode === "shfl" ? "Tickets" : "SHFL"}
                   <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
                 </div>
-                <div className="text-2xl font-bold text-terminal-accent tabular-nums">
+                <div className="text-xl font-bold text-terminal-accent tabular-nums">
                   {inputMode === "shfl" ? formatNumber(ticketCount) : formatNumber(shflAmount)}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-terminal-textMuted mb-1">Staking Value</div>
-                <div className="text-2xl font-bold text-terminal-text">
+                <div className="text-xl font-bold text-terminal-text">
                   <CurrencyAmount amount={stakingValueUSD} />
                 </div>
               </div>
@@ -245,9 +245,9 @@ export default function YieldCalculatorPanel({
           </div>
 
           {/* Right: Yield Projections 2x2 Grid */}
-          <div className="grid grid-cols-2 gap-3 w-[340px]">
+          <div className="grid grid-cols-2 gap-3 w-[320px]">
             {/* Upcoming Draw */}
-            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-4">
+            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-3">
                 <Calendar className="w-4 h-4 text-yellow-400" />
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">Upcoming</span>
@@ -262,7 +262,7 @@ export default function YieldCalculatorPanel({
             </div>
 
             {/* Average Week */}
-            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-4">
+            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-3">
                 <TrendingUp className="w-4 h-4 text-terminal-accent" />
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">Avg Week</span>
@@ -277,7 +277,7 @@ export default function YieldCalculatorPanel({
             </div>
 
             {/* Monthly */}
-            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-4">
+            <div className="bg-terminal-dark border border-terminal-border rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-3">
                 <Coins className="w-4 h-4 text-green-400" />
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">Monthly</span>
@@ -292,7 +292,7 @@ export default function YieldCalculatorPanel({
             </div>
 
             {/* Annual - Highlighted */}
-            <div className="bg-gradient-to-br from-terminal-accent/15 to-purple-900/20 border border-terminal-accent/30 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-terminal-accent/15 to-purple-900/20 border border-terminal-accent/30 rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-3">
                 <TrendingUp className="w-4 h-4 text-terminal-accent" />
                 <span className="text-xs text-terminal-textSecondary uppercase tracking-wider">Annual</span>

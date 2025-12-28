@@ -60,7 +60,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
 
   return (
     <header className="border-b border-terminal-border bg-terminal-dark/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-[1800px] mx-auto px-3 sm:px-4 py-2 sm:py-3">
+      <div className="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-5 py-2 sm:py-3">
         {/* Mobile Layout */}
         <div className="flex items-center justify-between lg:hidden">
           {/* Logo */}
@@ -167,17 +167,17 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
         {/* Desktop Layout */}
         <div className="hidden lg:flex items-center justify-between">
           {/* Logo & Title */}
-          <div className="flex items-center gap-4 xl:gap-6">
-            <div className="flex items-center gap-3 xl:gap-4">
+          <div className="flex items-center gap-4 xl:gap-5">
+            <div className="flex items-center gap-3 xl:gap-3.5">
               <img
                 src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
                 alt="SHFL Token"
-                className="w-9 h-9 xl:w-10 xl:h-10 animate-spin"
+                className="w-8 h-8 xl:w-9 xl:h-9 animate-spin"
                 style={{ animationDuration: "3s" }}
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg xl:text-xl font-semibold tracking-tight">
+                  <h1 className="text-base xl:text-lg font-semibold tracking-tight">
                     SHFL<span className="text-terminal-accent">Pro</span>
                   </h1>
                   <InfoTooltip content={TOOLTIPS.shfl} title="What is SHFL?" />
@@ -190,9 +190,9 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           </div>
 
           {/* Center: Live Stats */}
-          <div className="flex items-center gap-8 xl:gap-12">
+          <div className="flex items-center gap-6 xl:gap-8">
             {/* SHFL/USDC Price Ticker */}
-            <div className="flex items-center gap-3 xl:gap-4">
+            <div className="flex items-center gap-3 xl:gap-3.5">
               <div className="flex items-center gap-1.5 xl:gap-2">
                 <Activity 
                   className={cn(
@@ -204,10 +204,10 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                   SHFL/USDC
                 </span>
               </div>
-              <div className="flex items-center gap-2 xl:gap-3">
+              <div className="flex items-center gap-2 xl:gap-2.5">
                 <span
                   className={cn(
-                    "text-xl xl:text-2xl font-bold tabular-nums",
+                    "text-lg xl:text-xl font-bold tabular-nums",
                     isPriceUpdating && "price-update text-terminal-accent"
                   )}
                 >
@@ -235,7 +235,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
             <div className="w-px h-8 xl:h-10 bg-terminal-border" />
 
             {/* Next Draw Countdown */}
-            <div className="flex items-center gap-3 xl:gap-4">
+            <div className="flex items-center gap-3 xl:gap-3.5">
               <div className="flex items-center gap-1.5 xl:gap-2">
                 <Clock className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-terminal-textMuted" />
                 <span className="text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wide">
@@ -245,7 +245,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
               </div>
               <span
                 className={cn(
-                  "text-xl xl:text-2xl font-bold tabular-nums",
+                  "text-lg xl:text-xl font-bold tabular-nums",
                   timeToNextDraw === "DRAW LIVE" && "text-terminal-positive animate-pulse"
                 )}
               >
@@ -255,7 +255,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           </div>
 
           {/* Right: Status & Currency */}
-          <div className="flex items-center gap-4 xl:gap-6">
+          <div className="flex items-center gap-4 xl:gap-5">
             <CurrencySelector />
             <div className="w-px h-6 xl:h-8 bg-terminal-border" />
             <div className="flex items-center gap-2 xl:gap-3">
