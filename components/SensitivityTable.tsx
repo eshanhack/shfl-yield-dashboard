@@ -86,33 +86,33 @@ export default function SensitivityTable({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg xl:rounded-xl p-4 xl:p-6 card-glow overflow-x-auto">
-      <div className="mb-4 xl:mb-6">
-        <div className="flex items-center gap-2 xl:gap-3">
-          <h3 className="text-sm xl:text-base font-medium text-terminal-text">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow overflow-x-auto">
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium text-terminal-text">
             Yield Sensitivity Matrix
           </h3>
           <InfoTooltip content={TOOLTIPS.sensitivity} title="What-If Analysis" />
         </div>
-        <p className="text-xs xl:text-sm text-terminal-textMuted">
+        <p className="text-xs text-terminal-textMuted">
           How your APY changes with casino revenue and token price (per {stakedLabel} SHFL)
         </p>
       </div>
 
-      <div className="overflow-x-auto xl:overflow-visible">
-        <table className="w-full min-w-[600px] xl:min-w-0">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr>
-              <th className="p-3 xl:p-4 text-left text-[10px] xl:text-xs text-terminal-textMuted font-normal uppercase tracking-wider border-b border-terminal-border">
+              <th className="p-3 text-left text-[10px] text-terminal-textMuted font-normal uppercase tracking-wider border-b border-terminal-border">
                 NGR ↓ / Price →
               </th>
               {priceMultipliers.map((mult) => (
                 <th
                   key={mult}
-                  className="p-3 xl:p-4 text-center text-xs xl:text-sm text-terminal-textSecondary font-medium border-b border-terminal-border"
+                  className="p-3 text-center text-xs text-terminal-textSecondary font-medium border-b border-terminal-border"
                 >
                   <div>{mult}x</div>
-                  <div className="text-[10px] xl:text-xs text-terminal-textMuted font-normal">
+                  <div className="text-[10px] text-terminal-textMuted font-normal">
                     ${(basePrice * mult).toFixed(3)}
                   </div>
                 </th>
@@ -122,9 +122,9 @@ export default function SensitivityTable({
           <tbody>
             {table.map((row, rowIndex) => (
               <tr key={rowIndex}>
-                <td className="p-3 xl:p-4 text-xs xl:text-sm text-terminal-textSecondary font-medium border-b border-terminal-border/50">
+                <td className="p-3 text-xs text-terminal-textSecondary font-medium border-b border-terminal-border/50">
                   <div>{ngrMultipliers[rowIndex]}x</div>
-                  <div className="text-[10px] xl:text-xs text-terminal-textMuted font-normal">
+                  <div className="text-[10px] text-terminal-textMuted font-normal">
                     ${((baseNGR * ngrMultipliers[rowIndex]) / 1_000_000).toFixed(2)}M
                   </div>
                 </td>
@@ -132,7 +132,7 @@ export default function SensitivityTable({
                   <td
                     key={colIndex}
                     className={cn(
-                      "p-3 xl:p-4 text-center text-sm xl:text-base font-bold border-b border-terminal-border/50",
+                      "p-3 text-center text-sm font-bold border-b border-terminal-border/50",
                       getApyColor(cell.apy),
                       cell.ngrMultiplier === 1 &&
                         cell.priceMultiplier === 1 &&
@@ -148,26 +148,26 @@ export default function SensitivityTable({
         </table>
       </div>
 
-      <div className="flex items-center gap-6 xl:gap-8 mt-4 xl:mt-6 pt-3 xl:pt-4 border-t border-terminal-border flex-wrap">
-        <div className="flex items-center gap-2 xl:gap-3">
-          <div className="w-3 h-3 xl:w-4 xl:h-4 rounded bg-terminal-positive/30" />
-          <span className="text-[10px] xl:text-xs text-terminal-textMuted">≥100% APY</span>
+      <div className="flex items-center gap-6 mt-4 pt-3 border-t border-terminal-border flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-terminal-positive/30" />
+          <span className="text-[10px] text-terminal-textMuted">≥100% APY</span>
         </div>
-        <div className="flex items-center gap-2 xl:gap-3">
-          <div className="w-3 h-3 xl:w-4 xl:h-4 rounded bg-terminal-accent/30" />
-          <span className="text-[10px] xl:text-xs text-terminal-textMuted">≥50% APY</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-terminal-accent/30" />
+          <span className="text-[10px] text-terminal-textMuted">≥50% APY</span>
         </div>
-        <div className="flex items-center gap-2 xl:gap-3">
-          <div className="w-3 h-3 xl:w-4 xl:h-4 rounded bg-terminal-border" />
-          <span className="text-[10px] xl:text-xs text-terminal-textMuted">≥25% APY</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-terminal-border" />
+          <span className="text-[10px] text-terminal-textMuted">≥25% APY</span>
         </div>
-        <div className="flex items-center gap-2 xl:gap-3">
-          <div className="w-3 h-3 xl:w-4 xl:h-4 rounded bg-terminal-warning/30" />
-          <span className="text-[10px] xl:text-xs text-terminal-textMuted">≥10% APY</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-terminal-warning/30" />
+          <span className="text-[10px] text-terminal-textMuted">≥10% APY</span>
         </div>
-        <div className="flex items-center gap-2 xl:gap-3">
-          <div className="w-3 h-3 xl:w-4 xl:h-4 rounded ring-2 ring-terminal-accent" />
-          <span className="text-[10px] xl:text-xs text-terminal-textMuted">Current</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded ring-2 ring-terminal-accent" />
+          <span className="text-[10px] text-terminal-textMuted">Current</span>
         </div>
       </div>
     </div>

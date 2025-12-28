@@ -49,29 +49,29 @@ export default function YieldChart({ data }: YieldChartProps) {
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg xl:rounded-xl p-4 xl:p-6 card-glow h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4 xl:mb-6">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm xl:text-base font-medium text-terminal-text">
+          <h3 className="text-sm font-medium text-terminal-text">
             Weekly NGR vs SHFL Price
           </h3>
-          <p className="text-xs xl:text-sm text-terminal-textMuted">
+          <p className="text-xs text-terminal-textMuted">
             {formattedData.length} weeks of lottery history
           </p>
         </div>
-        <div className="flex items-center gap-4 xl:gap-6">
-          <div className="flex items-center gap-2 xl:gap-3">
-            <div className="w-3 h-3 xl:w-4 xl:h-4 rounded-full bg-terminal-accent" />
-            <span className="text-xs xl:text-sm text-terminal-textSecondary">NGR ($M)</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-terminal-accent" />
+            <span className="text-xs text-terminal-textSecondary">NGR ($M)</span>
           </div>
-          <div className="flex items-center gap-2 xl:gap-3">
-            <div className="w-3 h-3 xl:w-4 xl:h-4 rounded-full bg-white" />
-            <span className="text-xs xl:text-sm text-terminal-textSecondary">Price ($)</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-white" />
+            <span className="text-xs text-terminal-textSecondary">Price ($)</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-[300px] xl:min-h-[400px]">
+      <div className="flex-1 min-h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={formattedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid
