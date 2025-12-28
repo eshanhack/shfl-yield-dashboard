@@ -71,8 +71,6 @@ export default function TokenReturnsChart() {
         // Track data source (live vs demo)
         setDataSource(json.source === "live" ? "live" : "demo");
         
-        console.log("Token data:", json.tokensWithData, "Source:", json.source);
-        
         // Transform data to match expected format - filter out empty results
         const results = json.data
           .map((item: { symbol: string; prices: [number, number][] }) => {
@@ -154,8 +152,8 @@ export default function TokenReturnsChart() {
         
         setChartData(normalizedData);
         setReturns(finalReturns);
-      } catch (error) {
-        console.error("Error fetching price data:", error);
+      } catch {
+        // Error fetching price data
       }
       setIsLoading(false);
     };

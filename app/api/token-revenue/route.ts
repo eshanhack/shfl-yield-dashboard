@@ -49,14 +49,6 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
         const annualShuffleNGR = annualLotteryNGR / 0.15;  // Lottery is 15% of NGR
         const annualGGR = annualShuffleNGR * 2;  // GGR = NGR × 2
         
-        console.log("SHFL revenue (matching ShuffleRevenueCard):", {
-          draws: draws.length,
-          avgWeeklyLotteryNGR,
-          annualLotteryNGR,
-          annualShuffleNGR,
-          annualGGR,
-        });
-        
         return {
           symbol: "SHFL",
           weeklyRevenue: annualGGR / 52,
@@ -68,8 +60,8 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
         };
       }
     }
-  } catch (error) {
-    console.error("Error fetching SHFL revenue:", error);
+  } catch {
+    // SHFL revenue fetch failed, using fallback
   }
   
   // Fallback - EXACT values from Shuffle.com Revenue modal
@@ -89,13 +81,10 @@ async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
   const scraperUrl = process.env.SCRAPER_URL;
   
   if (!scraperUrl) {
-    console.log("No SCRAPER_URL configured, using estimates");
     return null;
   }
   
   try {
-    console.log("Fetching from scraper:", scraperUrl);
-    
     const response = await fetch(`${scraperUrl}/api/revenue`, {
       cache: "no-store",
       headers: {
@@ -104,20 +93,17 @@ async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
     });
     
     if (!response.ok) {
-      console.error("Scraper response not ok:", response.status);
       return null;
     }
     
     const result = await response.json();
     
     if (result.success && Array.isArray(result.data)) {
-      console.log("Scraper returned data:", result.data.length, "tokens");
       return result.data;
     }
     
     return null;
-  } catch (error) {
-    console.error("Error fetching from scraper:", error);
+  } catch {
     return null;
   }
 }
@@ -213,7 +199,6 @@ export async function GET(request: Request) {
           weeklyEarnings: annualEarnings / 52,
           revenueAccrualPct: accrualPct,
         });
-        console.log(`RLB: Using scraped revenue $${(annualRevenue/1e6).toFixed(0)}M with calculated accrual 13.55%`);
       }
       // For HYPE: Use scraped but override accrual to 99%
       else if (estimate.symbol === "HYPE" && scraped && scraped.annualRevenue > 100000000) {
@@ -224,7 +209,6 @@ export async function GET(request: Request) {
           weeklyEarnings: scraped.weeklyRevenue * accrualPct,
           revenueAccrualPct: accrualPct,
         });
-        console.log(`HYPE: Using scraped revenue with 99% accrual`);
       }
       // For PUMP: Use scraped data if looks valid
       else if (scraped && 
@@ -232,10 +216,8 @@ export async function GET(request: Request) {
           scraped.revenueAccrualPct >= 0.50 && // PUMP should be close to 100%
           scraped.revenueAccrualPct <= 1.0) {
         revenues.push(scraped);
-        console.log(`${estimate.symbol}: Using scraped data - accrual ${(scraped.revenueAccrualPct * 100).toFixed(1)}%`);
       } else {
         revenues.push(estimate);
-        console.log(`${estimate.symbol}: Using estimate - scraped accrual was ${scraped ? (scraped.revenueAccrualPct * 100).toFixed(1) + '%' : 'N/A'}`);
       }
     }
     
@@ -253,7 +235,6 @@ export async function GET(request: Request) {
       details: revenues.map(r => ({ symbol: r.symbol, source: r.source })),
     });
   } catch (error) {
-    console.error("Token revenue error:", error);
     
     // Return all estimated data on error - use exact values from Shuffle.com Revenue modal
     const fallbackData: TokenRevenue[] = [

@@ -143,20 +143,20 @@ export default function InfoTooltip({
   );
 }
 
-// Educational content constants
+// Educational content constants with source citations
 export const TOOLTIPS = {
-  shfl: "SHFL is the native token of Shuffle.com, a cryptocurrency casino. Holding SHFL lets you participate in the weekly lottery and earn passive yield.",
-  staking: "Staking means locking your SHFL tokens to receive lottery tickets. You can unstake anytime, but must wait until the next draw to receive your tokens back. If you unstake, you won't participate in that draw.",
-  ticket: "Each ticket costs 50 SHFL to stake. Tickets automatically enter every weekly lottery draw and can win prizes across 9 divisions. You can unstake anytime (tokens returned after next draw).",
-  apy: "Annual Percentage Yield - the estimated yearly return on your staked SHFL based on historical lottery payouts. This excludes jackpot winnings.",
-  ngr: "Net Gaming Revenue - the casino's profit after paying out winnings. 15% of Shuffle.com's NGR goes to the lottery prize pool each week.",
-  ggr: "Gross Gaming Revenue - total amount wagered minus winnings paid. NGR is roughly half of GGR after operating costs.",
-  prizePool: "The total prize pool for this week's lottery. Built from 15% of Shuffle.com's weekly NGR plus accumulated jackpot from previous weeks.",
-  jackpot: "The Division 1 prize, won by matching all 5 numbers + the powerball. If no one wins, it rolls over to next week, growing larger.",
-  lottery: "Every Friday, 5 numbers (1-55) and 1 powerball (1-18) are drawn. Your tickets are checked against 9 prize divisions automatically.",
-  yield: "Expected winnings from divisions 2-9 (excluding jackpot). Based on your share of total tickets and the prize pool distribution.",
-  shuffle: "Shuffle.com is a licensed cryptocurrency casino. The SHFL lottery is funded by 15% of the casino's weekly profits.",
-  sensitivity: "Shows how your yield changes if NGR (casino revenue) or SHFL price moves up or down from current levels.",
-  ev: "Expected Value - the average return per ticket. For purchased tickets, 85% of sales go to the prize pool (15% house edge). Negative EV is expected. Staked tickets have no ongoing cost, so EV represents pure expected winnings.",
-  unstaking: "You can unstake your SHFL anytime. Your tokens will be returned after the next lottery draw completes. Note: unstaked tokens won't participate in the upcoming draw.",
+  shfl: "SHFL is the native token of Shuffle.com, a cryptocurrency casino. Holding SHFL lets you participate in the weekly lottery and earn passive yield. [Source: Shuffle.com]",
+  staking: "Staking means locking your SHFL tokens to receive lottery tickets. You can unstake anytime, but must wait until the next draw to receive your tokens back. If you unstake, you won't participate in that draw. [Source: Shuffle.com]",
+  ticket: "Each ticket costs 50 SHFL to stake. Tickets automatically enter every weekly lottery draw and can win prizes across 9 divisions. You can unstake anytime (tokens returned after next draw). [Source: Shuffle.com]",
+  apy: "Annual Percentage Yield - ESTIMATED yearly return based on historical lottery payouts. Excludes jackpot winnings. Past performance does not guarantee future results. [Calculated from: Historical draw data]",
+  ngr: "Net Gaming Revenue - LIVE data showing casino profit after paying out winnings. 15% of Shuffle.com's NGR goes to the lottery prize pool each week. [Source: Shuffle.com API]",
+  ggr: "Gross Gaming Revenue - ESTIMATED value (NGR × 2). Total amount wagered minus winnings paid. NGR is roughly half of GGR after operating costs. [Calculated]",
+  prizePool: "The total prize pool for this week's lottery. LIVE data from Shuffle API. Built from 15% of weekly NGR plus accumulated jackpot. [Source: Shuffle.com API]",
+  jackpot: "The Division 1 prize, won by matching all 5 numbers + the powerball. If no one wins, it rolls over to next week. LIVE data. [Source: Shuffle.com API]",
+  lottery: "Every Friday at 6pm AEDT, 5 numbers (1-55) and 1 powerball (1-18) are drawn. Your tickets are checked against 9 prize divisions automatically. [Source: Shuffle.com]",
+  yield: "ESTIMATED winnings from divisions 2-9 (excluding jackpot). Based on your share of total tickets and the prize pool distribution. [Calculated from: Draw data]",
+  shuffle: "Shuffle.com is a licensed cryptocurrency casino. Note: This dashboard is NOT affiliated with Shuffle.com. [Disclaimer]",
+  sensitivity: "PROJECTED yield if NGR (casino revenue) or SHFL price moves up or down from current levels. For informational purposes only. [Calculated]",
+  ev: "Expected Value - CALCULATED average return per ticket based on probabilities. For purchased tickets, 85% of sales go to prize pool (15% house edge). Negative EV expected. [Calculated]",
+  unstaking: "You can unstake your SHFL anytime. Tokens returned after next draw completes. Unstaked tokens won't participate in upcoming draw. [Source: Shuffle.com]",
 };

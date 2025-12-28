@@ -51,13 +51,9 @@ export async function GET(request: Request) {
   if (proKey) {
     baseUrl = "https://pro-api.coingecko.com/api/v3";
     apiKeyHeader = { "x-cg-pro-api-key": proKey };
-    console.log("Using CoinGecko Pro API");
   } else if (demoKey) {
     baseUrl = "https://api.coingecko.com/api/v3";
     apiKeyHeader = { "x-cg-demo-api-key": demoKey };
-    console.log("Using CoinGecko Demo API with key");
-  } else {
-    console.log("Using CoinGecko public API (no key)");
   }
 
   // Fetch tokens sequentially to avoid rate limits
@@ -73,8 +69,6 @@ export async function GET(request: Request) {
         cache: "no-store",
       });
 
-      console.log(`${token.symbol}: ${response.status}`);
-
       if (response.ok) {
         const data = await response.json();
         if (data.prices && data.prices.length > 0) {
@@ -86,12 +80,9 @@ export async function GET(request: Request) {
           results.push({ symbol: token.symbol, prices: [] });
         }
       } else {
-        const errorText = await response.text();
-        console.error(`Failed ${token.symbol}: ${response.status} - ${errorText}`);
         results.push({ symbol: token.symbol, prices: [] });
       }
-    } catch (error) {
-      console.error(`Error fetching ${token.symbol}:`, error);
+    } catch {
       results.push({ symbol: token.symbol, prices: [] });
     }
 

@@ -85,7 +85,6 @@ export default function TokenValuationTable() {
             annualEarnings = 20640517;   // Lottery NGR 
             weeklyEarnings = annualEarnings / 52;
             revenueAccrualPct = 0.15;
-            console.log("SHFL: Overriding with correct values - annualRevenue:", annualRevenue);
           }
           
           // RLB: Ensure correct accrual rate (13.55%)
@@ -94,7 +93,6 @@ export default function TokenValuationTable() {
             revenueAccrualPct = 0.1355;
             annualEarnings = annualRevenue * revenueAccrualPct;
             weeklyEarnings = annualEarnings / 52;
-            console.log("RLB: Fixed accrual to 13.55%");
           }
           
           return {
@@ -119,8 +117,8 @@ export default function TokenValuationTable() {
         });
         
         setTokens(tokensWithCalcs);
-      } catch (error) {
-        console.error("Error:", error);
+      } catch {
+        // Error fetching token data
       }
       setIsLoading(false);
     };

@@ -69,8 +69,7 @@ async function fetchDrawFromApi(drawId: number): Promise<DrawApiData | null> {
       status: draw.status,
       drawAt: draw.drawAt,
     };
-  } catch (error) {
-    console.error(`Error fetching draw ${drawId}:`, error);
+  } catch {
     return null;
   }
 }
@@ -220,8 +219,7 @@ async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
       winCount: p.winCount || 0,
       win: p.win || 0,
     }));
-  } catch (error) {
-    console.error(`Error fetching prizes for draw ${drawId}:`, error);
+  } catch {
     return null;
   }
 }

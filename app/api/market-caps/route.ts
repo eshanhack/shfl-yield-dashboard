@@ -42,11 +42,10 @@ export async function GET() {
       
       if (price > 0 && supply > 0) {
         marketCaps["SHFL"] = price * supply;
-        console.log(`SHFL market cap: $${price} × ${supply.toLocaleString()} = $${marketCaps["SHFL"].toLocaleString()}`);
       }
     }
-  } catch (error) {
-    console.error("Error fetching SHFL market cap:", error);
+  } catch {
+    // SHFL market cap fetch failed, will use fallback
   }
   
   // Fetch other tokens from CoinGecko
@@ -64,8 +63,6 @@ export async function GET() {
     const ids = COINGECKO_TOKENS.map(t => t.id).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_market_cap=true&t=${Date.now()}`;
     
-    console.log("Fetching CoinGecko:", url);
-    
     const response = await fetch(url, { 
       headers, 
       cache: "no-store",
@@ -73,21 +70,15 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log("CoinGecko raw response:", JSON.stringify(data));
       
       COINGECKO_TOKENS.forEach(token => {
         if (data[token.id]?.usd_market_cap) {
           marketCaps[token.symbol] = data[token.id].usd_market_cap;
-          console.log(`${token.symbol} market cap from CoinGecko: $${marketCaps[token.symbol].toLocaleString()}`);
-        } else {
-          console.log(`${token.symbol} (${token.id}) NOT found in CoinGecko response`);
         }
       });
-    } else {
-      console.error("CoinGecko response not OK:", response.status, await response.text());
     }
-  } catch (error) {
-    console.error("Error fetching market caps from CoinGecko:", error);
+  } catch {
+    // CoinGecko fetch failed, will use fallbacks
   }
   
   // Fallbacks for any missing (Dec 2025 approximate values)
@@ -100,7 +91,6 @@ export async function GET() {
   
   for (const [symbol, fallback] of Object.entries(fallbacks)) {
     if (!marketCaps[symbol] || marketCaps[symbol] === 0) {
-      console.log(`Using fallback for ${symbol}: $${fallback.toLocaleString()}`);
       marketCaps[symbol] = fallback;
     }
   }

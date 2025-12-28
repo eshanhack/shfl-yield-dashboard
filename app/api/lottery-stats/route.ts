@@ -78,14 +78,12 @@ async function fetchTokenInfo(): Promise<TokenInfoResponse["data"]["tokenInfo"] 
     });
 
     if (!response.ok) {
-      console.error("Token info request failed:", response.status, response.statusText);
       return null;
     }
 
     const data: TokenInfoResponse = await response.json();
     return data.data?.tokenInfo || null;
-  } catch (error) {
-    console.error("Error fetching token info:", error);
+  } catch {
     return null;
   }
 }
@@ -202,14 +200,12 @@ async function fetchPrizesAndResults(drawId: number): Promise<PrizePool[] | null
     });
 
     if (!response.ok) {
-      console.error("GraphQL request failed:", response.status, response.statusText);
       return null;
     }
 
     const data: PrizesAndResultsResponse = await response.json();
     return data.data?.prizesAndResults || null;
-  } catch (error) {
-    console.error("Error fetching prizes and results:", error);
+  } catch {
     return null;
   }
 }
@@ -234,14 +230,12 @@ async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data
     });
 
     if (!response.ok) {
-      console.error("GraphQL request failed:", response.status, response.statusText);
       return null;
     }
 
     const data: LatestLotteryDrawResponse = await response.json();
     return data.data?.getLatestLotteryDraw || null;
-  } catch (error) {
-    console.error("Error fetching latest lottery draw:", error);
+  } catch {
     return null;
   }
 }
@@ -266,14 +260,12 @@ async function fetchLotteryDrawWithStaked(drawId?: number): Promise<LotteryDrawR
     });
 
     if (!response.ok) {
-      console.error("GraphQL request failed:", response.status, response.statusText);
       return null;
     }
 
     const data: LotteryDrawResponse = await response.json();
     return data.data?.lotteryDraw || null;
-  } catch (error) {
-    console.error("Error fetching lottery draw with staked:", error);
+  } catch {
     return null;
   }
 }
@@ -396,9 +388,7 @@ export async function GET() {
       source: lotteryData ? "shuffle.com GraphQL API (live)" : "fallback",
       lastUpdated: new Date().toISOString(),
     });
-  } catch (error) {
-    console.error("Error fetching lottery stats:", error);
-
+  } catch {
     return NextResponse.json({
       success: false,
       error: "Failed to fetch current stats",

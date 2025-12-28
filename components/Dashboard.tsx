@@ -50,7 +50,6 @@ import {
 
 import {
   calculateGlobalAPY,
-  formatUSD,
   formatPercent,
   formatNumber,
   HistoricalDraw,
@@ -114,8 +113,8 @@ export default function Dashboard() {
       setLotteryStats(stats);
       setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
-    } catch (error) {
-      console.error("Error loading data:", error);
+    } catch {
+      // Error loading data - will use fallback values
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -917,25 +916,54 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Footer */}
+        {/* Disclaimer & Footer */}
         <footer className="mt-8 pt-6 border-t border-terminal-border">
-          <div className="flex items-center justify-between text-xs text-terminal-textMuted">
+          {/* Global Disclaimer */}
+          <div className="mb-4 p-3 bg-terminal-dark rounded border border-yellow-500/30 text-xs text-terminal-textMuted">
+            <p className="mb-1">
+              <span className="text-yellow-400 font-medium">⚠️ Disclaimer:</span>{" "}
+              This platform is not affiliated with, endorsed by, or associated with Shuffle.com.
+            </p>
+            <p>
+              Gross revenue numbers are estimates. Net revenue figures are derived from publicly available data provided by Shuffle.
+              All calculations are for informational purposes only and should not be considered financial advice.
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-terminal-textMuted">
             <div className="flex items-center gap-4">
               <span>SHFLPro Terminal v1.0</span>
               <span>•</span>
               <span>Data updates every 60s</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-terminal-textMuted/70">
+                Data Sources:
+              </span>
               <a 
                 href="https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover:text-terminal-accent transition-colors"
               >
-                Lottery History Source
+                Shuffle (Lottery)
               </a>
-              <span>•</span>
-              <span>Price via CoinGecko</span>
+              <a 
+                href="https://www.coingecko.com/en/coins/shuffle-2" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-terminal-accent transition-colors"
+              >
+                CoinGecko (Prices)
+              </a>
+              <a 
+                href="https://terminal.tanzanite.xyz/overview" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-terminal-accent transition-colors"
+              >
+                Tanzanite (Deposits)
+              </a>
             </div>
           </div>
         </footer>

@@ -39,7 +39,7 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
           }
         }
       } catch (error) {
-        console.error("Error fetching Tanzanite data:", error);
+        // Error fetching Tanzanite data
         setTanzaniteData({
           week: { depositVolume: 15000000, percentChange: 5, found: false },
           month: { depositVolume: 60000000, percentChange: 8, found: false },

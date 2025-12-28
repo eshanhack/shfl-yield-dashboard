@@ -100,8 +100,8 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
         };
       }
     }
-  } catch (error) {
-    console.error("Shuffle.com API error, trying CoinGecko:", error);
+  } catch {
+    // Shuffle.com API unavailable, trying CoinGecko fallback
   }
 
   // Fallback to CoinGecko
@@ -125,12 +125,11 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
         last_updated: new Date((shflData.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
       };
     }
-  } catch (error) {
-    console.error("CoinGecko API error:", error);
+  } catch {
+    // CoinGecko API unavailable
   }
 
   // Last resort fallback - should rarely happen
-  console.error("All price APIs failed, using fallback");
   return {
     usd: 0.30, // More realistic fallback
     usd_24h_change: 0,
@@ -158,9 +157,8 @@ export async function fetchPriceHistory(days: number = 365): Promise<PriceHistor
       timestamp,
       price,
     }));
-  } catch (error) {
-    console.error("Error fetching price history:", error);
-    // Return mock data
+  } catch {
+    // Return mock data on error
     return generateMockPriceHistory(days);
   }
 }
@@ -222,8 +220,8 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         jackpotAmount: draw.jackpotAmount,
       };
     });
-  } catch (error) {
-    console.error("Error fetching lottery history:", error);
+  } catch {
+    // Return mock data on error
     return getMockHistoricalDraws(12);
   }
 }
@@ -260,8 +258,8 @@ export async function fetchNGRStats(): Promise<NGRStats> {
       current4WeekAvg: data.stats?.avgWeeklyNGR_4week || 500_000,
       prior4WeekAvg: data.stats?.avgWeeklyNGR_prior4week || 500_000,
     };
-  } catch (error) {
-    console.error("Error fetching NGR stats:", error);
+  } catch {
+    // Return fallback on error
     return {
       current4WeekAvg: 500_000,
       prior4WeekAvg: 500_000,
@@ -303,8 +301,8 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
       burnedTokens: data.stats.burnedTokens,
       totalSupply: data.stats.totalSupply,
     };
-  } catch (error) {
-    console.error("Error fetching lottery stats:", error);
+  } catch {
+    // Return mock data on error
     return getMockLotteryStats();
   }
 }
@@ -348,8 +346,8 @@ export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
     
     // Sort oldest first for charting
     return points.sort((a: NGRHistoryPoint, b: NGRHistoryPoint) => a.timestamp - b.timestamp);
-  } catch (error) {
-    console.error("Error fetching NGR history:", error);
+  } catch {
+    // Return mock data on error
     return getMockNGRHistory(52);
   }
 }
@@ -535,8 +533,8 @@ export async function fetchDrawDetails(drawNumber: number): Promise<LotteryDrawR
     }
     
     return data.draw;
-  } catch (error) {
-    console.error("Error fetching draw details:", error);
+  } catch {
+    // Return null on error
     return null;
   }
 }
@@ -561,8 +559,8 @@ export async function fetchLotteryHistoryWithPrizes(): Promise<LotteryDrawRaw[]>
     }
     
     return data.draws;
-  } catch (error) {
-    console.error("Error fetching lottery history with prizes:", error);
+  } catch {
+    // Return empty on error
     return [];
   }
 }
