@@ -23,6 +23,7 @@ import ShuffleRevenueChart from "./ShuffleRevenueChart";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 import TokenReturnsChart from "./TokenReturnsChart";
 import TokenValuationTable from "./TokenValuationTable";
+import RevenueAnalysis from "./RevenueAnalysis";
 import Loader from "./Loader";
 
 import {
@@ -551,41 +552,10 @@ export default function Dashboard() {
                 historicalDraws={completedDraws}
                 currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
               />
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                    <TrendingUp className="w-4 h-4 text-terminal-accent" />
-                  </div>
-                  <span className="text-sm font-medium text-terminal-text">Lottery Stats</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
-                    <div className="text-xs text-terminal-textMuted mb-1">Weekly Lottery NGR</div>
-                    <CurrencyAmount 
-                      amount={ngrStats.current4WeekAvg} 
-                      className="text-lg font-bold text-terminal-accent"
-                    />
-                  </div>
-                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
-                    <div className="text-xs text-terminal-textMuted mb-1">Total Draws</div>
-                    <div className="text-lg font-bold text-terminal-text">{completedDraws.length}</div>
-                  </div>
-                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
-                    <div className="text-xs text-terminal-textMuted mb-1">Avg. Pool Size</div>
-                    <CurrencyAmount 
-                      amount={completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0) / completedDraws.length} 
-                      className="text-lg font-bold text-terminal-text"
-                    />
-                  </div>
-                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
-                    <div className="text-xs text-terminal-textMuted mb-1">Total Prizes Paid</div>
-                    <CurrencyAmount 
-                      amount={completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0)} 
-                      className="text-lg font-bold text-terminal-positive"
-                    />
-                  </div>
-                </div>
-              </div>
+              <RevenueAnalysis
+                historicalDraws={completedDraws}
+                currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+              />
             </div>
 
             {/* Revenue History Chart */}

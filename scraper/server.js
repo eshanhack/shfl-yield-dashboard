@@ -456,10 +456,254 @@ app.get('/api/revenue', async (req, res) => {
   }
 });
 
+// Tanzanite cache
+let tanzaniteCache = {
+  data: null,
+  timestamp: 0,
+};
+const TANZANITE_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+// Scrape Shuffle deposit volume from Tanzanite
+async function scrapeTanzanite(browser, timeframe) {
+  console.log(`=== Scraping Tanzanite for ${timeframe} data ===`);
+  let page;
+  try {
+    page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    await page.goto('https://terminal.tanzanite.xyz/overview', { 
+      waitUntil: 'networkidle2',
+      timeout: 60000 
+    });
+    
+    // Wait for page to load
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // Click on the correct timeframe tab (Week, Month, Year)
+    const timeframeMap = { week: 'Week', month: 'Month', year: 'Year' };
+    const tabText = timeframeMap[timeframe] || 'Week';
+    
+    try {
+      // Find and click the timeframe button
+      const clicked = await page.evaluate((text) => {
+        const buttons = document.querySelectorAll('button, [role="tab"], div[class*="tab"]');
+        for (const btn of buttons) {
+          if (btn.textContent?.trim().toLowerCase() === text.toLowerCase()) {
+            btn.click();
+            return true;
+          }
+        }
+        return false;
+      }, tabText);
+      
+      if (clicked) {
+        await new Promise(r => setTimeout(r, 2000)); // Wait for data to update
+      }
+    } catch (e) {
+      console.log(`Could not click ${tabText} tab:`, e.message);
+    }
+    
+    // Extract Shuffle data from the Market Breakdown table
+    const data = await page.evaluate(() => {
+      const result = {
+        depositVolume: 0,
+        percentChange: 0,
+        found: false,
+        debug: '',
+      };
+      
+      // Look for Market Breakdown section
+      const tables = document.querySelectorAll('table');
+      result.debug = `Found ${tables.length} tables. `;
+      
+      for (const table of tables) {
+        const rows = table.querySelectorAll('tr');
+        for (const row of rows) {
+          const text = row.textContent || '';
+          if (text.toLowerCase().includes('shuffle')) {
+            result.found = true;
+            result.debug += `Found Shuffle row. `;
+            
+            // Get all cells
+            const cells = row.querySelectorAll('td');
+            
+            // Look for deposit volume (usually a large number with $ or formatted)
+            for (const cell of cells) {
+              const cellText = cell.textContent || '';
+              
+              // Parse deposit volume - look for patterns like $1.2M, $500K, etc.
+              const volumeMatch = cellText.match(/\$?([\d,.]+)\s*(B|M|K)?/i);
+              if (volumeMatch && !result.depositVolume) {
+                let value = parseFloat(volumeMatch[1].replace(/,/g, ''));
+                const suffix = volumeMatch[2]?.toUpperCase();
+                if (suffix === 'B') value *= 1e9;
+                else if (suffix === 'M') value *= 1e6;
+                else if (suffix === 'K') value *= 1e3;
+                
+                if (value > 10000) { // Reasonable deposit volume
+                  result.depositVolume = value;
+                  result.debug += `Volume: ${value}. `;
+                }
+              }
+              
+              // Parse percentage change - look for +X% or -X%
+              const pctMatch = cellText.match(/([+-]?\d+\.?\d*)%/);
+              if (pctMatch && !result.percentChange) {
+                result.percentChange = parseFloat(pctMatch[1]);
+                result.debug += `Change: ${result.percentChange}%. `;
+              }
+            }
+            
+            break;
+          }
+        }
+        if (result.found) break;
+      }
+      
+      // Alternative: scan entire page for Shuffle-related data
+      if (!result.found) {
+        const bodyText = document.body.innerText;
+        const shuffleSection = bodyText.split(/shuffle/i)[1]?.slice(0, 500);
+        if (shuffleSection) {
+          result.debug += `Found shuffle in text. `;
+          
+          const volumeMatch = shuffleSection.match(/\$?([\d,.]+)\s*(B|M|K)?/i);
+          if (volumeMatch) {
+            let value = parseFloat(volumeMatch[1].replace(/,/g, ''));
+            const suffix = volumeMatch[2]?.toUpperCase();
+            if (suffix === 'B') value *= 1e9;
+            else if (suffix === 'M') value *= 1e6;
+            else if (suffix === 'K') value *= 1e3;
+            result.depositVolume = value;
+          }
+          
+          const pctMatch = shuffleSection.match(/([+-]?\d+\.?\d*)%/);
+          if (pctMatch) {
+            result.percentChange = parseFloat(pctMatch[1]);
+          }
+        }
+      }
+      
+      return result;
+    });
+    
+    await page.close();
+    console.log(`Tanzanite ${timeframe}:`, data);
+    
+    return {
+      timeframe,
+      depositVolume: data.depositVolume,
+      percentChange: data.percentChange,
+      found: data.found || data.depositVolume > 0,
+      debug: data.debug,
+    };
+    
+  } catch (error) {
+    console.error(`Tanzanite ${timeframe} error:`, error.message);
+    if (page) await page.close().catch(() => {});
+    return {
+      timeframe,
+      depositVolume: 0,
+      percentChange: 0,
+      found: false,
+      error: error.message,
+    };
+  }
+}
+
+// Scrape all Tanzanite timeframes
+async function scrapeAllTanzanite() {
+  console.log('\n========================================');
+  console.log('Starting Tanzanite scrape...');
+  console.log('========================================\n');
+  
+  let browser;
+  const results = { week: null, month: null, year: null };
+  
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process',
+      ],
+    });
+    
+    // Scrape each timeframe in sequence
+    results.week = await scrapeTanzanite(browser, 'week');
+    results.month = await scrapeTanzanite(browser, 'month');
+    results.year = await scrapeTanzanite(browser, 'year');
+    
+    await browser.close();
+  } catch (error) {
+    console.error('Tanzanite browser error:', error.message);
+    if (browser) await browser.close().catch(() => {});
+    
+    // Return fallback estimates
+    results.week = { timeframe: 'week', depositVolume: 15000000, percentChange: 5, found: false, source: 'estimated' };
+    results.month = { timeframe: 'month', depositVolume: 60000000, percentChange: 8, found: false, source: 'estimated' };
+    results.year = { timeframe: 'year', depositVolume: 700000000, percentChange: 15, found: false, source: 'estimated' };
+  }
+  
+  return results;
+}
+
+// Tanzanite API endpoint
+app.get('/api/tanzanite', async (req, res) => {
+  const forceRefresh = req.query.refresh === 'true';
+  
+  // Check cache
+  if (!forceRefresh && tanzaniteCache.data && Date.now() - tanzaniteCache.timestamp < TANZANITE_CACHE_DURATION) {
+    const cacheAge = Math.round((Date.now() - tanzaniteCache.timestamp) / 1000 / 60);
+    return res.json({
+      success: true,
+      data: tanzaniteCache.data,
+      cached: true,
+      cacheAge: cacheAge + ' minutes',
+    });
+  }
+  
+  try {
+    const results = await scrapeAllTanzanite();
+    
+    // Update cache
+    tanzaniteCache = { data: results, timestamp: Date.now() };
+    
+    res.json({
+      success: true,
+      data: results,
+      cached: false,
+      scrapedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Tanzanite error:', error);
+    
+    // Return cached if available
+    if (tanzaniteCache.data) {
+      return res.json({
+        success: true,
+        data: tanzaniteCache.data,
+        cached: true,
+        error: error.message,
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Revenue scraper v4.1 running on port ${PORT}`);
+  console.log(`Revenue scraper v5.0 running on port ${PORT}`);
   console.log(`- PUMP: fees.pump.fun (Token Purchases table - sum daily amounts)`);
   console.log(`- RLB: rollshare.io/buyback?days=365 (365 Days Combined Revenue)`);
   console.log(`- HYPE: DeFiLlama API`);
+  console.log(`- Tanzanite: terminal.tanzanite.xyz/overview (Shuffle deposit volume)`);
 });
