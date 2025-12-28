@@ -17,6 +17,7 @@ let cache: { data: TokenRevenue[]; timestamp: number } | null = null;
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 // Fetch SHFL revenue from lottery history API
+// Uses SAME calculation as Shuffle.com Revenue modal for consistency
 async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
   try {
     // Get the base URL from the request
@@ -31,18 +32,40 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
     
     if (response.ok) {
       const data = await response.json();
-      console.log("Lottery history response:", JSON.stringify(data.stats));
       
-      if (data.stats?.avgWeeklyNGR_4week) {
-        const weeklyEarnings = data.stats.avgWeeklyNGR_4week;
-        const weeklyRevenue = weeklyEarnings / 0.15;
+      // Calculate the same way as ShuffleRevenueCard:
+      // Average ALL historical draws, not just 4-week
+      if (data.draws && data.draws.length > 0) {
+        // Sum all lottery NGR contributions
+        const totalLotteryNGR = data.draws.reduce((sum: number, draw: any) => {
+          const ngrContribution = draw.totalNGRContribution || draw.ngrAdded || 0;
+          const singlesContribution = (draw.singlesAdded || 0) * 0.85;
+          return sum + ngrContribution + singlesContribution;
+        }, 0);
+        
+        // Average weekly lottery NGR
+        const avgWeeklyLotteryNGR = totalLotteryNGR / data.draws.length;
+        
+        // Annual lottery NGR
+        const annualLotteryNGR = avgWeeklyLotteryNGR * 52;
+        
+        // Shuffle NGR = Lottery NGR / 0.15 (lottery gets 15% of total)
+        const annualShuffleNGR = annualLotteryNGR / 0.15;
+        const weeklyShuffleNGR = avgWeeklyLotteryNGR / 0.15;
+        
+        console.log("SHFL revenue calc:", {
+          draws: data.draws.length,
+          avgWeeklyLotteryNGR,
+          annualLotteryNGR,
+          annualShuffleNGR,
+        });
         
         return {
           symbol: "SHFL",
-          weeklyRevenue,
-          annualRevenue: weeklyRevenue * 52,
-          weeklyEarnings,
-          annualEarnings: weeklyEarnings * 52,
+          weeklyRevenue: weeklyShuffleNGR,
+          annualRevenue: annualShuffleNGR,
+          weeklyEarnings: avgWeeklyLotteryNGR,
+          annualEarnings: annualLotteryNGR,
           revenueAccrualPct: 0.15,
           source: "live",
         };
@@ -54,13 +77,13 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
     console.error("Error fetching SHFL revenue:", error);
   }
   
-  // Fallback estimate
+  // Fallback estimate (based on Shuffle.com Revenue modal showing ~$137M)
   return {
     symbol: "SHFL",
-    weeklyRevenue: 3100000,
-    annualRevenue: 161200000,
-    weeklyEarnings: 465000,
-    annualEarnings: 24180000,
+    weeklyRevenue: 2646000, // $137.6M / 52
+    annualRevenue: 137600000,
+    weeklyEarnings: 396900, // $20.6M / 52
+    annualEarnings: 20640000,
     revenueAccrualPct: 0.15,
     source: "estimated",
   };
