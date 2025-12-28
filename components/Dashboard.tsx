@@ -115,11 +115,11 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
 
-    // Refresh price every 60 seconds
+    // Refresh price every 30 seconds
     const priceInterval = setInterval(async () => {
       const priceData = await fetchSHFLPrice();
       setPrice(priceData);
-    }, 60000);
+    }, 30000);
 
     // Refresh all data every 5 minutes
     const dataInterval = setInterval(() => {

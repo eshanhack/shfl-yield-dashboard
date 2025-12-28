@@ -68,7 +68,8 @@ const GET_TOKEN_INFO_QUERY = `query tokenInfo {
 export async function fetchSHFLPrice(): Promise<SHFLPrice> {
   // Try Shuffle.com API first (more reliable)
   try {
-    const shuffleResponse = await fetch(SHUFFLE_API_ENDPOINT, {
+    // Add timestamp to prevent caching
+    const shuffleResponse = await fetch(`${SHUFFLE_API_ENDPOINT}?t=${Date.now()}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -76,6 +77,8 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Origin": "https://shuffle.com",
         "Referer": "https://shuffle.com/token",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
       },
       body: JSON.stringify({
         operationName: "tokenInfo",
@@ -104,8 +107,8 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
   // Fallback to CoinGecko
   try {
     const response = await fetch(
-      `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`,
-      { next: { revalidate: 60 } }
+      `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true&t=${Date.now()}`,
+      { cache: "no-store" }
     );
     
     if (!response.ok) {
