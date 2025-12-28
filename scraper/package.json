@@ -1,16 +1,28 @@
 {
   "name": "shfl-revenue-scraper",
-  "version": "1.0.0",
-  "description": "Scraping server for token revenue data",
+  "version": "6.0.0",
+  "description": "Revenue scraper for SHFL dashboard - PUMP, RLB, HYPE, Tanzanite, and Lottery NGR",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "puppeteer": "^21.6.1",
-    "cors": "^2.8.5"
-  }
+    "puppeteer": "^21.6.1"
+  },
+  "keywords": [
+    "shfl",
+    "shuffle",
+    "scraper",
+    "lottery",
+    "ngr"
+  ],
+  "author": "",
+  "license": "MIT"
 }
 

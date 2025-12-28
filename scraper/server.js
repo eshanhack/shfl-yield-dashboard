@@ -699,11 +699,578 @@ app.get('/api/tanzanite', async (req, res) => {
   }
 });
 
+// ==================== LOTTERY NGR SCRAPER ====================
+// Scrapes shuffle.com/lottery to extract prize data and calculate NGR
+
+// Cache for lottery data
+let lotteryCache = {
+  draws: {},  // drawNumber -> { prizes, timestamp }
+  timestamp: 0,
+};
+const LOTTERY_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Scrape prize data for a specific draw from shuffle.com/lottery
+ * @param {object} browser - Puppeteer browser instance
+ * @param {number} targetDraw - Draw number to scrape
+ * @param {number} currentDraw - Current draw number on page (for navigation)
+ * @param {object} page - Existing page to reuse (optional)
+ */
+async function scrapeLotteryDraw(browser, targetDraw, currentDraw = null, existingPage = null) {
+  console.log(`=== Scraping Lottery Draw #${targetDraw} ===`);
+  
+  let page = existingPage;
+  let createdPage = false;
+  
+  try {
+    if (!page) {
+      page = await browser.newPage();
+      createdPage = true;
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+      await page.setViewport({ width: 1920, height: 1080 });
+      
+      // Navigate to lottery results page
+      await page.goto('https://shuffle.com/lottery?tab=ticketsPrizes&section=results', { 
+        waitUntil: 'networkidle2',
+        timeout: 60000 
+      });
+      
+      // Wait for page to load
+      await new Promise(r => setTimeout(r, 3000));
+    }
+    
+    // Get current draw number from page if not provided
+    if (currentDraw === null) {
+      currentDraw = await page.evaluate(() => {
+        // Look for "Draw #XX" text
+        const text = document.body.innerText;
+        const match = text.match(/Draw\s*#\s*(\d+)/i);
+        return match ? parseInt(match[1]) : null;
+      });
+      console.log(`Current draw on page: #${currentDraw}`);
+    }
+    
+    // Navigate to target draw if needed
+    if (currentDraw && currentDraw !== targetDraw) {
+      const clicksNeeded = currentDraw - targetDraw;
+      const buttonText = clicksNeeded > 0 ? 'Prev' : 'Next';
+      const numClicks = Math.abs(clicksNeeded);
+      
+      console.log(`Navigating ${numClicks} draws ${buttonText.toLowerCase()}...`);
+      
+      for (let i = 0; i < numClicks; i++) {
+        // Click the appropriate navigation button
+        const clicked = await page.evaluate((btnText) => {
+          const buttons = document.querySelectorAll('button');
+          for (const btn of buttons) {
+            const text = btn.textContent?.toLowerCase() || '';
+            if (text.includes(btnText.toLowerCase()) && text.includes('draw')) {
+              btn.click();
+              return true;
+            }
+          }
+          // Try alternate button patterns
+          for (const btn of buttons) {
+            if (btn.textContent?.toLowerCase().includes(btnText.toLowerCase())) {
+              btn.click();
+              return true;
+            }
+          }
+          return false;
+        }, buttonText);
+        
+        if (!clicked) {
+          console.log(`Could not find ${buttonText} button`);
+          break;
+        }
+        
+        // Wait for data to load
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+    
+    // Verify we're on the correct draw
+    const verifiedDraw = await page.evaluate(() => {
+      const text = document.body.innerText;
+      const match = text.match(/Draw\s*#\s*(\d+)/i);
+      return match ? parseInt(match[1]) : null;
+    });
+    
+    console.log(`Now on Draw #${verifiedDraw}`);
+    
+    // Extract prize data for all divisions
+    const prizeData = await page.evaluate(() => {
+      const result = {
+        drawNumber: null,
+        prizes: [],
+        totalPrizes: 0,
+        totalPayouts: 0,
+        totalWinners: 0,
+        debug: '',
+      };
+      
+      // Get draw number
+      const drawMatch = document.body.innerText.match(/Draw\s*#\s*(\d+)/i);
+      if (drawMatch) {
+        result.drawNumber = parseInt(drawMatch[1]);
+      }
+      
+      // Find the prizes table/section
+      // Look for division names like "Jackpot", "Division 2", etc.
+      const divisions = [
+        { name: 'Jackpot', aliases: ['jackpot', 'division 1', 'div 1'] },
+        { name: 'Division 2', aliases: ['division 2', 'div 2', '2nd'] },
+        { name: 'Division 3', aliases: ['division 3', 'div 3', '3rd'] },
+        { name: 'Division 4', aliases: ['division 4', 'div 4', '4th'] },
+        { name: 'Division 5', aliases: ['division 5', 'div 5', '5th'] },
+        { name: 'Division 6', aliases: ['division 6', 'div 6', '6th'] },
+        { name: 'Division 7', aliases: ['division 7', 'div 7', '7th'] },
+        { name: 'Division 8', aliases: ['division 8', 'div 8', '8th'] },
+        { name: 'Division 9', aliases: ['division 9', 'div 9', '9th'] },
+      ];
+      
+      // Try to find prize tables
+      const tables = document.querySelectorAll('table');
+      result.debug += `Found ${tables.length} tables. `;
+      
+      for (const table of tables) {
+        const rows = table.querySelectorAll('tr');
+        
+        for (const row of rows) {
+          const cells = row.querySelectorAll('td, th');
+          const rowText = row.textContent?.toLowerCase() || '';
+          
+          // Check if this row contains a division
+          for (const div of divisions) {
+            const isMatch = div.aliases.some(alias => rowText.includes(alias));
+            if (!isMatch) continue;
+            
+            // Already have this division? Skip
+            if (result.prizes.some(p => p.division === div.name)) continue;
+            
+            // Extract prize amount and winners
+            let prizeAmount = 0;
+            let winners = 0;
+            
+            for (const cell of cells) {
+              const cellText = cell.textContent || '';
+              
+              // Look for currency amounts (e.g., $1,234,567.89)
+              const amountMatch = cellText.match(/\$?\s*([\d,]+(?:\.\d+)?)\s*(M|K)?/i);
+              if (amountMatch && prizeAmount === 0) {
+                let value = parseFloat(amountMatch[1].replace(/,/g, ''));
+                const suffix = amountMatch[2]?.toUpperCase();
+                if (suffix === 'M') value *= 1e6;
+                else if (suffix === 'K') value *= 1e3;
+                
+                // Prize amounts are typically > $100
+                if (value > 100) {
+                  prizeAmount = value;
+                }
+              }
+              
+              // Look for winner count (just a number, typically small)
+              const winnerMatch = cellText.match(/^(\d+)$/);
+              if (winnerMatch) {
+                const num = parseInt(winnerMatch[1]);
+                if (num < 10000) { // Winner counts are typically small
+                  winners = num;
+                }
+              }
+            }
+            
+            if (prizeAmount > 0) {
+              const payout = winners > 0 ? prizeAmount : 0;
+              result.prizes.push({
+                division: div.name,
+                prizePool: prizeAmount,
+                winners: winners,
+                payout: payout,
+              });
+              result.totalPrizes += prizeAmount;
+              result.totalPayouts += payout;
+              result.totalWinners += winners;
+            }
+            
+            break; // Found this division, move to next row
+          }
+        }
+        
+        // If we found prizes, we're done with tables
+        if (result.prizes.length > 0) break;
+      }
+      
+      // Alternative: Parse from page text if table parsing failed
+      if (result.prizes.length === 0) {
+        result.debug += 'Table parsing failed, trying text extraction. ';
+        
+        // Split page into sections and look for prize data
+        const bodyText = document.body.innerText;
+        
+        // Look for patterns like "Jackpot $1,234,567" or "Division 2 $123,456"
+        for (const div of divisions) {
+          for (const alias of div.aliases) {
+            const regex = new RegExp(`${alias}[^\\d]*\\$?([\\d,]+(?:\\.\\d+)?)`, 'i');
+            const match = bodyText.match(regex);
+            if (match) {
+              const amount = parseFloat(match[1].replace(/,/g, ''));
+              if (amount > 100 && !result.prizes.some(p => p.division === div.name)) {
+                result.prizes.push({
+                  division: div.name,
+                  prizePool: amount,
+                  winners: 0,
+                  payout: 0,
+                });
+                result.totalPrizes += amount;
+              }
+              break;
+            }
+          }
+        }
+      }
+      
+      result.debug += `Extracted ${result.prizes.length} divisions. `;
+      return result;
+    });
+    
+    console.log(`Draw #${targetDraw} prizes:`, prizeData.prizes.length, 'divisions, total:', prizeData.totalPrizes);
+    
+    return {
+      success: true,
+      drawNumber: prizeData.drawNumber || targetDraw,
+      prizes: prizeData.prizes,
+      totalPrizes: prizeData.totalPrizes,
+      totalPayouts: prizeData.totalPayouts,
+      totalWinners: prizeData.totalWinners,
+      debug: prizeData.debug,
+      page: createdPage ? null : page, // Return page for reuse if we created it
+      currentPageDraw: verifiedDraw,
+    };
+    
+  } catch (error) {
+    console.error(`Error scraping draw #${targetDraw}:`, error.message);
+    if (page && createdPage) await page.close().catch(() => {});
+    return {
+      success: false,
+      drawNumber: targetDraw,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Calculate NGR for a draw by comparing with previous draw
+ * NGR = Current Draw Prizes - (Previous Draw Prizes - Previous Draw Payouts)
+ */
+function calculateNGR(currentDraw, previousDraw) {
+  if (!currentDraw.success || !previousDraw.success) {
+    return {
+      success: false,
+      error: 'Missing draw data',
+    };
+  }
+  
+  const previousRollover = previousDraw.totalPrizes - previousDraw.totalPayouts;
+  const ngrAdded = currentDraw.totalPrizes - previousRollover;
+  
+  return {
+    success: true,
+    drawNumber: currentDraw.drawNumber,
+    ngrAdded: Math.round(ngrAdded),
+    currentTotalPrizes: currentDraw.totalPrizes,
+    previousTotalPrizes: previousDraw.totalPrizes,
+    previousPayouts: previousDraw.totalPayouts,
+    previousRollover: previousRollover,
+    breakdown: {
+      formula: `NGR = ${currentDraw.totalPrizes.toLocaleString()} - (${previousDraw.totalPrizes.toLocaleString()} - ${previousDraw.totalPayouts.toLocaleString()})`,
+      result: `NGR = ${currentDraw.totalPrizes.toLocaleString()} - ${previousRollover.toLocaleString()} = ${Math.round(ngrAdded).toLocaleString()}`,
+    },
+  };
+}
+
+/**
+ * Scrape NGR for multiple draws
+ */
+async function scrapeMultipleDrawsNGR(drawNumbers) {
+  console.log('\n========================================');
+  console.log('Starting Lottery NGR Scrape for draws:', drawNumbers);
+  console.log('========================================\n');
+  
+  let browser;
+  const results = [];
+  
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--window-size=1920,1080',
+      ],
+    });
+    
+    // Create a single page and reuse it
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Navigate to lottery page
+    await page.goto('https://shuffle.com/lottery?tab=ticketsPrizes&section=results', { 
+      waitUntil: 'networkidle2',
+      timeout: 60000 
+    });
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // Get current draw on page
+    let currentPageDraw = await page.evaluate(() => {
+      const text = document.body.innerText;
+      const match = text.match(/Draw\s*#\s*(\d+)/i);
+      return match ? parseInt(match[1]) : null;
+    });
+    
+    console.log(`Starting from Draw #${currentPageDraw}`);
+    
+    // Sort draw numbers descending so we minimize navigation
+    const sortedDraws = [...drawNumbers].sort((a, b) => b - a);
+    
+    // For each target draw, we need it AND the previous draw
+    const allDrawsNeeded = new Set();
+    for (const draw of sortedDraws) {
+      allDrawsNeeded.add(draw);
+      allDrawsNeeded.add(draw - 1);
+    }
+    
+    const drawsToScrape = [...allDrawsNeeded].sort((a, b) => b - a);
+    const scrapedDraws = {};
+    
+    // Scrape each draw
+    for (const targetDraw of drawsToScrape) {
+      // Check cache first
+      if (lotteryCache.draws[targetDraw] && 
+          Date.now() - lotteryCache.draws[targetDraw].timestamp < LOTTERY_CACHE_DURATION) {
+        console.log(`Using cached data for Draw #${targetDraw}`);
+        scrapedDraws[targetDraw] = lotteryCache.draws[targetDraw].data;
+        continue;
+      }
+      
+      // Navigate to the draw
+      const clicksNeeded = currentPageDraw - targetDraw;
+      if (clicksNeeded !== 0) {
+        const buttonSelector = clicksNeeded > 0 ? 'Prev' : 'Next';
+        const numClicks = Math.abs(clicksNeeded);
+        
+        for (let i = 0; i < numClicks; i++) {
+          await page.evaluate((btnText) => {
+            const buttons = document.querySelectorAll('button');
+            for (const btn of buttons) {
+              const text = btn.textContent?.toLowerCase() || '';
+              if (text.includes(btnText.toLowerCase())) {
+                btn.click();
+                return;
+              }
+            }
+          }, buttonSelector);
+          await new Promise(r => setTimeout(r, 1200));
+        }
+        currentPageDraw = targetDraw;
+      }
+      
+      // Extract data
+      const drawData = await page.evaluate(() => {
+        const result = {
+          prizes: [],
+          totalPrizes: 0,
+          totalPayouts: 0,
+        };
+        
+        // Find the results table - look for structure with divisions
+        const allElements = document.querySelectorAll('*');
+        
+        for (const el of allElements) {
+          const text = el.textContent || '';
+          
+          // Look for jackpot amount pattern
+          if (text.toLowerCase().includes('jackpot') && text.includes('$')) {
+            // Try to extract amounts from this element's children
+            const matches = text.match(/\$([\d,]+(?:\.\d+)?)/g);
+            if (matches) {
+              // First match is usually the prize pool
+              for (const match of matches) {
+                const amount = parseFloat(match.replace(/[$,]/g, ''));
+                if (amount > 1000) {
+                  result.prizes.push({ amount, type: 'found' });
+                  result.totalPrizes += amount;
+                }
+              }
+            }
+          }
+        }
+        
+        return result;
+      });
+      
+      scrapedDraws[targetDraw] = {
+        success: true,
+        drawNumber: targetDraw,
+        totalPrizes: drawData.totalPrizes,
+        totalPayouts: drawData.totalPayouts,
+        prizes: drawData.prizes,
+      };
+      
+      // Cache it
+      lotteryCache.draws[targetDraw] = {
+        data: scrapedDraws[targetDraw],
+        timestamp: Date.now(),
+      };
+    }
+    
+    await page.close();
+    await browser.close();
+    
+    // Calculate NGR for each requested draw
+    for (const targetDraw of sortedDraws) {
+      const current = scrapedDraws[targetDraw];
+      const previous = scrapedDraws[targetDraw - 1];
+      
+      if (current && previous) {
+        const ngrResult = calculateNGR(current, previous);
+        results.push({
+          drawNumber: targetDraw,
+          ...ngrResult,
+          currentDraw: current,
+          previousDraw: previous,
+        });
+      } else {
+        results.push({
+          drawNumber: targetDraw,
+          success: false,
+          error: `Missing data for draw ${targetDraw} or ${targetDraw - 1}`,
+        });
+      }
+    }
+    
+  } catch (error) {
+    console.error('Lottery scraping error:', error.message);
+    if (browser) await browser.close().catch(() => {});
+    return {
+      success: false,
+      error: error.message,
+      results: [],
+    };
+  }
+  
+  return {
+    success: true,
+    results,
+    scrapedAt: new Date().toISOString(),
+  };
+}
+
+// Lottery NGR API endpoint
+app.get('/api/lottery-ngr', async (req, res) => {
+  const draws = req.query.draws; // e.g., "60,61,62" or "64"
+  const forceRefresh = req.query.refresh === 'true';
+  
+  if (!draws) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing draws parameter. Usage: /api/lottery-ngr?draws=60,61,62',
+      example: '/api/lottery-ngr?draws=64',
+    });
+  }
+  
+  // Parse draw numbers
+  const drawNumbers = draws.split(',')
+    .map(s => parseInt(s.trim()))
+    .filter(n => !isNaN(n) && n > 1);
+  
+  if (drawNumbers.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'No valid draw numbers provided',
+    });
+  }
+  
+  // Clear cache if force refresh
+  if (forceRefresh) {
+    for (const draw of drawNumbers) {
+      delete lotteryCache.draws[draw];
+      delete lotteryCache.draws[draw - 1];
+    }
+  }
+  
+  try {
+    const results = await scrapeMultipleDrawsNGR(drawNumbers);
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Single draw prizes endpoint (for debugging/verification)
+app.get('/api/lottery-prizes', async (req, res) => {
+  const drawNumber = parseInt(req.query.draw);
+  
+  if (!drawNumber || isNaN(drawNumber)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing or invalid draw parameter. Usage: /api/lottery-prizes?draw=64',
+    });
+  }
+  
+  // Check cache
+  if (lotteryCache.draws[drawNumber] && 
+      Date.now() - lotteryCache.draws[drawNumber].timestamp < LOTTERY_CACHE_DURATION) {
+    return res.json({
+      success: true,
+      cached: true,
+      data: lotteryCache.draws[drawNumber].data,
+    });
+  }
+  
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    
+    const result = await scrapeLotteryDraw(browser, drawNumber);
+    await browser.close();
+    
+    if (result.success) {
+      lotteryCache.draws[drawNumber] = {
+        data: result,
+        timestamp: Date.now(),
+      };
+    }
+    
+    res.json({
+      success: result.success,
+      cached: false,
+      data: result,
+    });
+  } catch (error) {
+    if (browser) await browser.close().catch(() => {});
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Revenue scraper v5.0 running on port ${PORT}`);
-  console.log(`- PUMP: fees.pump.fun (Token Purchases table - sum daily amounts)`);
-  console.log(`- RLB: rollshare.io/buyback?days=365 (365 Days Combined Revenue)`);
-  console.log(`- HYPE: DeFiLlama API`);
-  console.log(`- Tanzanite: terminal.tanzanite.xyz/overview (Shuffle deposit volume)`);
+  console.log(`Revenue scraper v6.0 running on port ${PORT}`);
+  console.log(`Endpoints:`);
+  console.log(`  - GET /api/revenue - PUMP, RLB, HYPE revenue data`);
+  console.log(`  - GET /api/tanzanite - Shuffle deposit volume`);
+  console.log(`  - GET /api/lottery-ngr?draws=60,61,62 - Calculate NGR for draws`);
+  console.log(`  - GET /api/lottery-prizes?draw=64 - Get prize data for a draw`);
+  console.log(`  - GET /api/health - Health check`);
 });

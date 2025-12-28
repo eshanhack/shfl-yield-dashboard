@@ -228,6 +228,90 @@ async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
   }
 }
 
+// Cache for calculated NGR values (to avoid repeated API calls)
+const calculatedNGRCache: Map<number, { ngr: number; timestamp: number }> = new Map();
+const NGR_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Calculate NGR for a draw using prize pool differences
+ * NGR = Current Draw Prizes - (Previous Draw Prizes - Previous Draw Payouts)
+ */
+async function calculateNGRFromPrizes(drawNumber: number): Promise<number | null> {
+  // Check cache first
+  const cached = calculatedNGRCache.get(drawNumber);
+  if (cached && Date.now() - cached.timestamp < NGR_CACHE_DURATION) {
+    return cached.ngr;
+  }
+
+  try {
+    // Fetch prizes for current and previous draw
+    const [currentPrizes, previousPrizes] = await Promise.all([
+      fetchPrizesForDraw(drawNumber),
+      fetchPrizesForDraw(drawNumber - 1),
+    ]);
+
+    if (!currentPrizes || !previousPrizes) {
+      console.log(`Cannot calculate NGR for draw ${drawNumber}: missing prize data`);
+      return null;
+    }
+
+    // Calculate totals
+    const currentTotal = currentPrizes.reduce((sum, p) => sum + p.amount, 0);
+    const previousTotal = previousPrizes.reduce((sum, p) => sum + p.amount, 0);
+    const previousPayouts = previousPrizes.reduce((sum, p) => sum + (p.win || 0), 0);
+
+    // NGR = Current prizes - (Previous prizes - Previous payouts)
+    const previousRollover = previousTotal - previousPayouts;
+    const ngr = currentTotal - previousRollover;
+
+    console.log(`Calculated NGR for draw ${drawNumber}: $${Math.round(ngr).toLocaleString()}`);
+    console.log(`  Current: $${Math.round(currentTotal).toLocaleString()}, Prev: $${Math.round(previousTotal).toLocaleString()}, Payouts: $${Math.round(previousPayouts).toLocaleString()}`);
+
+    // Cache the result
+    calculatedNGRCache.set(drawNumber, { ngr: Math.round(ngr), timestamp: Date.now() });
+
+    return Math.round(ngr);
+  } catch (error) {
+    console.error(`Error calculating NGR for draw ${drawNumber}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get NGR for a draw - uses static data if available, otherwise calculates from prizes
+ */
+async function getNGRForDraw(drawNumber: number, previousDrawStaticData: typeof LOTTERY_HISTORY_DATA[0] | undefined): Promise<{ ngrAdded: number; singlesAdded: number; calculated: boolean }> {
+  // If we have static data from the previous draw, use it
+  if (previousDrawStaticData && previousDrawStaticData.ngrAdded > 0) {
+    return {
+      ngrAdded: previousDrawStaticData.ngrAdded,
+      singlesAdded: previousDrawStaticData.singlesAdded || 0,
+      calculated: false,
+    };
+  }
+
+  // Otherwise, calculate from prize data
+  const calculatedNGR = await calculateNGRFromPrizes(drawNumber);
+  
+  if (calculatedNGR !== null) {
+    return {
+      ngrAdded: calculatedNGR,
+      singlesAdded: 0, // Can't determine singles from prize data alone
+      calculated: true,
+    };
+  }
+
+  // Fallback: estimate as 15% of prize pool (rough approximation)
+  const drawData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNumber);
+  const estimatedNGR = drawData ? drawData.prizePool * 0.15 : 0;
+  
+  return {
+    ngrAdded: Math.round(estimatedNGR),
+    singlesAdded: 0,
+    calculated: true,
+  };
+}
+
 // Get latest draw number
 async function getLatestDrawNumber(): Promise<number> {
   try {
@@ -251,11 +335,199 @@ async function getLatestDrawNumber(): Promise<number> {
   }
 }
 
+// NGR Sanity Check: Compare stored NGR values against calculated prize pool differences
+async function runNgrSanityCheck(drawNumbers: number[]): Promise<{
+  results: Array<{
+    drawNumber: number;
+    storedNgr: number;
+    calculatedNgr: number;
+    difference: number;
+    percentDiff: number;
+    status: "match" | "close" | "mismatch" | "missing_data";
+    details: {
+      currentPrizes: number;
+      prevPrizes: number;
+      prevPayouts: number;
+      prevRollover: number;
+    } | null;
+  }>;
+  summary: {
+    totalChecked: number;
+    matches: number;
+    close: number;
+    mismatches: number;
+    missingData: number;
+  };
+}> {
+  const results: Array<{
+    drawNumber: number;
+    storedNgr: number;
+    calculatedNgr: number;
+    difference: number;
+    percentDiff: number;
+    status: "match" | "close" | "mismatch" | "missing_data";
+    details: {
+      currentPrizes: number;
+      prevPrizes: number;
+      prevPayouts: number;
+      prevRollover: number;
+    } | null;
+  }> = [];
+
+  // Fetch prizes for all draws we need to check (and their previous draws)
+  const allDrawsToFetch = new Set<number>();
+  for (const drawNum of drawNumbers) {
+    if (drawNum > 1) {
+      allDrawsToFetch.add(drawNum);
+      allDrawsToFetch.add(drawNum - 1);
+    }
+  }
+
+  // Batch fetch all prize data
+  const prizeDataMap = new Map<number, PrizeData[]>();
+  const fetchPromises = Array.from(allDrawsToFetch).map(async (drawNum) => {
+    const prizes = await fetchPrizesForDraw(drawNum);
+    if (prizes) {
+      prizeDataMap.set(drawNum, prizes);
+    }
+  });
+  await Promise.all(fetchPromises);
+
+  // Check each draw
+  for (const drawNum of drawNumbers) {
+    if (drawNum === 1) continue; // Skip draw 1, no previous draw to compare
+
+    const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
+    const prevStaticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum - 1);
+    
+    // The stored NGR for this draw comes from the PREVIOUS draw's ngrAdded field
+    const storedNgr = prevStaticData?.ngrAdded || 0;
+    
+    const currentPrizes = prizeDataMap.get(drawNum);
+    const prevPrizes = prizeDataMap.get(drawNum - 1);
+
+    if (!currentPrizes || !prevPrizes) {
+      results.push({
+        drawNumber: drawNum,
+        storedNgr,
+        calculatedNgr: 0,
+        difference: 0,
+        percentDiff: 0,
+        status: "missing_data",
+        details: null,
+      });
+      continue;
+    }
+
+    // Calculate totals
+    // Current draw total prizes (before any payouts)
+    const currentTotalPrizes = currentPrizes.reduce((sum, p) => sum + p.amount, 0);
+    
+    // Previous draw: total prizes and what was paid out
+    const prevTotalPrizes = prevPrizes.reduce((sum, p) => sum + p.amount, 0);
+    const prevTotalPayouts = prevPrizes.reduce((sum, p) => sum + (p.win || 0), 0);
+    
+    // What rolled over from previous draw = prizes - payouts
+    const prevRollover = prevTotalPrizes - prevTotalPayouts;
+    
+    // NGR Added = Current prizes - Previous rollover
+    // This represents the new money that came in (NGR + singles contributions)
+    const calculatedNgr = currentTotalPrizes - prevRollover;
+    
+    const difference = Math.abs(storedNgr - calculatedNgr);
+    const percentDiff = storedNgr > 0 ? (difference / storedNgr) * 100 : 0;
+    
+    // Determine status based on difference
+    // Note: calculatedNgr includes both NGR and singles, so we should compare against totalNGRContribution
+    const storedTotal = storedNgr + (prevStaticData?.singlesAdded || 0) * 0.85;
+    const totalDifference = Math.abs(storedTotal - calculatedNgr);
+    const totalPercentDiff = storedTotal > 0 ? (totalDifference / storedTotal) * 100 : 0;
+    
+    let status: "match" | "close" | "mismatch" | "missing_data";
+    if (totalPercentDiff < 5) {
+      status = "match";
+    } else if (totalPercentDiff < 15) {
+      status = "close";
+    } else {
+      status = "mismatch";
+    }
+
+    results.push({
+      drawNumber: drawNum,
+      storedNgr,
+      calculatedNgr: Math.round(calculatedNgr),
+      difference: Math.round(totalDifference),
+      percentDiff: Math.round(totalPercentDiff * 10) / 10,
+      status,
+      details: {
+        currentPrizes: Math.round(currentTotalPrizes),
+        prevPrizes: Math.round(prevTotalPrizes),
+        prevPayouts: Math.round(prevTotalPayouts),
+        prevRollover: Math.round(prevRollover),
+      },
+    });
+  }
+
+  // Sort by draw number descending
+  results.sort((a, b) => b.drawNumber - a.drawNumber);
+
+  const summary = {
+    totalChecked: results.length,
+    matches: results.filter(r => r.status === "match").length,
+    close: results.filter(r => r.status === "close").length,
+    mismatches: results.filter(r => r.status === "mismatch").length,
+    missingData: results.filter(r => r.status === "missing_data").length,
+  };
+
+  return { results, summary };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fetchPrizes = searchParams.get("fetchPrizes") === "true";
   const drawId = searchParams.get("drawId");
   const fetchAll = searchParams.get("fetchAll") === "true";
+  const sanityCheck = searchParams.get("sanityCheck") === "true";
+  const sanityCheckDraws = searchParams.get("draws"); // e.g., "60,61,62,63" or "all"
+
+  // NGR Sanity Check endpoint
+  if (sanityCheck) {
+    let drawsToCheck: number[];
+    
+    if (sanityCheckDraws === "all" || !sanityCheckDraws) {
+      // Check all draws in static data (except draw 1)
+      drawsToCheck = LOTTERY_HISTORY_DATA
+        .map(d => d.drawNumber)
+        .filter(n => n > 1)
+        .sort((a, b) => b - a);
+    } else {
+      // Parse specific draw numbers
+      drawsToCheck = sanityCheckDraws
+        .split(",")
+        .map(s => parseInt(s.trim()))
+        .filter(n => !isNaN(n) && n > 1);
+    }
+
+    const checkResult = await runNgrSanityCheck(drawsToCheck);
+
+    return NextResponse.json({
+      success: true,
+      sanityCheck: checkResult,
+      explanation: {
+        method: "Compares stored NGR values against calculated prize pool differences",
+        formula: "Calculated NGR = Current Draw Prizes - (Previous Draw Prizes - Previous Draw Payouts)",
+        storedNgr: "The ngrAdded value from the PREVIOUS draw's row (since NGR is added to the NEXT draw)",
+        statuses: {
+          match: "Difference < 5%",
+          close: "Difference 5-15%", 
+          mismatch: "Difference > 15%",
+          missing_data: "Could not fetch prize data from API",
+        },
+        note: "Small differences are expected due to timing, rounding, and singles contributions",
+      },
+      lastUpdated: new Date().toISOString(),
+    });
+  }
 
   // If requesting specific draw details
   if (drawId) {
@@ -278,9 +550,26 @@ export async function GET(request: Request) {
     
     const totalPool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
     
-    // The actual NGR that contributed to THIS draw came from the PREVIOUS draw's ngrAdded
-    const actualNgrForThisDraw = previousDrawData?.ngrAdded || (drawNum === 1 ? 0 : totalPool * 0.15);
-    const actualSinglesForThisDraw = previousDrawData?.singlesAdded || 0;
+    // Get NGR - use static data or calculate from prizes
+    let actualNgrForThisDraw: number;
+    let actualSinglesForThisDraw: number;
+    let ngrSource: string;
+    
+    if (previousDrawData?.ngrAdded) {
+      actualNgrForThisDraw = previousDrawData.ngrAdded;
+      actualSinglesForThisDraw = previousDrawData.singlesAdded || 0;
+      ngrSource = 'static';
+    } else if (drawNum > 1) {
+      // Try to calculate from prize data
+      const ngrResult = await getNGRForDraw(drawNum, previousDrawData);
+      actualNgrForThisDraw = ngrResult.ngrAdded;
+      actualSinglesForThisDraw = ngrResult.singlesAdded;
+      ngrSource = ngrResult.calculated ? 'calculated' : 'static';
+    } else {
+      actualNgrForThisDraw = 0;
+      actualSinglesForThisDraw = 0;
+      ngrSource = 'none';
+    }
     
     // Posted values (what's shown in this draw's row - goes to NEXT draw)
     const postedNgrAdded = staticData?.ngrAdded || totalPool * 0.15;
@@ -308,6 +597,7 @@ export async function GET(request: Request) {
         jackpotWon: jackpotWonFromPrizes || jackpotWonFromRatio,
         totalWinners: prizes?.reduce((sum, p) => sum + p.winCount, 0) || 0,
         totalPaidOut: prizes?.reduce((sum, p) => sum + (p.win || 0), 0) || 0,
+        ngrSource, // Include for debugging
       },
       lastUpdated: new Date().toISOString(),
     });
@@ -315,6 +605,9 @@ export async function GET(request: Request) {
 
   // Get the latest draw number
   const latestDrawNum = await getLatestDrawNumber();
+  
+  // Check if we should auto-fill missing NGR (default: true for recent draws)
+  const autoFillNGR = searchParams.get("autoFillNGR") !== "false";
   
   // Fetch all draws from API (1 to latest) - limit concurrent requests
   const allDrawNumbers = Array.from({ length: latestDrawNum }, (_, i) => latestDrawNum - i);
@@ -332,19 +625,79 @@ export async function GET(request: Request) {
   // Build draws list combining API data with static data
   // IMPORTANT: The ngrAdded in a draw's row is added to the NEXT draw's prize pool
   // So Draw N's actual NGR contribution comes from Draw (N-1)'s ngrAdded field
-  let drawsWithData: LotteryDrawData[] = allDrawNumbers.map((drawNum, index) => {
+  
+  // First pass: build initial data (sync)
+  const initialDrawsData = allDrawNumbers.map((drawNum, index) => {
     const apiData = allDrawsData[index];
     const staticData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum);
-    
-    // Get the PREVIOUS draw's data for the actual NGR contribution to this draw
     const previousDrawData = LOTTERY_HISTORY_DATA.find(d => d.drawNumber === drawNum - 1);
-    
     const prizePool = apiData?.prizePoolAmount || staticData?.prizePool || 0;
+    
+    return {
+      drawNum,
+      apiData,
+      staticData,
+      previousDrawData,
+      prizePool,
+    };
+  }).filter(d => d.prizePool > 0);
+
+  // Find draws that are missing NGR data (no previous draw data in static)
+  const drawsMissingNGR = initialDrawsData.filter(d => 
+    d.drawNum > 1 && 
+    !d.previousDrawData?.ngrAdded && 
+    autoFillNGR
+  ).slice(0, 10); // Limit to 10 most recent to avoid too many API calls
+
+  // Fetch missing NGR for draws without static data (async)
+  const calculatedNGRMap: Map<number, { ngrAdded: number; singlesAdded: number }> = new Map();
+  
+  if (drawsMissingNGR.length > 0) {
+    console.log(`Auto-filling NGR for ${drawsMissingNGR.length} draws: ${drawsMissingNGR.map(d => d.drawNum).join(', ')}`);
+    
+    // Calculate NGR for each missing draw
+    const ngrPromises = drawsMissingNGR.map(async (d) => {
+      const result = await getNGRForDraw(d.drawNum, d.previousDrawData);
+      if (result.calculated) {
+        calculatedNGRMap.set(d.drawNum, { ngrAdded: result.ngrAdded, singlesAdded: result.singlesAdded });
+      }
+    });
+    
+    await Promise.all(ngrPromises);
+  }
+
+  // Second pass: build final draws with calculated NGR where needed
+  let drawsWithData: LotteryDrawData[] = initialDrawsData.map(({ drawNum, apiData, staticData, previousDrawData, prizePool }) => {
+    // Check if we have calculated NGR for this draw
+    const calculatedNGR = calculatedNGRMap.get(drawNum);
     
     // The actual NGR that contributed to THIS draw came from the PREVIOUS draw's ngrAdded
     // For Draw 1, there's no previous draw, so we estimate based on the prize pool
-    const actualNgrForThisDraw = previousDrawData?.ngrAdded || (drawNum === 1 ? 0 : prizePool * 0.15);
-    const actualSinglesForThisDraw = previousDrawData?.singlesAdded || 0;
+    let actualNgrForThisDraw: number;
+    let actualSinglesForThisDraw: number;
+    let ngrSource: string;
+    
+    if (previousDrawData?.ngrAdded) {
+      // Have static data from previous draw
+      actualNgrForThisDraw = previousDrawData.ngrAdded;
+      actualSinglesForThisDraw = previousDrawData.singlesAdded || 0;
+      ngrSource = 'static';
+    } else if (calculatedNGR) {
+      // Calculated from prize differences
+      actualNgrForThisDraw = calculatedNGR.ngrAdded;
+      actualSinglesForThisDraw = calculatedNGR.singlesAdded;
+      ngrSource = 'calculated';
+    } else if (drawNum === 1) {
+      // Draw 1 has no previous draw
+      actualNgrForThisDraw = 0;
+      actualSinglesForThisDraw = 0;
+      ngrSource = 'none';
+    } else {
+      // Fallback estimate
+      actualNgrForThisDraw = prizePool * 0.15;
+      actualSinglesForThisDraw = 0;
+      ngrSource = 'estimated';
+    }
     
     // Also store the "posted" NGR (what's shown in this draw's row - goes to NEXT draw)
     const postedNgrAdded = staticData?.ngrAdded || prizePool * 0.15;
@@ -368,8 +721,10 @@ export async function GET(request: Request) {
       totalStaked: apiData?.totalStaked || 0,
       totalTickets: apiData?.totalStaked ? Math.floor(apiData.totalStaked / 50) : 0,
       jackpotWon: staticData ? wasJackpotWon(staticData.jackpotted, staticData.prizePool) : false,
-    };
-  }).filter(d => d.prizePool > 0); // Filter out draws with no data
+      // Include source info for debugging (will be stripped in response)
+      _ngrSource: ngrSource,
+    } as LotteryDrawData & { _ngrSource?: string };
+  });
 
   // Optionally fetch prize data for recent draws
   if (fetchPrizes) {
