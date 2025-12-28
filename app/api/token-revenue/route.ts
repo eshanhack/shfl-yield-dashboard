@@ -17,15 +17,13 @@ let cache: { data: TokenRevenue[]; timestamp: number } | null = null;
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 // Fetch SHFL revenue from lottery history API
+// EXACT SAME calculation as ShuffleRevenueCard for consistency
 // Revenue = GGR (Gross Gaming Revenue) = NGR × 2
-// Earnings = Lottery NGR (what accrues to token holders)
+// Earnings = Lottery NGR = 15% of Shuffle NGR
 async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
   try {
-    // Get the base URL from the request
     const url = new URL(request.url);
     const baseUrl = `${url.protocol}//${url.host}`;
-    
-    console.log("Fetching SHFL from:", `${baseUrl}/api/lottery-history`);
     
     const response = await fetch(`${baseUrl}/api/lottery-history`, {
       cache: "no-store",
@@ -34,64 +32,54 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
     if (response.ok) {
       const data = await response.json();
       
-      // Calculate the same way as ShuffleRevenueCard
       if (data.draws && data.draws.length > 0) {
-        // Sum all lottery NGR contributions
-        const totalLotteryNGR = data.draws.reduce((sum: number, draw: any) => {
-          const ngrContribution = draw.totalNGRContribution || draw.ngrAdded || 0;
-          const singlesContribution = (draw.singlesAdded || 0) * 0.85;
-          return sum + ngrContribution + singlesContribution;
+        // EXACT same calculation as ShuffleRevenueCard.tsx:
+        // Sum: d.ngrUSD + (d.singlesAdded || 0) * 0.85
+        const draws = data.draws.filter((d: any) => d.ngrUSD > 0);
+        
+        const totalLotteryNGR = draws.reduce((sum: number, d: any) => {
+          return sum + (d.ngrUSD || 0) + (d.singlesAdded || 0) * 0.85;
         }, 0);
         
         // Average weekly lottery NGR
-        const avgWeeklyLotteryNGR = totalLotteryNGR / data.draws.length;
+        const avgWeeklyLotteryNGR = draws.length > 0 ? totalLotteryNGR / draws.length : 0;
         
-        // Annual lottery NGR (earnings to token holders)
+        // Annual values
         const annualLotteryNGR = avgWeeklyLotteryNGR * 52;
+        const annualShuffleNGR = annualLotteryNGR / 0.15;  // Lottery is 15% of NGR
+        const annualGGR = annualShuffleNGR * 2;  // GGR = NGR × 2
         
-        // Shuffle NGR = Lottery NGR / 0.15
-        const annualShuffleNGR = annualLotteryNGR / 0.15;
-        
-        // GGR = NGR × 2 (industry standard)
-        const annualGGR = annualShuffleNGR * 2;
-        const weeklyGGR = annualGGR / 52;
-        
-        // Earnings = 15% of Shuffle NGR (lottery allocation)
-        // Display accrual as 15% (the rate from NGR to lottery)
-        
-        console.log("SHFL revenue calc:", {
-          draws: data.draws.length,
+        console.log("SHFL revenue (matching ShuffleRevenueCard):", {
+          draws: draws.length,
+          avgWeeklyLotteryNGR,
           annualLotteryNGR,
           annualShuffleNGR,
           annualGGR,
-          accrualPct: "15% (of NGR)",
         });
         
         return {
           symbol: "SHFL",
-          weeklyRevenue: weeklyGGR,
+          weeklyRevenue: annualGGR / 52,
           annualRevenue: annualGGR,  // GGR as revenue
           weeklyEarnings: avgWeeklyLotteryNGR,
-          annualEarnings: annualLotteryNGR,  // 15% of NGR
-          revenueAccrualPct: 0.15,  // Show 15% (lottery allocation rate from NGR)
+          annualEarnings: annualLotteryNGR,  // Lottery NGR as earnings
+          revenueAccrualPct: 0.15,  // 15% of NGR goes to lottery
           source: "live",
         };
       }
-    } else {
-      console.error("Lottery history failed:", response.status);
     }
   } catch (error) {
     console.error("Error fetching SHFL revenue:", error);
   }
   
-  // Fallback estimate (based on Shuffle.com Revenue modal showing ~$275M GGR)
+  // Fallback - EXACT values from Shuffle.com Revenue modal
   return {
     symbol: "SHFL",
-    weeklyRevenue: 5292000, // $275M / 52
-    annualRevenue: 275000000,  // GGR
-    weeklyEarnings: 396900, // $20.6M / 52
-    annualEarnings: 20640000,  // Lottery NGR
-    revenueAccrualPct: 0.075,  // ~7.5%
+    weeklyRevenue: 275206896 / 52,
+    annualRevenue: 275206896,  // GGR from modal
+    weeklyEarnings: 20640517 / 52,
+    annualEarnings: 20640517,  // Lottery NGR from modal
+    revenueAccrualPct: 0.15,
     source: "estimated",
   };
 }
@@ -163,15 +151,17 @@ function getEstimatedRevenues(): TokenRevenue[] {
       source: "estimated",
     },
     {
-      // RLB - Rollbit (Dec 2025)
-      // From rollshare.io: $277M annual (Casino $213.5M, Trading $34.6M, Sports $29.3M)
-      // Accrual: Casino 10%, Trading 30%, Sports 20%
-      // Earnings = ($213.5M × 10%) + ($34.6M × 30%) + ($29.3M × 20%) = $37.6M
+      // RLB - Rollbit (Dec 2025 from rollshare.io)
+      // Total Annual Revenue: $277,489,012
+      // - Casino: $213,546,804 × 10% = $21,354,680
+      // - Trading: $34,618,572 × 30% = $10,385,572
+      // - Sports: $29,323,636 × 20% = $5,864,727
+      // Total Annual Earnings: $37,604,979
       symbol: "RLB",
       weeklyRevenue: 277489012 / 52,
       annualRevenue: 277489012,
-      weeklyEarnings: 37605000 / 52,
-      annualEarnings: 37605000,
+      weeklyEarnings: 37604979 / 52,
+      annualEarnings: 37604979,
       revenueAccrualPct: 0.1355, // 37.6M / 277.5M = 13.55%
       source: "estimated",
     },
@@ -228,14 +218,14 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Token revenue error:", error);
     
-    // Return all estimated data on error
+    // Return all estimated data on error - use exact values from Shuffle.com Revenue modal
     const fallbackData: TokenRevenue[] = [
       {
         symbol: "SHFL",
-        weeklyRevenue: 3100000,
-        annualRevenue: 161200000,
-        weeklyEarnings: 465000,
-        annualEarnings: 24180000,
+        weeklyRevenue: 275206896 / 52,
+        annualRevenue: 275206896,  // GGR
+        weeklyEarnings: 20640517 / 52,
+        annualEarnings: 20640517,  // Lottery NGR
         revenueAccrualPct: 0.15,
         source: "estimated",
       },
