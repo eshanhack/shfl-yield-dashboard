@@ -140,12 +140,17 @@ export default function YieldCalculatorPanel({
   }, [shflAmount, shflPrice, upcomingDraw, prizeSplit, stakingValueUSD]);
 
   // Historical yields for each draw (historicalDraws should already be filtered to completed draws)
+  // Use adjustedNgrUSD when available (accounts for jackpot replenishment)
   const historicalYields = useMemo(() => {
     return historicalDraws.slice(0, 8).map((draw) => {
+      // Use adjusted NGR if available (after jackpot replenishment is deducted)
+      // Otherwise fallback to regular NGR
+      const effectiveNGR = draw.adjustedNgrUSD !== undefined ? draw.adjustedNgrUSD : draw.ngrUSD;
+      
       const yieldResult = calculateYield(
         shflAmount,
         shflPrice,
-        draw.ngrUSD,
+        effectiveNGR,
         draw.totalTickets,
         draw.prizepoolSplit || prizeSplit
       );
@@ -153,6 +158,11 @@ export default function YieldCalculatorPanel({
         draw,
         weeklyUSD: yieldResult.weeklyExpectedUSD,
         weeklyPercent: (yieldResult.weeklyExpectedUSD / stakingValueUSD) * 100,
+        // Track if this week had jackpot replenishment adjustment
+        hadJackpotReplenishment: draw.jackpotReplenishment && draw.jackpotReplenishment > 0,
+        jackpotReplenishment: draw.jackpotReplenishment || 0,
+        originalNGR: draw.ngrUSD,
+        adjustedNGR: effectiveNGR,
       };
     });
   }, [shflAmount, shflPrice, historicalDraws, prizeSplit, stakingValueUSD]);
@@ -376,12 +386,12 @@ export default function YieldCalculatorPanel({
                   )}
                   
                   {/* Historical Draws */}
-                  {historicalYields.map(({ draw, weeklyUSD, weeklyPercent }, index) => (
+                  {historicalYields.map(({ draw, weeklyUSD, weeklyPercent, hadJackpotReplenishment, jackpotReplenishment, adjustedNGR }, index) => (
                     <tr 
                       key={draw.drawNumber}
                       className={`border-b border-terminal-border/50 ${
                         index === 0 ? "bg-terminal-accent/5" : ""
-                      }`}
+                      } ${hadJackpotReplenishment ? "bg-orange-500/5" : ""}`}
                     >
                       <td className="px-2 sm:px-4 py-2">
                         <span className="text-xs sm:text-sm font-medium text-terminal-text">
@@ -392,6 +402,11 @@ export default function YieldCalculatorPanel({
                             Latest
                           </span>
                         )}
+                        {hadJackpotReplenishment && (
+                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" title={`Jackpot replenishment: $${jackpotReplenishment.toLocaleString()}`}>
+                            🎰 JP
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-terminal-textSecondary">
                         {new Date(draw.date).toLocaleDateString("en-US", {
@@ -399,8 +414,17 @@ export default function YieldCalculatorPanel({
                           day: "numeric",
                         })}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right text-xs sm:text-sm text-terminal-textMuted">
-                        <CurrencyAmount amount={draw.ngrUSD} />
+                      <td className="px-2 sm:px-4 py-2 text-right">
+                        {hadJackpotReplenishment ? (
+                          <div className="flex flex-col items-end">
+                            <CurrencyAmount amount={adjustedNGR} className="text-xs sm:text-sm text-terminal-textMuted" />
+                            <span className="text-[9px] text-orange-400 line-through opacity-70">
+                              <CurrencyAmount amount={draw.ngrUSD} />
+                            </span>
+                          </div>
+                        ) : (
+                          <CurrencyAmount amount={draw.ngrUSD} className="text-xs sm:text-sm text-terminal-textMuted" />
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-2 text-right">
                         <div className="flex items-center justify-end gap-1">

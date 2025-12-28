@@ -107,6 +107,10 @@ export interface LotteryDrawData {
   totalWinners?: number;
   totalPaidOut?: number;
   jackpotWon?: boolean;
+  // Adjusted NGR fields for jackpot replenishment
+  adjustedNGR?: number;
+  jackpotReplenishment?: number;
+  prevJackpotWon?: boolean;
 }
 
 /**
@@ -746,6 +750,44 @@ export async function GET(request: Request) {
       return draw;
     });
   }
+
+  // Calculate adjusted NGR for jackpot replenishment weeks
+  // When jackpot is won, the following week's NGR is inflated because it replenishes the jackpot
+  // We need to subtract the jackpot replenishment from NGR for accurate yield calculations
+  drawsWithData = drawsWithData.map((draw, index) => {
+    // Get the previous draw (next in array since sorted newest first)
+    const previousDraw = drawsWithData[index + 1];
+    
+    // Check if previous draw had jackpot won
+    const prevJackpotWon = previousDraw?.jackpotWon || false;
+    
+    if (prevJackpotWon && draw.jackpotted) {
+      // Previous draw had jackpot won - this draw's NGR includes jackpot replenishment
+      // Jackpot replenishment = this draw's jackpot - remaining jackpot from previous draw
+      const prevJackpotRemaining = previousDraw?.jackpotted || 0;
+      const jackpotReplenishment = Math.max(0, draw.jackpotted - prevJackpotRemaining);
+      
+      // Adjusted NGR = total NGR - jackpot replenishment
+      const adjustedNGR = Math.max(0, draw.totalNGRContribution - jackpotReplenishment);
+      
+      console.log(`Draw ${draw.drawNumber}: Jackpot replenishment detected. Total NGR: $${draw.totalNGRContribution.toLocaleString()}, Replenishment: $${jackpotReplenishment.toLocaleString()}, Adjusted: $${adjustedNGR.toLocaleString()}`);
+      
+      return {
+        ...draw,
+        adjustedNGR,
+        jackpotReplenishment,
+        prevJackpotWon: true,
+      };
+    }
+    
+    // No adjustment needed - adjusted NGR equals total NGR
+    return {
+      ...draw,
+      adjustedNGR: draw.totalNGRContribution,
+      jackpotReplenishment: 0,
+      prevJackpotWon: false,
+    };
+  });
 
   // Calculate 4-week average NGR (from the latest 4 draws: weeks 1-4)
   const last4Draws = drawsWithData.slice(0, 4);

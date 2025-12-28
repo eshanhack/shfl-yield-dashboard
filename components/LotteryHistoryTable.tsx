@@ -268,6 +268,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                 const estimatedJackpot = draw.totalPoolUSD * 0.87;
                 const isJackpotWon = draw.jackpotWon;
                 const isLatest = currentPage === 0 && index === 0;
+                // Check if this draw had jackpot replenishment (previous draw had jackpot won)
+                const hadJackpotReplenishment = draw.jackpotReplenishment && draw.jackpotReplenishment > 0;
                 
                 return (
                   <tr
@@ -277,8 +279,10 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                       "border-b border-terminal-border/50 transition-all cursor-pointer active:bg-terminal-accent/20",
                       isJackpotWon 
                         ? "bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-amber-500/20 hover:from-yellow-500/30 hover:via-yellow-400/20 hover:to-amber-500/30 border-l-2 border-l-yellow-500"
+                        : hadJackpotReplenishment
+                        ? "bg-orange-500/5 hover:bg-orange-500/10 border-l-2 border-l-orange-400"
                         : "hover:bg-terminal-accent/10",
-                      isLatest && !isJackpotWon && "bg-terminal-accent/5"
+                      isLatest && !isJackpotWon && !hadJackpotReplenishment && "bg-terminal-accent/5"
                     )}
                   >
                     <td className="px-2 sm:px-4 py-2 sm:py-3">
@@ -295,6 +299,14 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         {isLatest && (
                           <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
+                          </span>
+                        )}
+                        {hadJackpotReplenishment && (
+                          <span 
+                            className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" 
+                            title={`Jackpot replenished: $${draw.jackpotReplenishment?.toLocaleString() || 0} (yield adjusted)`}
+                          >
+                            🎰 JP
                           </span>
                         )}
                       </div>

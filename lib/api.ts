@@ -51,6 +51,10 @@ export interface LotteryDrawRaw {
   totalWinners?: number;
   totalPaidOut?: number;
   jackpotWon?: boolean;
+  // Adjusted NGR fields for jackpot replenishment
+  adjustedNGR?: number;
+  jackpotReplenishment?: number;
+  prevJackpotWon?: boolean;
 }
 
 // Shuffle.com API endpoint for token info (more reliable than CoinGecko)
@@ -213,6 +217,10 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
     return data.draws.map((draw: LotteryDrawRaw) => {
       // Use actual totalTickets from API if available, otherwise estimate
       const totalTickets = draw.totalTickets || estimateTicketsFromPool(draw.prizePool);
+      
+      // For jackpot replenishment weeks, use adjusted NGR for yield calculation
+      const effectiveNGR = draw.adjustedNGR !== undefined ? draw.adjustedNGR : draw.totalNGRContribution;
+      
       return {
         drawNumber: draw.drawNumber,
         date: draw.date,
@@ -220,13 +228,18 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         // ngrUSD = actual NGR that contributed to THIS draw (from previous draw's posted NGR)
         ngrUSD: draw.totalNGRContribution, // ngrAdded + (singlesAdded * 0.85)
         totalTickets,
-        yieldPerThousandSHFL: calcYield(draw.totalNGRContribution, totalTickets, draw.prizepoolSplit),
+        yieldPerThousandSHFL: calcYield(effectiveNGR, totalTickets, draw.prizepoolSplit),
         prizepoolSplit: draw.prizepoolSplit,
         jackpotWon: draw.jackpotWon,
         jackpotAmount: draw.jackpotAmount,
+        jackpotted: draw.jackpotted,
         // Posted values (what's shown in this draw's row - goes to NEXT draw)
         postedNgrUSD: (draw.postedNgrAdded || 0) + (draw.postedSinglesAdded || 0) * 0.85,
         postedSinglesAdded: draw.postedSinglesAdded,
+        // Adjusted NGR for jackpot replenishment
+        adjustedNgrUSD: draw.adjustedNGR,
+        jackpotReplenishment: draw.jackpotReplenishment,
+        prevJackpotWon: draw.prevJackpotWon,
       };
     });
   } catch {

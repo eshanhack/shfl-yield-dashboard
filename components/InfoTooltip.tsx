@@ -159,4 +159,5 @@ export const TOOLTIPS = {
   sensitivity: "PROJECTED yield if NGR (casino revenue) or SHFL price moves up or down from current levels. For informational purposes only. [Calculated]",
   ev: "Expected Value - CALCULATED average return per ticket based on probabilities. For purchased tickets, 85% of sales go to prize pool (15% house edge). Negative EV expected. [Calculated]",
   unstaking: "You can unstake your SHFL anytime. Tokens returned after next draw completes. Unstaked tokens won't participate in upcoming draw. [Source: Shuffle.com]",
+  jackpotReplenishment: "🎰 JP Badge - This week's NGR was adjusted because the previous week's jackpot was won. Most of the NGR went to replenishing the jackpot (insurance), not staker yield. The expected yield shown is adjusted to reflect only the non-jackpot portion. [Calculated]",
 };

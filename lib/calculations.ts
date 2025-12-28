@@ -47,10 +47,15 @@ export interface HistoricalDraw {
   prizepoolSplit?: string;
   jackpotWon?: boolean;
   jackpotAmount?: number;
+  jackpotted?: number; // The jackpot pool amount after the draw
   singlesAdded?: number;
   // postedNgrUSD = what's shown in this draw's row (goes to NEXT draw)
   postedNgrUSD?: number;
   postedSinglesAdded?: number;
+  // Adjusted NGR for yield calculation (after removing jackpot replenishment)
+  adjustedNgrUSD?: number;
+  jackpotReplenishment?: number;
+  prevJackpotWon?: boolean;
 }
 
 export interface YieldResult {
@@ -78,6 +83,59 @@ export function getNonJackpotPercentage(splitString: string): number {
   // Sum all except the first (jackpot) percentage
   const nonJackpot = splits.slice(1).reduce((sum, pct) => sum + pct, 0);
   return nonJackpot / 100; // Convert to decimal
+}
+
+/**
+ * Calculate adjusted NGR for yield after accounting for jackpot replenishment
+ * 
+ * When a jackpot is hit, the following week's NGR includes money to replenish
+ * the jackpot (insurance). This amount should NOT count toward staker yield.
+ * 
+ * @param currentDrawNGR - The NGR added to the current draw
+ * @param currentJackpotAmount - The jackpot amount in the current draw
+ * @param prevJackpotWon - Whether the previous draw had its jackpot won
+ * @param prevJackpotRemaining - The remaining jackpot from previous draw (usually near 0 if won)
+ * @returns Object with adjusted NGR and jackpot replenishment amount
+ */
+export function adjustNGRForJackpotReplenishment(
+  currentDrawNGR: number,
+  currentJackpotAmount: number,
+  prevJackpotWon: boolean,
+  prevJackpotRemaining: number = 0
+): { adjustedNGR: number; jackpotReplenishment: number; wasAdjusted: boolean } {
+  // If previous draw didn't have jackpot won, no adjustment needed
+  if (!prevJackpotWon) {
+    return {
+      adjustedNGR: currentDrawNGR,
+      jackpotReplenishment: 0,
+      wasAdjusted: false,
+    };
+  }
+
+  // Jackpot was won in previous draw
+  // The jackpot replenishment = current jackpot - remaining from previous (usually ~0)
+  const jackpotReplenishment = Math.max(0, currentJackpotAmount - prevJackpotRemaining);
+  
+  // Adjusted NGR = total NGR - what went to jackpot replenishment
+  // But we need to be careful: the jackpot replenishment comes from the NGR
+  // The adjusted NGR is what's available for non-jackpot divisions
+  const adjustedNGR = Math.max(0, currentDrawNGR - jackpotReplenishment);
+
+  return {
+    adjustedNGR,
+    jackpotReplenishment,
+    wasAdjusted: true,
+  };
+}
+
+/**
+ * Check if a draw had its jackpot won based on the jackpotted amount
+ * A very low jackpotted amount relative to prize pool indicates jackpot was won
+ */
+export function wasJackpotWon(jackpotted: number, prizePool: number): boolean {
+  if (prizePool === 0) return false;
+  const ratio = jackpotted / prizePool;
+  return ratio < 0.1; // Less than 10% means jackpot was won
 }
 
 /**
