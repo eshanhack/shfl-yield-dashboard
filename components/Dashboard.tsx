@@ -181,6 +181,7 @@ export default function Dashboard() {
 
   // Calculate current APY based on 4-week average NGR
   const currentAPY = useMemo(() => {
+    if (!ngrStats || !lotteryStats || !price) return 0;
     // Get current prize split from latest completed draw
     const currentSplit = completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
     
@@ -190,13 +191,14 @@ export default function Dashboard() {
       price.usd,
       currentSplit
     );
-  }, [ngrStats.current4WeekAvg, lotteryStats.totalTickets, price.usd, completedDraws]);
+  }, [ngrStats, lotteryStats, price, completedDraws]);
 
   // Calculate additional stats
-  const weeklyPoolUSD = lotteryStats.currentWeekPool;
+  const weeklyPoolUSD = lotteryStats?.currentWeekPool || 0;
 
   // Calculate 4-week vs prior 4-week NGR change
   const ngrChange = useMemo(() => {
+    if (!ngrStats) return 0;
     const current = ngrStats.current4WeekAvg;
     const prior = ngrStats.prior4WeekAvg;
     if (prior === 0) return 0;
@@ -205,20 +207,21 @@ export default function Dashboard() {
 
   // Calculate week-over-week staked change (current vs prior week from GraphQL)
   const stakedChange = useMemo(() => {
+    if (!lotteryStats) return 0;
     const currentTickets = lotteryStats.totalTickets;
     const priorTickets = lotteryStats.priorWeekTickets || 0;
     if (priorTickets === 0) return 0;
     return ((currentTickets - priorTickets) / priorTickets) * 100;
-  }, [lotteryStats.totalTickets, lotteryStats.priorWeekTickets]);
+  }, [lotteryStats]);
 
   // Calculate last week's APY (from the most recent completed draw)
   const lastWeekAPY = useMemo(() => {
-    if (completedDraws.length === 0) return 0;
+    if (completedDraws.length === 0 || !lotteryStats || !price) return 0;
     const lastDraw = completedDraws[0];
     const ngrContribution = lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85;
     const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
     return calculateGlobalAPY(ngrContribution, totalTickets, price.usd, lastDraw.prizepoolSplit);
-  }, [completedDraws, lotteryStats.totalTickets, price.usd]);
+  }, [completedDraws, lotteryStats, price]);
 
   // Calculate APY change from last week vs current 4-week avg
   const apyChange = useMemo(() => {
@@ -228,7 +231,7 @@ export default function Dashboard() {
 
   // Find highest APY draw
   const highestAPYData = useMemo(() => {
-    if (completedDraws.length === 0) return { apy: 0, weeksAgo: 0 };
+    if (completedDraws.length === 0 || !lotteryStats || !price) return { apy: 0, weeksAgo: 0 };
     
     let highest = { apy: 0, weeksAgo: 0 };
     
@@ -243,7 +246,7 @@ export default function Dashboard() {
     });
     
     return highest;
-  }, [completedDraws, lotteryStats.totalTickets, price.usd]);
+  }, [completedDraws, lotteryStats, price]);
 
   // Find highest prize pool
   const highestPrizePoolData = useMemo(() => {
@@ -366,6 +369,11 @@ export default function Dashboard() {
   
   // Token metrics
   const tokenMetrics = useMemo(() => {
+    if (!lotteryStats || !price) return {
+      marketCap: 0, fdv: 0, circulatingSupply: 0, totalSupply: 0, burnedTokens: 0,
+      annualLotteryNGR: 0, valueToHoldersRatio: 0, peRatio: 0, stakedSupply: 0, stakedPercent: 0
+    };
+    
     const circulatingSupply = lotteryStats.circulatingSupply || 361000000;
     const burnedTokens = lotteryStats.burnedTokens || 53693902;
     // Total supply = 1 billion - burned tokens
@@ -396,7 +404,7 @@ export default function Dashboard() {
       stakedSupply,
       stakedPercent
     };
-  }, [price.usd, lotteryStats, revenueStats.annualLotteryNGR]);
+  }, [price, lotteryStats, revenueStats.annualLotteryNGR]);
 
   // Show loader until we have initial data
   if (isLoading || !hasInitialData || !price || !lotteryStats || !ngrStats) {
