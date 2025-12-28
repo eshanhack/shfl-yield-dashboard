@@ -33,10 +33,11 @@ async function scrapePUMP(browser) {
     // Wait for data to load
     await new Promise(r => setTimeout(r, 5000));
     
-    // Extract daily USD amounts from Token Purchases table
+    // Extract daily USD amounts AND accrual percentages from Token Purchases table
     const data = await page.evaluate(() => {
       const results = {
         dailyAmounts: [],
+        accrualPercentages: [],
         debug: '',
       };
       
@@ -56,9 +57,12 @@ async function scrapePUMP(browser) {
         const altAmountIndex = headers.findIndex(h => h.includes('amount'));
         const finalAmountIndex = amountIndex !== -1 ? amountIndex : altAmountIndex;
         
+        // Find "% of Daily Revenue" column
+        const accrualIndex = headers.findIndex(h => h.includes('%') && h.includes('daily'));
+        
         if (finalAmountIndex === -1) continue;
         
-        results.debug += `Amount column at index ${finalAmountIndex}. `;
+        results.debug += `Amount column at index ${finalAmountIndex}, Accrual at ${accrualIndex}. `;
         
         // Get all data rows
         const rows = table.querySelectorAll('tbody tr');
@@ -67,18 +71,27 @@ async function scrapePUMP(browser) {
         rows.forEach((row, i) => {
           const cells = row.querySelectorAll('td');
           if (cells.length > finalAmountIndex) {
+            // Extract amount
             const amountText = cells[finalAmountIndex].innerText;
-            // Parse amount - remove $ and , then parse
             const amount = parseFloat(amountText.replace(/[$,]/g, ''));
             if (!isNaN(amount) && amount > 0) {
               results.dailyAmounts.push(amount);
+            }
+            
+            // Extract accrual percentage if column exists
+            if (accrualIndex !== -1 && cells.length > accrualIndex) {
+              const accrualText = cells[accrualIndex].innerText;
+              const accrual = parseFloat(accrualText.replace(/[%,]/g, ''));
+              if (!isNaN(accrual) && accrual > 0 && accrual <= 100) {
+                results.accrualPercentages.push(accrual / 100); // Convert to decimal
+              }
             }
           }
         });
         
         // If we found amounts, break (we found the right table)
         if (results.dailyAmounts.length > 0) {
-          results.debug += `Extracted ${results.dailyAmounts.length} daily amounts. `;
+          results.debug += `Extracted ${results.dailyAmounts.length} daily amounts, ${results.accrualPercentages.length} accrual values. `;
           break;
         }
       }
@@ -97,16 +110,24 @@ async function scrapePUMP(browser) {
     const monthlyRevenue = data.dailyAmounts.slice(0, 30).reduce((sum, a) => sum + a, 0);
     const annualRevenue = monthlyRevenue * 12;
     
-    console.log('PUMP calculated - weekly:', weeklyRevenue, 'monthly:', monthlyRevenue, 'annual:', annualRevenue);
+    // Calculate average accrual from last 30 days (or whatever we have)
+    let accrualPct = 1.0; // Default to 100%
+    if (data.accrualPercentages.length > 0) {
+      const last30Accruals = data.accrualPercentages.slice(0, 30);
+      accrualPct = last30Accruals.reduce((sum, a) => sum + a, 0) / last30Accruals.length;
+      console.log('PUMP accrual from scrape:', (accrualPct * 100).toFixed(1) + '%');
+    }
+    
+    console.log('PUMP calculated - weekly:', weeklyRevenue, 'monthly:', monthlyRevenue, 'annual:', annualRevenue, 'accrual:', accrualPct);
     
     if (data.dailyAmounts.length >= 7 && weeklyRevenue > 100000) {
       return {
         symbol: 'PUMP',
         weeklyRevenue,
         annualRevenue,
-        weeklyEarnings: weeklyRevenue, // 100% to token
-        annualEarnings: annualRevenue,
-        revenueAccrualPct: 1.0,
+        weeklyEarnings: weeklyRevenue * accrualPct,
+        annualEarnings: annualRevenue * accrualPct,
+        revenueAccrualPct: accrualPct,
         source: 'live',
         dataPoints: data.dailyAmounts.length,
       };
@@ -235,7 +256,7 @@ async function fetchHYPE() {
         const avgDaily = recent.reduce((sum, [_, val]) => sum + val, 0) / recent.length;
         const weeklyRevenue = avgDaily * 7;
         const annualRevenue = avgDaily * 365;
-        const earningsRate = 0.54;
+        const earningsRate = 0.99; // 99% accrues to token holders
         
         console.log('HYPE from DeFiLlama - daily avg:', avgDaily, 'weekly:', weeklyRevenue);
         
@@ -260,9 +281,9 @@ async function fetchHYPE() {
     symbol: 'HYPE',
     weeklyRevenue,
     annualRevenue: weeklyRevenue * 52,
-    weeklyEarnings: weeklyRevenue * 0.54,
-    annualEarnings: weeklyRevenue * 52 * 0.54,
-    revenueAccrualPct: 0.54,
+    weeklyEarnings: weeklyRevenue * 0.99,
+    annualEarnings: weeklyRevenue * 52 * 0.99,
+    revenueAccrualPct: 0.99,
     source: 'estimated',
   };
 }

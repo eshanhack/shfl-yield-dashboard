@@ -35,7 +35,7 @@ interface TokenWithCalculations extends TokenBase {
 }
 
 export default function TokenValuationTable() {
-  const [viewMode, setViewMode] = useState<ViewMode>("earnings");
+  const [viewMode, setViewMode] = useState<ViewMode>("revenue");
   const [tokens, setTokens] = useState<TokenWithCalculations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<"live" | "demo">("live");

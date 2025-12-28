@@ -111,13 +111,13 @@ function getEstimatedRevenues(): TokenRevenue[] {
     {
       // HYPE - Hyperliquid (Dec 2025)
       // ~$20M/week from DeFi revenue reports
-      // 54% accrues to token through buybacks/assistance fund
+      // 99% accrues to token holders
       symbol: "HYPE",
       weeklyRevenue: 20000000,
       annualRevenue: 1040000000,
-      weeklyEarnings: 20000000 * 0.54,
-      annualEarnings: 1040000000 * 0.54,
-      revenueAccrualPct: 0.54,
+      weeklyEarnings: 20000000 * 0.99,
+      annualEarnings: 1040000000 * 0.99,
+      revenueAccrualPct: 0.99,
       source: "estimated",
     },
     {
