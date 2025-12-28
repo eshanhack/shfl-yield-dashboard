@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import Header from "./Header";
+import SectionSelector, { DashboardSection } from "./SectionSelector";
 import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
 import LotteryHistoryTable from "./LotteryHistoryTable";
@@ -77,6 +78,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeSection, setActiveSection] = useState<DashboardSection>("lottery");
 
   // Fetch initial data
   const loadData = async (showRefreshing = false) => {
@@ -266,200 +268,11 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-[1800px] mx-auto px-4 py-6">
-        {/* Top KPI Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Main APY Card - Large */}
-          <div className="md:col-span-2 lg:col-span-1">
-            <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                    <Percent className="w-4 h-4 text-terminal-accent" />
-                  </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Annual Yield
-                  </span>
-                  <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
-                </div>
-                {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                  <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                    apyChange > 0 
-                      ? "text-terminal-positive bg-terminal-positive/10" 
-                      : "text-terminal-negative bg-terminal-negative/10"
-                  }`}>
-                    {apyChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                    <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(2)}%</span>
-                  </div>
-                )}
-              </div>
-              <div className="mb-2">
-                <span className="text-3xl font-bold text-terminal-accent tabular-nums">
-                  {formatPercent(currentAPY)}
-                </span>
-              </div>
-              <div className="text-xs text-terminal-textMuted mb-1">
-                4-week moving average
-              </div>
-              <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-terminal-textMuted">Last Week APY</span>
-                  <span className="font-medium text-terminal-text tabular-nums">
-                    {formatPercent(lastWeekAPY)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-terminal-textMuted">Highest APY</span>
-                  <span className="font-medium text-terminal-positive tabular-nums">
-                    {formatPercent(highestAPYData.apy)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestAPYData.weeksAgo)})</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                  <DollarSign className="w-4 h-4 text-terminal-accent" />
-                </div>
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                  Upcoming Draw
-                </span>
-                <InfoTooltip content={TOOLTIPS.prizePool} title="Prize Pool" />
-              </div>
-              {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
-                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                  prizePoolChange > 0 
-                    ? "text-terminal-positive bg-terminal-positive/10" 
-                    : "text-terminal-negative bg-terminal-negative/10"
-                }`}>
-                  {prizePoolChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                  <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
-                </div>
-              )}
-            </div>
-            <div className="mb-1">
-              <CurrencyAmount 
-                amount={weeklyPoolUSD} 
-                className="text-2xl font-bold text-terminal-text"
-              />
-            </div>
-            <div className="text-xs text-terminal-textMuted mb-2">
-              Draw #{lotteryStats.drawNumber || 64}
-            </div>
-            <div className="space-y-1 pt-2 border-t border-terminal-border/50">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Last Week Pool</span>
-                <CurrencyAmount 
-                  amount={completedDraws[0]?.totalPoolUSD || 0} 
-                  className="font-medium text-terminal-text"
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Highest Pool</span>
-                <span className="font-medium text-terminal-positive tabular-nums">
-                  <CurrencyAmount amount={highestPrizePoolData.pool} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                  <Users className="w-4 h-4 text-terminal-accent" />
-                </div>
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                  Total Staked
-                </span>
-                <InfoTooltip content={TOOLTIPS.staking} title="What is Staking?" />
-              </div>
-              {stakedChange !== 0 && (
-                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                  stakedChange > 0 
-                    ? "text-terminal-positive bg-terminal-positive/10" 
-                    : "text-terminal-negative bg-terminal-negative/10"
-                }`}>
-                  {stakedChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                  <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(2)}%</span>
-                </div>
-              )}
-            </div>
-            <div className="mb-2">
-              <span className="text-2xl font-bold text-terminal-text tabular-nums">
-                {formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL
-              </span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Circulating Supply</span>
-                <span className="font-bold text-terminal-accent tabular-nums">
-                  {lotteryStats.circulatingSupply 
-                    ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(2)
-                    : "0"}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Total Supply</span>
-                <span className="font-bold text-purple-400 tabular-nums">
-                  {lotteryStats.totalSupply 
-                    ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(2)
-                    : "0"}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                  <TrendingUp className="w-4 h-4 text-terminal-accent" />
-                </div>
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                  Avg. Weekly NGR
-                </span>
-                <InfoTooltip content={TOOLTIPS.ngr} title="What is NGR?" />
-              </div>
-              {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
-                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                  ngrChange > 0 
-                    ? "text-terminal-positive bg-terminal-positive/10" 
-                    : "text-terminal-negative bg-terminal-negative/10"
-                }`}>
-                  {ngrChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-                  <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
-                </div>
-              )}
-            </div>
-            <div className="mb-1">
-              <CurrencyAmount 
-                amount={ngrStats.current4WeekAvg} 
-                className="text-2xl font-bold text-terminal-text"
-              />
-            </div>
-            <div className="text-xs text-terminal-textMuted mb-2">
-              Prior 4wk: <CurrencyAmount amount={ngrStats.prior4WeekAvg} />
-            </div>
-            <div className="space-y-1 pt-2 border-t border-terminal-border/50">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Last Week NGR</span>
-                <CurrencyAmount 
-                  amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} 
-                  className="font-medium text-terminal-accent"
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-terminal-textMuted">Highest NGR</span>
-                <span className="font-medium text-terminal-positive tabular-nums">
-                  <CurrencyAmount amount={highestNGRData.ngr} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Section Selector */}
+        <SectionSelector 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection} 
+        />
 
         {/* Action Button Row */}
         <div className="flex items-center justify-between mb-6">
@@ -475,78 +288,361 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Yield Calculator Panel */}
-        <YieldCalculatorPanel
-          shflPrice={price.usd}
-          currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
-          avgWeeklyNGR={ngrStats.current4WeekAvg}
-          totalTickets={lotteryStats.totalTickets}
-          historicalDraws={completedDraws}
-          prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-        />
+        {/* ==================== LOTTERY SECTION ==================== */}
+        {activeSection === "lottery" && (
+          <>
+            {/* Top KPI Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Main APY Card - Large */}
+              <div className="md:col-span-2 lg:col-span-1">
+                <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Percent className="w-4 h-4 text-terminal-accent" />
+                      </div>
+                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                        Annual Yield
+                      </span>
+                      <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
+                    </div>
+                    {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
+                      <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                        apyChange > 0 
+                          ? "text-terminal-positive bg-terminal-positive/10" 
+                          : "text-terminal-negative bg-terminal-negative/10"
+                      }`}>
+                        {apyChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                        <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(2)}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-3xl font-bold text-terminal-accent tabular-nums">
+                      {formatPercent(currentAPY)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-terminal-textMuted mb-1">
+                    4-week moving average
+                  </div>
+                  <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Last Week APY</span>
+                      <span className="font-medium text-terminal-text tabular-nums">
+                        {formatPercent(lastWeekAPY)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-terminal-textMuted">Highest APY</span>
+                      <span className="font-medium text-terminal-positive tabular-nums">
+                        {formatPercent(highestAPYData.apy)} <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestAPYData.weeksAgo)})</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        {/* Charts and Ticket EV Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-stretch">
-          {/* NGR vs Price Chart */}
-          <div className="lg:col-span-2 h-full">
-            <YieldChart data={chartData} />
-          </div>
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                      <DollarSign className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Upcoming Draw
+                    </span>
+                    <InfoTooltip content={TOOLTIPS.prizePool} title="Prize Pool" />
+                  </div>
+                  {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
+                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                      prizePoolChange > 0 
+                        ? "text-terminal-positive bg-terminal-positive/10" 
+                        : "text-terminal-negative bg-terminal-negative/10"
+                    }`}>
+                      {prizePoolChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                      <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mb-1">
+                  <CurrencyAmount 
+                    amount={weeklyPoolUSD} 
+                    className="text-2xl font-bold text-terminal-text"
+                  />
+                </div>
+                <div className="text-xs text-terminal-textMuted mb-2">
+                  Draw #{lotteryStats.drawNumber || 64}
+                </div>
+                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Last Week Pool</span>
+                    <CurrencyAmount 
+                      amount={completedDraws[0]?.totalPoolUSD || 0} 
+                      className="font-medium text-terminal-text"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Highest Pool</span>
+                    <span className="font-medium text-terminal-positive tabular-nums">
+                      <CurrencyAmount amount={highestPrizePoolData.pool} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestPrizePoolData.weeksAgo)})</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          {/* Ticket Expected Value */}
-          <div className="h-full">
-            <TicketEVPanel
-              totalPool={weeklyPoolUSD}
-              prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-              totalTickets={lotteryStats.totalTickets}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                      <Users className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Total Staked
+                    </span>
+                    <InfoTooltip content={TOOLTIPS.staking} title="What is Staking?" />
+                  </div>
+                  {stakedChange !== 0 && (
+                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                      stakedChange > 0 
+                        ? "text-terminal-positive bg-terminal-positive/10" 
+                        : "text-terminal-negative bg-terminal-negative/10"
+                    }`}>
+                      {stakedChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                      <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(2)}%</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mb-2">
+                  <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                    {formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M SHFL
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Circulating Supply</span>
+                    <span className="font-bold text-terminal-accent tabular-nums">
+                      {lotteryStats.circulatingSupply 
+                        ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(2)
+                        : "0"}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Total Supply</span>
+                    <span className="font-bold text-purple-400 tabular-nums">
+                      {lotteryStats.totalSupply 
+                        ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(2)
+                        : "0"}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                      <TrendingUp className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Avg. Weekly NGR
+                    </span>
+                    <InfoTooltip content={TOOLTIPS.ngr} title="What is NGR?" />
+                  </div>
+                  {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
+                    <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+                      ngrChange > 0 
+                        ? "text-terminal-positive bg-terminal-positive/10" 
+                        : "text-terminal-negative bg-terminal-negative/10"
+                    }`}>
+                      {ngrChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                      <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mb-1">
+                  <CurrencyAmount 
+                    amount={ngrStats.current4WeekAvg} 
+                    className="text-2xl font-bold text-terminal-text"
+                  />
+                </div>
+                <div className="text-xs text-terminal-textMuted mb-2">
+                  Prior 4wk: <CurrencyAmount amount={ngrStats.prior4WeekAvg} />
+                </div>
+                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Last Week NGR</span>
+                    <CurrencyAmount 
+                      amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} 
+                      className="font-medium text-terminal-accent"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Highest NGR</span>
+                    <span className="font-medium text-terminal-positive tabular-nums">
+                      <CurrencyAmount amount={highestNGRData.ngr} /> <span className="text-terminal-textMuted font-normal">({formatTimeAgo(highestNGRData.weeksAgo)})</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Yield Calculator Panel */}
+            <YieldCalculatorPanel
               shflPrice={price.usd}
-              historicalDraws={completedDraws}
-              currentDrawNumber={lotteryStats.drawNumber}
-            />
-          </div>
-        </div>
-
-        {/* Revenue Card and Sensitivity Table */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-1">
-            <ShuffleRevenueCard
-              historicalDraws={completedDraws}
               currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            <SensitivityTable
-              baseNGR={ngrStats.current4WeekAvg}
-              basePrice={price.usd}
+              avgWeeklyNGR={ngrStats.current4WeekAvg}
               totalTickets={lotteryStats.totalTickets}
+              historicalDraws={completedDraws}
               prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
             />
-          </div>
-        </div>
 
-        {/* Shuffle Revenue History Chart */}
-        <div className="mb-6">
-          <ShuffleRevenueChart historicalDraws={completedDraws} />
-        </div>
+            {/* Charts and Ticket EV Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-stretch">
+              {/* NGR vs Price Chart */}
+              <div className="lg:col-span-2 h-full">
+                <YieldChart data={chartData} />
+              </div>
 
-        {/* Token Comparison Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TokenReturnsChart />
-          <TokenValuationTable />
-        </div>
+              {/* Ticket Expected Value */}
+              <div className="h-full">
+                <TicketEVPanel
+                  totalPool={weeklyPoolUSD}
+                  prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+                  totalTickets={lotteryStats.totalTickets}
+                  shflPrice={price.usd}
+                  historicalDraws={completedDraws}
+                  currentDrawNumber={lotteryStats.drawNumber}
+                />
+              </div>
+            </div>
 
-        {/* Lottery History Table */}
-        <LotteryHistoryTable 
-          draws={completedDraws} 
-          upcomingDraw={{
-            drawNumber: lotteryStats.drawNumber || 64,
-            date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
-            totalPoolUSD: weeklyPoolUSD,
-            jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
-            totalTickets: lotteryStats.totalTickets,
-            prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-            ngrUSD: completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
-          }}
-        />
+            {/* Sensitivity Table */}
+            <div className="mb-6">
+              <SensitivityTable
+                baseNGR={ngrStats.current4WeekAvg}
+                basePrice={price.usd}
+                totalTickets={lotteryStats.totalTickets}
+                prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+              />
+            </div>
+
+            {/* Lottery History Table */}
+            <LotteryHistoryTable 
+              draws={completedDraws} 
+              upcomingDraw={{
+                drawNumber: lotteryStats.drawNumber || 64,
+                date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
+                totalPoolUSD: weeklyPoolUSD,
+                jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
+                totalTickets: lotteryStats.totalTickets,
+                prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+                ngrUSD: completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
+              }}
+            />
+          </>
+        )}
+
+        {/* ==================== REVENUE SECTION ==================== */}
+        {activeSection === "revenue" && (
+          <>
+            {/* Revenue Overview Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <ShuffleRevenueCard
+                historicalDraws={completedDraws}
+                currentWeekNGR={completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+              />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                    <TrendingUp className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-sm font-medium text-terminal-text">Lottery Stats</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
+                    <div className="text-xs text-terminal-textMuted mb-1">Weekly Lottery NGR</div>
+                    <CurrencyAmount 
+                      amount={ngrStats.current4WeekAvg} 
+                      className="text-lg font-bold text-terminal-accent"
+                    />
+                  </div>
+                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
+                    <div className="text-xs text-terminal-textMuted mb-1">Total Draws</div>
+                    <div className="text-lg font-bold text-terminal-text">{completedDraws.length}</div>
+                  </div>
+                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
+                    <div className="text-xs text-terminal-textMuted mb-1">Avg. Pool Size</div>
+                    <CurrencyAmount 
+                      amount={completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0) / completedDraws.length} 
+                      className="text-lg font-bold text-terminal-text"
+                    />
+                  </div>
+                  <div className="bg-terminal-dark rounded-lg p-3 border border-terminal-border/50">
+                    <div className="text-xs text-terminal-textMuted mb-1">Total Prizes Paid</div>
+                    <CurrencyAmount 
+                      amount={completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0)} 
+                      className="text-lg font-bold text-terminal-positive"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue History Chart */}
+            <ShuffleRevenueChart historicalDraws={completedDraws} />
+          </>
+        )}
+
+        {/* ==================== TOKEN SECTION ==================== */}
+        {activeSection === "token" && (
+          <>
+            {/* Token Price Overview */}
+            <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 mb-6">
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                    alt="SHFL"
+                    className="w-10 h-10"
+                  />
+                  <div>
+                    <div className="text-sm text-terminal-textMuted">SHFL Price</div>
+                    <div className="text-2xl font-bold text-terminal-text">${price.usd.toFixed(4)}</div>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
+                  price.usd_24h_change >= 0 
+                    ? "bg-terminal-positive/10 text-terminal-positive" 
+                    : "bg-terminal-negative/10 text-terminal-negative"
+                }`}>
+                  <TrendingUp className={`w-4 h-4 ${price.usd_24h_change < 0 ? "rotate-180" : ""}`} />
+                  <span className="font-medium">{price.usd_24h_change >= 0 ? "+" : ""}{price.usd_24h_change.toFixed(2)}%</span>
+                  <span className="text-xs opacity-70">24h</span>
+                </div>
+                <div className="hidden md:flex items-center gap-6 ml-auto text-sm">
+                  <div>
+                    <span className="text-terminal-textMuted">Market Cap: </span>
+                    <span className="font-medium text-terminal-text">
+                      ${formatNumber(Math.round((price.usd * (lotteryStats.circulatingSupply || 361000000)) / 1000000))}M
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-terminal-textMuted">Circulating: </span>
+                    <span className="font-medium text-terminal-text">
+                      {formatNumber(Math.round((lotteryStats.circulatingSupply || 361000000) / 1000000))}M
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Token Comparison Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <TokenReturnsChart />
+              <TokenValuationTable />
+            </div>
+          </>
+        )}
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t border-terminal-border">
