@@ -731,28 +731,33 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className={`text-xs font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
-                  {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}% avg growth
+                  {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}% over last 4 weeks
                 </div>
               </div>
 
-              {/* Total Lottery NGR Added */}
+              {/* USDC Awarded to Stakers */}
               <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
                     <PiggyBank className="w-4 h-4 text-terminal-positive" />
                   </div>
                   <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Total NGR Added
+                    USDC Awarded (Lifetime)
                   </span>
                 </div>
-                <div className="mb-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <img 
+                    src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" 
+                    alt="USDC" 
+                    className="w-6 h-6"
+                  />
                   <CurrencyAmount 
                     amount={revenueStats.totalLotteryNGRAdded} 
                     className="text-2xl font-bold text-terminal-positive"
                   />
                 </div>
                 <div className="text-xs text-terminal-textMuted">
-                  Across {completedDraws.length} draws
+                  To SHFL stakers across {completedDraws.length} draws
                 </div>
               </div>
             </div>
