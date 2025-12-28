@@ -81,22 +81,64 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
     return { week: weekNGR, month: monthNGR, year: yearNGR, weekChange, monthChange, yearChange };
   }, [historicalDraws]);
 
-  // Determine business health based on delta between deposit change and NGR change
-  const getBusinessHealth = (depositChange: number, ngrChange: number) => {
-    const delta = Math.abs(depositChange - ngrChange);
+  // Calculate expected Lottery NGR from deposit volume
+  // Formula: Deposit Volume / 3 = GGR, GGR / 2 = NGR, NGR * 15% = Lottery NGR
+  // Simplified: Expected Lottery NGR = Deposit Volume / 40
+  const calculateExpectedLotteryNGR = (depositVolume: number) => {
+    return depositVolume / 40;
+  };
+
+  // Determine business health by comparing actual vs expected lottery NGR
+  const getBusinessHealth = (depositVolume: number, actualLotteryNGR: number, depositChange: number, ngrChange: number) => {
+    const expectedLotteryNGR = calculateExpectedLotteryNGR(depositVolume);
     
-    // If both changes are within 5% of each other, it's as expected
-    if (delta <= 5) {
-      return { status: "neutral", emoji: "📊", label: "As Expected", color: "text-terminal-textSecondary", bgColor: "bg-terminal-border/30", borderColor: "border-terminal-border/50" };
-    }
+    // Calculate variance: how much actual differs from expected
+    // Positive = actual > expected (casino winning more)
+    // Negative = actual < expected (casino winning less)
+    const variance = expectedLotteryNGR > 0 
+      ? ((actualLotteryNGR - expectedLotteryNGR) / expectedLotteryNGR) * 100 
+      : 0;
     
-    // Delta > 5%: determine hot or cold
-    // Hot: NGR outperforming deposits (NGR up more or down less than deposits)
-    // Cold: Deposits outperforming NGR (deposits up more or down less than NGR)
-    if (ngrChange > depositChange) {
-      return { status: "hot", emoji: "🔥", label: "Running Hot", color: "text-orange-400", bgColor: "bg-orange-500/10", borderColor: "border-orange-500/30" };
+    // Also consider the trend (change in both metrics)
+    const trendDelta = ngrChange - depositChange;
+    
+    // Combined score: variance is primary, trend is secondary
+    const combinedScore = variance * 0.7 + trendDelta * 0.3;
+    
+    // Thresholds:
+    // Within ±10% combined score = As Expected
+    // Above +10% = Running Hot (casino winning more than expected)
+    // Below -10% = Running Cold (casino winning less than expected)
+    if (combinedScore > 10) {
+      return { 
+        status: "hot", 
+        emoji: "🔥", 
+        label: "Running Hot", 
+        color: "text-orange-400", 
+        bgColor: "bg-orange-500/10", 
+        borderColor: "border-orange-500/30",
+        variance: variance.toFixed(1),
+      };
+    } else if (combinedScore < -10) {
+      return { 
+        status: "cold", 
+        emoji: "🥶", 
+        label: "Running Cold", 
+        color: "text-blue-400", 
+        bgColor: "bg-blue-500/10", 
+        borderColor: "border-blue-500/30",
+        variance: variance.toFixed(1),
+      };
     } else {
-      return { status: "cold", emoji: "🥶", label: "Running Cold", color: "text-blue-400", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/30" };
+      return { 
+        status: "neutral", 
+        emoji: "📊", 
+        label: "As Expected", 
+        color: "text-terminal-textSecondary", 
+        bgColor: "bg-terminal-border/30", 
+        borderColor: "border-terminal-border/50",
+        variance: variance.toFixed(1),
+      };
     }
   };
 
@@ -148,15 +190,28 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
               const deposit = tanzaniteData?.[key] || { depositVolume: 0, percentChange: 0 };
               const ngrValue = ngrStats[key];
               const ngrChange = ngrStats[`${key}Change` as keyof typeof ngrStats] as number;
-              const health = getBusinessHealth(deposit.percentChange, ngrChange);
+              const health = getBusinessHealth(deposit.depositVolume, ngrValue, deposit.percentChange, ngrChange);
+              const expectedNGR = calculateExpectedLotteryNGR(deposit.depositVolume);
 
+              const varianceNum = parseFloat(health.variance);
+              
               return (
                 <div key={key} className={cn("rounded-lg p-3 border", health.bgColor, health.borderColor)}>
                   <div className="flex items-center justify-between mb-2.5">
                     <span className="text-xs font-semibold text-terminal-text">{label}</span>
-                    <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1", health.color)}>
-                      <span>{health.emoji}</span>
-                      <span>{health.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded font-medium",
+                        varianceNum > 0 ? "bg-orange-500/20 text-orange-400" : 
+                        varianceNum < 0 ? "bg-blue-500/20 text-blue-400" : 
+                        "bg-terminal-border/50 text-terminal-textMuted"
+                      )}>
+                        {varianceNum > 0 ? "+" : ""}{health.variance}% vs expected
+                      </span>
+                      <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1", health.color)}>
+                        <span>{health.emoji}</span>
+                        <span>{health.label}</span>
+                      </div>
                     </div>
                   </div>
                   
@@ -176,11 +231,14 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
                           {deposit.percentChange >= 0 ? "+" : ""}{deposit.percentChange.toFixed(1)}%
                         </span>
                       </div>
+                      <div className="text-[9px] text-terminal-textMuted mt-0.5">
+                        → Expected NGR: {formatVolume(expectedNGR)}
+                      </div>
                     </div>
                     
                     {/* Lottery NGR */}
                     <div>
-                      <div className="text-[10px] text-terminal-textMuted mb-1 uppercase tracking-wide">Lottery NGR</div>
+                      <div className="text-[10px] text-terminal-textMuted mb-1 uppercase tracking-wide">Actual Lottery NGR</div>
                       <div className="flex items-baseline gap-1.5">
                         <CurrencyAmount 
                           amount={ngrValue} 
@@ -194,6 +252,12 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
                           {ngrChange >= 0 ? "+" : ""}{ngrChange.toFixed(1)}%
                         </span>
                       </div>
+                      <div className={cn(
+                        "text-[9px] mt-0.5",
+                        varianceNum > 5 ? "text-orange-400" : varianceNum < -5 ? "text-blue-400" : "text-terminal-textMuted"
+                      )}>
+                        {varianceNum > 0 ? "↑" : varianceNum < 0 ? "↓" : "="} {Math.abs(varianceNum).toFixed(1)}% {varianceNum > 0 ? "above" : varianceNum < 0 ? "below" : "at"} expected
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -203,18 +267,21 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
 
           {/* Legend */}
           <div className="pt-3 mt-3 border-t border-terminal-border/50">
+            <div className="text-[9px] text-terminal-textMuted mb-2">
+              Expected NGR = Deposits ÷ 40 (based on GGR/NGR ratios)
+            </div>
             <div className="grid grid-cols-3 gap-2 text-[9px]">
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-orange-500/10 border border-orange-500/20">
                 <span>🔥</span>
-                <span className="text-orange-400 font-medium">Casino winning</span>
+                <span className="text-orange-400 font-medium">NGR &gt; expected</span>
               </div>
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-blue-500/10 border border-blue-500/20">
                 <span>🥶</span>
-                <span className="text-blue-400 font-medium">Players winning</span>
+                <span className="text-blue-400 font-medium">NGR &lt; expected</span>
               </div>
               <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-terminal-border/30 border border-terminal-border/50">
                 <span>📊</span>
-                <span className="text-terminal-textSecondary font-medium">Normal variance</span>
+                <span className="text-terminal-textSecondary font-medium">Within ±10%</span>
               </div>
             </div>
           </div>
