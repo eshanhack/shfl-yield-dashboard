@@ -104,35 +104,36 @@ async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
   }
 }
 
-// Estimated data for other tokens based on public information
+// Estimated data for other tokens based on public information (Dec 2025)
 function getEstimatedRevenues(): TokenRevenue[] {
   return [
     {
-      // HYPE - Hyperliquid
-      // Based on ~$130M annualized fees from Artemis Analytics
+      // HYPE - Hyperliquid (Dec 2025)
+      // Based on ~$20M/week from DeFi revenue reports (Oct 2025: $21.15M/week)
       // 100% accrues to token through buybacks/assistance fund
       symbol: "HYPE",
-      weeklyRevenue: 2500000,
-      annualRevenue: 130000000,
-      weeklyEarnings: 2500000,
-      annualEarnings: 130000000,
+      weeklyRevenue: 20000000,
+      annualRevenue: 1040000000,
+      weeklyEarnings: 20000000,
+      annualEarnings: 1040000000,
       revenueAccrualPct: 1.0,
       source: "estimated",
     },
     {
-      // PUMP - Pump.fun
-      // Based on ~$3M/week in token launch fees
+      // PUMP - Pump.fun (Dec 2025)
+      // Volatile: ranged from $1.7M to $13.5M/week in 2025
+      // Using ~$8M/week average for late 2025
       // 100% accrues to token through buybacks
       symbol: "PUMP",
-      weeklyRevenue: 3000000,
-      annualRevenue: 156000000,
-      weeklyEarnings: 3000000,
-      annualEarnings: 156000000,
+      weeklyRevenue: 8000000,
+      annualRevenue: 416000000,
+      weeklyEarnings: 8000000,
+      annualEarnings: 416000000,
       revenueAccrualPct: 1.0,
       source: "estimated",
     },
     {
-      // RLB - Rollbit
+      // RLB - Rollbit (Dec 2025)
       // Based on ~$6M/month total revenue
       // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
       symbol: "RLB",

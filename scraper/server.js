@@ -57,8 +57,8 @@ async function scrapePUMP(browser) {
     
     await page.close();
     
-    // Estimate based on recent data: ~$2-4M weekly
-    let weeklyRevenue = 3000000;
+    // Estimate based on late 2025 data: ~$8M weekly average (ranges $1.7M-$13.5M)
+    let weeklyRevenue = 8000000;
     if (data.amounts.length > 0) {
       // Use largest reasonable amount as a reference
       const maxAmount = Math.max(...data.amounts.filter(a => a < 50000000));
@@ -82,12 +82,13 @@ async function scrapePUMP(browser) {
     console.error('PUMP scraping error:', error.message);
     if (page) await page.close().catch(() => {});
     
+    // Fallback: ~$8M/week average for late 2025 (ranges $1.7M-$13.5M)
     return {
       symbol: 'PUMP',
-      weeklyRevenue: 3000000,
-      annualRevenue: 156000000,
-      weeklyEarnings: 3000000,
-      annualEarnings: 156000000,
+      weeklyRevenue: 8000000,
+      annualRevenue: 416000000,
+      weeklyEarnings: 8000000,
+      annualEarnings: 416000000,
       revenueAccrualPct: 1.0,
       source: 'estimated',
     };
@@ -181,7 +182,6 @@ async function fetchHYPE() {
     // DeFiLlama fees API
     const response = await fetch('https://api.llama.fi/summary/fees/hyperliquid?dataType=dailyFees', {
       headers: { 'Accept': 'application/json' },
-      timeout: 10000,
     });
     
     if (response.ok) {
@@ -195,7 +195,7 @@ async function fetchHYPE() {
         const weeklyRevenue = avgDaily * 7;
         const annualRevenue = avgDaily * 365;
         
-        console.log('HYPE from DeFiLlama, daily avg:', avgDaily);
+        console.log('HYPE from DeFiLlama, daily avg:', avgDaily, 'weekly:', weeklyRevenue);
         
         return {
           symbol: 'HYPE',
@@ -212,13 +212,13 @@ async function fetchHYPE() {
     console.error('HYPE DeFiLlama error:', error.message);
   }
   
-  // Fallback estimate based on ~$130M annual
+  // Fallback estimate based on ~$20M/week (Oct 2025 data: $21.15M/week)
   return {
     symbol: 'HYPE',
-    weeklyRevenue: 2500000,
-    annualRevenue: 130000000,
-    weeklyEarnings: 2500000,
-    annualEarnings: 130000000,
+    weeklyRevenue: 20000000,
+    annualRevenue: 1040000000,
+    weeklyEarnings: 20000000,
+    annualEarnings: 1040000000,
     revenueAccrualPct: 1.0,
     source: 'estimated',
   };
@@ -259,10 +259,10 @@ async function scrapeAll() {
     
     pump = {
       symbol: 'PUMP',
-      weeklyRevenue: 3000000,
-      annualRevenue: 156000000,
-      weeklyEarnings: 3000000,
-      annualEarnings: 156000000,
+      weeklyRevenue: 8000000,
+      annualRevenue: 416000000,
+      weeklyEarnings: 8000000,
+      annualEarnings: 416000000,
       revenueAccrualPct: 1.0,
       source: 'estimated',
     };
@@ -328,11 +328,11 @@ app.get('/api/revenue', async (req, res) => {
   } catch (error) {
     console.error('Scraping error:', error);
     
-    // Return estimates on error
+    // Return estimates on error (Dec 2025 data)
     const fallbackData = [
-      { symbol: 'PUMP', weeklyRevenue: 3000000, annualRevenue: 156000000, weeklyEarnings: 3000000, annualEarnings: 156000000, revenueAccrualPct: 1.0, source: 'estimated' },
+      { symbol: 'PUMP', weeklyRevenue: 8000000, annualRevenue: 416000000, weeklyEarnings: 8000000, annualEarnings: 416000000, revenueAccrualPct: 1.0, source: 'estimated' },
       { symbol: 'RLB', weeklyRevenue: 1500000, annualRevenue: 78000000, weeklyEarnings: 255000, annualEarnings: 13260000, revenueAccrualPct: 0.17, source: 'estimated' },
-      { symbol: 'HYPE', weeklyRevenue: 2500000, annualRevenue: 130000000, weeklyEarnings: 2500000, annualEarnings: 130000000, revenueAccrualPct: 1.0, source: 'estimated' },
+      { symbol: 'HYPE', weeklyRevenue: 20000000, annualRevenue: 1040000000, weeklyEarnings: 20000000, annualEarnings: 1040000000, revenueAccrualPct: 1.0, source: 'estimated' },
     ];
     
     res.json({
