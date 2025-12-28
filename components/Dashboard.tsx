@@ -7,6 +7,13 @@ import {
   Users,
   TrendingUp,
   RefreshCw,
+  Building2,
+  Activity,
+  Rocket,
+  Coins,
+  PiggyBank,
+  BarChart3,
+  Wallet,
 } from "lucide-react";
 
 import Header from "./Header";
@@ -253,6 +260,110 @@ export default function Dashboard() {
     
     return highest;
   }, [completedDraws]);
+
+  // ==================== REVENUE SECTION CALCULATIONS ====================
+  
+  // Calculate annual GGR and NGR
+  const revenueStats = useMemo(() => {
+    if (completedDraws.length === 0) return { 
+      annualGGR: 0, annualNGR: 0, annualLotteryNGR: 0,
+      weeklyNGRGrowth: 0, monthlyNGRGrowth: 0, annualNGRGrowth: 0,
+      totalPrizesPaid: 0, avgPoolSize: 0
+    };
+    
+    // Calculate average weekly lottery NGR
+    const totalLotteryNGR = completedDraws.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0);
+    const avgWeeklyLotteryNGR = totalLotteryNGR / completedDraws.length;
+    
+    // Annual values (Lottery NGR is 15% of Shuffle NGR)
+    const annualLotteryNGR = avgWeeklyLotteryNGR * 52;
+    const annualNGR = annualLotteryNGR / 0.15;  // Total Shuffle NGR
+    const annualGGR = annualNGR * 2;  // GGR is roughly 2x NGR
+    
+    // Growth calculations
+    const recent4 = completedDraws.slice(0, 4);
+    const prior4 = completedDraws.slice(4, 8);
+    const recentNGR = recent4.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / recent4.length;
+    const priorNGR = prior4.length > 0 ? prior4.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / prior4.length : recentNGR;
+    const monthlyNGRGrowth = priorNGR > 0 ? ((recentNGR - priorNGR) / priorNGR) * 100 : 0;
+    
+    // Weekly growth
+    const weekNGR = completedDraws[0]?.ngrUSD + (completedDraws[0]?.singlesAdded || 0) * 0.85 || 0;
+    const priorWeekNGR = completedDraws[1]?.ngrUSD + (completedDraws[1]?.singlesAdded || 0) * 0.85 || weekNGR;
+    const weeklyNGRGrowth = priorWeekNGR > 0 ? ((weekNGR - priorWeekNGR) / priorWeekNGR) * 100 : 0;
+    
+    // Annual growth (first half vs second half)
+    const halfPoint = Math.floor(completedDraws.length / 2);
+    const recentHalf = completedDraws.slice(0, halfPoint);
+    const olderHalf = completedDraws.slice(halfPoint);
+    const recentAvg = recentHalf.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / recentHalf.length;
+    const olderAvg = olderHalf.length > 0 ? olderHalf.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / olderHalf.length : recentAvg;
+    const annualNGRGrowth = olderAvg > 0 ? ((recentAvg - olderAvg) / olderAvg) * 100 : 0;
+    
+    // Total prizes paid
+    const totalPrizesPaid = completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0);
+    const avgPoolSize = totalPrizesPaid / completedDraws.length;
+    
+    return { 
+      annualGGR, annualNGR, annualLotteryNGR,
+      weeklyNGRGrowth, monthlyNGRGrowth, annualNGRGrowth,
+      totalPrizesPaid, avgPoolSize
+    };
+  }, [completedDraws]);
+
+  // Overall business health (aggregate)
+  const overallBusinessHealth = useMemo(() => {
+    const { weeklyNGRGrowth, monthlyNGRGrowth, annualNGRGrowth } = revenueStats;
+    const avgGrowth = (weeklyNGRGrowth + monthlyNGRGrowth + annualNGRGrowth) / 3;
+    
+    if (avgGrowth > 10) return { status: "hot", emoji: "🔥", label: "Running Hot", color: "text-orange-400", bgColor: "bg-orange-500/10" };
+    if (avgGrowth < -10) return { status: "cold", emoji: "🥶", label: "Running Cold", color: "text-blue-400", bgColor: "bg-blue-500/10" };
+    return { status: "neutral", emoji: "📊", label: "As Expected", color: "text-terminal-textSecondary", bgColor: "bg-terminal-border/30" };
+  }, [revenueStats]);
+
+  // Business growth trend
+  const businessGrowth = useMemo(() => {
+    const { monthlyNGRGrowth, annualNGRGrowth } = revenueStats;
+    const avgGrowth = (monthlyNGRGrowth + annualNGRGrowth) / 2;
+    
+    if (avgGrowth > 20) return { status: "skyrocketing", emoji: "🚀", label: "Skyrocketing", color: "text-terminal-positive", change: avgGrowth };
+    if (avgGrowth > 5) return { status: "growing", emoji: "📈", label: "Growing", color: "text-terminal-positive", change: avgGrowth };
+    if (avgGrowth < -5) return { status: "slowing", emoji: "📉", label: "Slowing", color: "text-terminal-negative", change: avgGrowth };
+    return { status: "steady", emoji: "➡️", label: "Steady", color: "text-terminal-textSecondary", change: avgGrowth };
+  }, [revenueStats]);
+
+  // ==================== TOKEN SECTION CALCULATIONS ====================
+  
+  // Token metrics
+  const tokenMetrics = useMemo(() => {
+    const circulatingSupply = lotteryStats.circulatingSupply || 361000000;
+    const totalSupply = lotteryStats.totalSupply || 1000000000;
+    const marketCap = price.usd * circulatingSupply;
+    const fdv = price.usd * totalSupply;
+    
+    // Value to tokenholders = Lottery NGR (15% of Shuffle NGR)
+    const annualLotteryNGR = revenueStats.annualLotteryNGR;
+    const valueToHoldersRatio = marketCap > 0 ? marketCap / annualLotteryNGR : 0;
+    
+    // P/E style ratio
+    const peRatio = annualLotteryNGR > 0 ? marketCap / annualLotteryNGR : 0;
+    
+    // Staking stats
+    const stakedSupply = lotteryStats.totalSHFLStaked || 0;
+    const stakedPercent = circulatingSupply > 0 ? (stakedSupply / circulatingSupply) * 100 : 0;
+    
+    return {
+      marketCap,
+      fdv,
+      circulatingSupply,
+      totalSupply,
+      annualLotteryNGR,
+      valueToHoldersRatio,
+      peRatio,
+      stakedSupply,
+      stakedPercent
+    };
+  }, [price.usd, lotteryStats, revenueStats.annualLotteryNGR]);
 
   if (isLoading) {
     return <Loader />;
@@ -546,7 +657,102 @@ export default function Dashboard() {
         {/* ==================== REVENUE SECTION ==================== */}
         {activeSection === "revenue" && (
           <>
-            {/* Revenue Overview Cards */}
+            {/* Revenue KPI Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Annual GGR */}
+              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                    <Building2 className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Annual GGR
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <CurrencyAmount 
+                    amount={revenueStats.annualGGR} 
+                    className="text-2xl font-bold text-terminal-accent"
+                  />
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  NGR: <CurrencyAmount amount={revenueStats.annualNGR} className="text-terminal-text" />
+                </div>
+              </div>
+
+              {/* Business Health */}
+              <div className={`bg-terminal-card border rounded-lg p-4 ${
+                overallBusinessHealth.status === "hot" ? "border-orange-500/30" :
+                overallBusinessHealth.status === "cold" ? "border-blue-500/30" :
+                "border-terminal-border"
+              }`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`p-1.5 rounded border ${
+                    overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" :
+                    overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" :
+                    "bg-terminal-accent/10 border-terminal-accent/20"
+                  }`}>
+                    <Activity className={`w-4 h-4 ${overallBusinessHealth.color}`} />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Business Health
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{overallBusinessHealth.emoji}</span>
+                  <span className={`text-xl font-bold ${overallBusinessHealth.color}`}>
+                    {overallBusinessHealth.label}
+                  </span>
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  Based on weekly, monthly & annual trends
+                </div>
+              </div>
+
+              {/* Business Growth */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                    <Rocket className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Business Growth
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{businessGrowth.emoji}</span>
+                  <span className={`text-xl font-bold ${businessGrowth.color}`}>
+                    {businessGrowth.label}
+                  </span>
+                </div>
+                <div className={`text-xs font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
+                  {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}% avg growth
+                </div>
+              </div>
+
+              {/* Total Prizes Paid */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                    <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Total Prizes Paid
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <CurrencyAmount 
+                    amount={revenueStats.totalPrizesPaid} 
+                    className="text-2xl font-bold text-terminal-positive"
+                  />
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  Avg pool: <CurrencyAmount amount={revenueStats.avgPoolSize} className="text-terminal-text" />
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
@@ -566,7 +772,97 @@ export default function Dashboard() {
         {/* ==================== TOKEN SECTION ==================== */}
         {activeSection === "token" && (
           <>
-            {/* Token Price Overview */}
+            {/* Token KPI Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Market Cap */}
+              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                    <Coins className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Market Cap
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <span className="text-2xl font-bold text-terminal-accent tabular-nums">
+                    ${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M
+                  </span>
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  FDV: <span className="text-terminal-text">${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M</span>
+                </div>
+              </div>
+
+              {/* Circulating Supply */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                    <Wallet className="w-4 h-4 text-terminal-accent" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Circulating Supply
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                    {formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M
+                  </span>
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  Total: <span className="text-terminal-text">{formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M</span>
+                  <span className="text-terminal-textMuted ml-2">
+                    ({((tokenMetrics.circulatingSupply / tokenMetrics.totalSupply) * 100).toFixed(1)}% circulating)
+                  </span>
+                </div>
+              </div>
+
+              {/* Value to Tokenholders */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                    <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Annual Value to Holders
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <CurrencyAmount 
+                    amount={tokenMetrics.annualLotteryNGR} 
+                    className="text-2xl font-bold text-terminal-positive"
+                  />
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  P/E Ratio: <span className={`font-medium ${
+                    tokenMetrics.peRatio < 10 ? "text-terminal-positive" : 
+                    tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"
+                  }`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
+                </div>
+              </div>
+
+              {/* Staking Stats */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 rounded bg-purple-500/10 border border-purple-500/20">
+                    <BarChart3 className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                    Staked Supply
+                  </span>
+                </div>
+                <div className="mb-1">
+                  <span className="text-2xl font-bold text-purple-400 tabular-nums">
+                    {tokenMetrics.stakedPercent.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  {formatNumber(Math.round(tokenMetrics.stakedSupply / 1000000))}M SHFL staked
+                </div>
+              </div>
+            </div>
+
+            {/* Token Price Bar */}
             <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 mb-6">
               <div className="flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-3">
@@ -591,16 +887,12 @@ export default function Dashboard() {
                 </div>
                 <div className="hidden md:flex items-center gap-6 ml-auto text-sm">
                   <div>
-                    <span className="text-terminal-textMuted">Market Cap: </span>
-                    <span className="font-medium text-terminal-text">
-                      ${formatNumber(Math.round((price.usd * (lotteryStats.circulatingSupply || 361000000)) / 1000000))}M
-                    </span>
+                    <span className="text-terminal-textMuted">24h Volume: </span>
+                    <span className="font-medium text-terminal-text">-</span>
                   </div>
                   <div>
-                    <span className="text-terminal-textMuted">Circulating: </span>
-                    <span className="font-medium text-terminal-text">
-                      {formatNumber(Math.round((lotteryStats.circulatingSupply || 361000000) / 1000000))}M
-                    </span>
+                    <span className="text-terminal-textMuted">ATH: </span>
+                    <span className="font-medium text-terminal-text">$0.85</span>
                   </div>
                 </div>
               </div>
