@@ -252,9 +252,9 @@ export default function TokenReturnsChart() {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-4">
         {/* Returns Summary */}
-        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 mb-5">
           {sortedTokens.map((token, index) => {
             const returnVal = returns[token.symbol] || 0;
             const isVisible = visibleTokens.has(token.symbol);
@@ -265,7 +265,7 @@ export default function TokenReturnsChart() {
                 key={token.symbol}
                 onClick={() => toggleToken(token.symbol)}
                 className={cn(
-                  "p-3 rounded-lg border transition-all text-left relative",
+                  "p-2 rounded-lg border transition-all text-left relative",
                   token.symbol === "SHFL" 
                     ? isVisible
                       ? "bg-terminal-accent/10 border-terminal-accent"
@@ -277,24 +277,24 @@ export default function TokenReturnsChart() {
               >
                 {/* Medal badge */}
                 {medal && (
-                  <span className="absolute -top-1.5 -right-1.5 text-sm">
+                  <span className="absolute -top-1 -right-1 text-xs">
                     {medal}
                   </span>
                 )}
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
                   <div 
-                    className="w-2.5 h-2.5 rounded-full" 
+                    className="w-2 h-2 rounded-full flex-shrink-0" 
                     style={{ backgroundColor: token.color }}
                   />
-                  <span className="text-xs font-medium text-terminal-text">
+                  <span className="text-[10px] font-medium text-terminal-text">
                     {token.symbol}
                   </span>
                 </div>
                 <div className={cn(
-                  "text-base font-bold tabular-nums flex items-center gap-1.5",
+                  "text-sm font-bold tabular-nums flex items-center gap-1",
                   returnVal >= 0 ? "text-terminal-positive" : "text-terminal-negative"
                 )}>
-                  {returnVal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  {returnVal >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {returnVal >= 0 ? "+" : ""}{returnVal.toFixed(1)}%
                 </div>
               </button>

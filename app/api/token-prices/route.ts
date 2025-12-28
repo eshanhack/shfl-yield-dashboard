@@ -9,6 +9,7 @@ const TOKENS = [
   { id: "solana", symbol: "SOL" },
   { id: "rollbit-coin", symbol: "RLB" },
   { id: "hyperliquid", symbol: "HYPE" },
+  { id: "pump-fun", symbol: "PUMP" },
 ];
 
 interface PriceData {
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
   }
 
   // Sort by preferred order
-  const order = ["SHFL", "BTC", "ETH", "SOL", "RLB", "HYPE"];
+  const order = ["SHFL", "PUMP", "BTC", "ETH", "SOL", "RLB", "HYPE"];
   results.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
 
   // Cache the results
