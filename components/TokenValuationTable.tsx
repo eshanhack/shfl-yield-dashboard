@@ -34,21 +34,56 @@ interface TokenWithCalculations extends TokenBase {
   revenueSource: "live" | "estimated";
 }
 
+// Fallback data for immediate render
+const getFallbackTokens = (viewMode: ViewMode): TokenWithCalculations[] => {
+  const fallbackData = [
+    { symbol: "SHFL", marketCap: 108000000, annualRevenue: 275206896, annualEarnings: 20640517, revenueAccrualPct: 0.15 },
+    { symbol: "HYPE", marketCap: 9000000000, annualRevenue: 1040000000, annualEarnings: 1029600000, revenueAccrualPct: 0.99 },
+    { symbol: "PUMP", marketCap: 1100000000, annualRevenue: 396000000, annualEarnings: 396000000, revenueAccrualPct: 1.0 },
+    { symbol: "RLB", marketCap: 120000000, annualRevenue: 277489012, annualEarnings: 37604979, revenueAccrualPct: 0.1355 },
+  ];
+  
+  return fallbackData.map(d => {
+    const info = TOKEN_INFO.find(t => t.symbol === d.symbol)!;
+    return {
+      ...info,
+      marketCap: d.marketCap,
+      weeklyRevenue: d.annualRevenue / 52,
+      weeklyEarnings: d.annualEarnings / 52,
+      annualRevenue: d.annualRevenue,
+      annualEarnings: d.annualEarnings,
+      revenueAccrualPct: d.revenueAccrualPct,
+      psRatio: d.marketCap / d.annualRevenue,
+      peRatio: d.marketCap / d.annualEarnings,
+      revenueSource: "estimated" as const,
+    };
+  }).sort((a, b) => {
+    const ratioA = viewMode === "revenue" ? a.psRatio : a.peRatio;
+    const ratioB = viewMode === "revenue" ? b.psRatio : b.peRatio;
+    return ratioA - ratioB;
+  });
+};
+
 export default function TokenValuationTable() {
   const [viewMode, setViewMode] = useState<ViewMode>("revenue");
-  const [tokens, setTokens] = useState<TokenWithCalculations[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
+  // Start with fallback data for immediate render
+  const [tokens, setTokens] = useState<TokenWithCalculations[]>(() => getFallbackTokens("revenue"));
+  const [isLoading, setIsLoading] = useState(false); // Don't block initial render
+  const [dataSource, setDataSource] = useState<"live" | "demo">("demo");
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
-        // Fetch both market caps and revenue data in parallel
+        // Fetch both in parallel with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         const [mcResponse, revResponse] = await Promise.all([
-          fetch("/api/market-caps"),
-          fetch("/api/token-revenue"),
+          fetch("/api/market-caps", { signal: controller.signal }),
+          fetch("/api/token-revenue", { signal: controller.signal }),
         ]);
+        
+        clearTimeout(timeoutId);
         
         const mcJson = await mcResponse.json();
         const revJson = await revResponse.json();
@@ -56,7 +91,6 @@ export default function TokenValuationTable() {
         const marketCaps = mcJson.data || {};
         const revenues = revJson.data || [];
         
-        // Determine if we have live data
         const hasLiveMarketCap = mcJson.source === "live";
         const hasLiveRevenue = revJson.source === "live";
         setDataSource(hasLiveMarketCap || hasLiveRevenue ? "live" : "demo");
@@ -65,31 +99,23 @@ export default function TokenValuationTable() {
           const marketCap = marketCaps[token.symbol] || 100000000;
           const revData = revenues.find((r: any) => r.symbol === token.symbol);
           
-          // Get values from API (use pre-calculated earnings for accuracy)
           let weeklyRevenue = revData?.weeklyRevenue || 1000000;
           let annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
           let revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
           const revenueSource = revData?.source || "estimated";
           
-          // Use API's pre-calculated earnings (more accurate for tokens like SHFL
-          // where earnings = 15% of NGR, not 15% of GGR)
           let annualEarnings = revData?.annualEarnings || annualRevenue * revenueAccrualPct;
           let weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * revenueAccrualPct;
           
-          // VALIDATION: Ensure values match known correct data
-          // If API returns wrong values, use known correct values
           if (token.symbol === "SHFL" && annualRevenue < 200000000) {
-            // Override with correct values from Shuffle.com Revenue modal
-            annualRevenue = 275206896;  // GGR
+            annualRevenue = 275206896;
             weeklyRevenue = annualRevenue / 52;
-            annualEarnings = 20640517;   // Lottery NGR 
+            annualEarnings = 20640517;
             weeklyEarnings = annualEarnings / 52;
             revenueAccrualPct = 0.15;
           }
           
-          // RLB: Ensure correct accrual rate (13.55%)
           if (token.symbol === "RLB" && (revenueAccrualPct < 0.10 || revenueAccrualPct > 0.20)) {
-            // Known breakdown: Casino 77% @10%, Trading 12.5% @30%, Sports 10.5% @20%
             revenueAccrualPct = 0.1355;
             annualEarnings = annualRevenue * revenueAccrualPct;
             weeklyEarnings = annualEarnings / 52;
@@ -109,7 +135,6 @@ export default function TokenValuationTable() {
           };
         });
         
-        // Sort by the current view mode ratio
         tokensWithCalcs.sort((a, b) => {
           const ratioA = viewMode === "revenue" ? a.psRatio : a.peRatio;
           const ratioB = viewMode === "revenue" ? b.psRatio : b.peRatio;
@@ -118,9 +143,9 @@ export default function TokenValuationTable() {
         
         setTokens(tokensWithCalcs);
       } catch {
-        // Error fetching token data
+        // Keep fallback data on error
+        setTokens(getFallbackTokens(viewMode));
       }
-      setIsLoading(false);
     };
 
     fetchData();
@@ -198,13 +223,9 @@ export default function TokenValuationTable() {
       </div>
 
       <div className="p-4 flex-1">
-        {isLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-terminal-accent border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <>
-            {/* Legend */}
+        {/* Always render - show fallback data immediately */}
+        <>
+          {/* Legend */}
             <div className="flex items-center gap-4 mb-4 text-[10px]">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/30" />
@@ -345,7 +366,6 @@ export default function TokenValuationTable() {
               </div>
             </div>
           </>
-        )}
       </div>
     </div>
   );

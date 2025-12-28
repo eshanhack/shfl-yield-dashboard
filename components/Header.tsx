@@ -167,22 +167,22 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
         {/* Desktop Layout */}
         <div className="hidden lg:flex items-center justify-between">
           {/* Logo & Title */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 xl:gap-6">
+            <div className="flex items-center gap-3 xl:gap-4">
               <img
                 src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
                 alt="SHFL Token"
-                className="w-9 h-9 animate-spin"
+                className="w-9 h-9 xl:w-10 xl:h-10 animate-spin"
                 style={{ animationDuration: "3s" }}
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold tracking-tight">
+                  <h1 className="text-lg xl:text-xl font-semibold tracking-tight">
                     SHFL<span className="text-terminal-accent">Pro</span>
                   </h1>
                   <InfoTooltip content={TOOLTIPS.shfl} title="What is SHFL?" />
                 </div>
-                <p className="text-[10px] text-terminal-textSecondary tracking-wide">
+                <p className="text-[10px] xl:text-xs text-terminal-textSecondary tracking-wide">
                   TERMINAL v1.0
                 </p>
               </div>
@@ -190,24 +190,24 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           </div>
 
           {/* Center: Live Stats */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-8 xl:gap-12">
             {/* SHFL/USDC Price Ticker */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-3 xl:gap-4">
+              <div className="flex items-center gap-1.5 xl:gap-2">
                 <Activity 
                   className={cn(
-                    "w-3.5 h-3.5",
+                    "w-3.5 h-3.5 xl:w-4 xl:h-4",
                     isPriceUpdating ? "text-terminal-accent animate-pulse" : "text-terminal-textMuted"
                   )} 
                 />
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
+                <span className="text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wide">
                   SHFL/USDC
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 xl:gap-3">
                 <span
                   className={cn(
-                    "text-xl font-bold tabular-nums",
+                    "text-xl xl:text-2xl font-bold tabular-nums",
                     isPriceUpdating && "price-update text-terminal-accent"
                   )}
                 >
@@ -215,16 +215,16 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                 </span>
                 <div
                   className={cn(
-                    "flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded",
+                    "flex items-center gap-0.5 xl:gap-1 text-xs xl:text-sm font-medium px-1.5 xl:px-2 py-0.5 xl:py-1 rounded",
                     isPositive
                       ? "text-terminal-positive bg-terminal-positive/10"
                       : "text-terminal-negative bg-terminal-negative/10"
                   )}
                 >
                   {isPositive ? (
-                    <TrendingUp className="w-3 h-3" />
+                    <TrendingUp className="w-3 h-3 xl:w-4 xl:h-4" />
                   ) : (
-                    <TrendingDown className="w-3 h-3" />
+                    <TrendingDown className="w-3 h-3 xl:w-4 xl:h-4" />
                   )}
                   <span>{isPositive ? "+" : ""}{priceChange24h.toFixed(2)}%</span>
                 </div>
@@ -232,20 +232,20 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
             </div>
 
             {/* Separator */}
-            <div className="w-px h-8 bg-terminal-border" />
+            <div className="w-px h-8 xl:h-10 bg-terminal-border" />
 
             {/* Next Draw Countdown */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-terminal-textMuted" />
-                <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
+            <div className="flex items-center gap-3 xl:gap-4">
+              <div className="flex items-center gap-1.5 xl:gap-2">
+                <Clock className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-terminal-textMuted" />
+                <span className="text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wide">
                   Next Draw
                 </span>
                 <InfoTooltip content={TOOLTIPS.lottery} title="Weekly Lottery" />
               </div>
               <span
                 className={cn(
-                  "text-xl font-bold tabular-nums",
+                  "text-xl xl:text-2xl font-bold tabular-nums",
                   timeToNextDraw === "DRAW LIVE" && "text-terminal-positive animate-pulse"
                 )}
               >
@@ -255,19 +255,19 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           </div>
 
           {/* Right: Status & Currency */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 xl:gap-6">
             <CurrencySelector />
-            <div className="w-px h-6 bg-terminal-border" />
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
+            <div className="w-px h-6 xl:h-8 bg-terminal-border" />
+            <div className="flex items-center gap-2 xl:gap-3">
+              <span className="relative flex h-2 w-2 xl:h-2.5 xl:w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terminal-positive opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-terminal-positive"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 xl:h-2.5 xl:w-2.5 bg-terminal-positive"></span>
               </span>
-              <span className="text-xs text-terminal-textSecondary uppercase tracking-wide">
+              <span className="text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wide">
                 Live
               </span>
             </div>
-            <div className="text-xs text-terminal-textMuted">
+            <div className="text-xs xl:text-sm text-terminal-textMuted">
               {new Date().toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",

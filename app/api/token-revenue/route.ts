@@ -12,9 +12,9 @@ interface TokenRevenue {
   source: "live" | "estimated";
 }
 
-// Disable cache temporarily to ensure fresh data
+// In-memory cache for revenue data
 let cache: { data: TokenRevenue[]; timestamp: number } | null = null;
-const CACHE_DURATION = 0; // Disabled - always fetch fresh
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes - revenue doesn't change often
 
 // Fetch SHFL revenue from lottery history API
 // EXACT SAME calculation as ShuffleRevenueCard for consistency

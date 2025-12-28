@@ -435,13 +435,8 @@ button:disabled,
 
 /* ==================== MOBILE OPTIMIZATIONS ==================== */
 
-/* Mobile-first responsive typography */
-@media (max-width: 640px) {
-  /* Reduce base font sizes */
-  .text-3xl { font-size: 1.5rem !important; line-height: 2rem !important; }
-  .text-2xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
-  .text-xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
-  
+/* Mobile-first responsive typography - ONLY affects mobile */
+@media (max-width: 639px) {
   /* Tighter padding for cards on mobile */
   .mobile-compact-padding {
     padding: 0.75rem !important;
@@ -450,6 +445,13 @@ button:disabled,
   /* Hide less important info on mobile */
   .hide-mobile {
     display: none !important;
+  }
+}
+
+/* Desktop enhancements - larger screens get more breathing room */
+@media (min-width: 1280px) {
+  .desktop-spacious {
+    padding: 1.5rem;
   }
 }
 
@@ -470,7 +472,7 @@ button:disabled,
 }
 
 /* Mobile card improvements */
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .mobile-card {
     border-radius: 0.5rem;
     padding: 0.875rem;
@@ -484,6 +486,14 @@ button:disabled,
   .kpi-value {
     font-size: 1.5rem;
     line-height: 1.75rem;
+  }
+}
+
+/* Desktop card enhancements */
+@media (min-width: 1280px) {
+  .kpi-value {
+    font-size: 3rem;
+    line-height: 1.2;
   }
 }
 

@@ -31,12 +31,18 @@ interface PricePoint {
   [key: string]: number | string;
 }
 
+// Generate placeholder returns for immediate render
+const generatePlaceholderReturns = (): Record<string, number> => ({
+  SHFL: 5.2, BTC: 2.1, ETH: 3.5, SOL: 8.3, RLB: -2.1, HYPE: 12.5, PUMP: 15.2
+});
+
 export default function TokenReturnsChart() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("30d");
   const [chartData, setChartData] = useState<PricePoint[]>([]);
-  const [returns, setReturns] = useState<Record<string, number>>({});
+  // Start with placeholder returns for immediate render
+  const [returns, setReturns] = useState<Record<string, number>>(generatePlaceholderReturns());
   const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
+  const [dataSource, setDataSource] = useState<"live" | "demo">("demo");
   const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
     new Set(TOKENS.map(t => t.symbol))
   );
@@ -55,23 +61,74 @@ export default function TokenReturnsChart() {
     "365d": "1Y",
   };
 
+  // Process data outside of useEffect for reuse
+  const processData = (
+    results: { token: TokenData; prices: [number, number][] }[],
+    period: TimePeriod
+  ) => {
+    if (results.length === 0) return { chartData: [], returns: {} };
+    
+    const normalizedData: PricePoint[] = [];
+    const startPrices: Record<string, number> = {};
+    const endPrices: Record<string, number> = {};
+    
+    const maxLength = Math.max(...results.map(r => r.prices.length));
+    const step = Math.max(1, Math.floor(maxLength / 100));
+    
+    for (let i = 0; i < maxLength; i += step) {
+      const point: PricePoint = { timestamp: 0, date: "" };
+      
+      results.forEach(({ token, prices }) => {
+        const scaledIndex = Math.min(
+          Math.floor((i / maxLength) * prices.length),
+          prices.length - 1
+        );
+        
+        if (prices[scaledIndex]) {
+          const [timestamp, price] = prices[scaledIndex];
+          if (!point.timestamp) {
+            point.timestamp = timestamp;
+            point.date = new Date(timestamp).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: period === "1d" ? "numeric" : undefined,
+            });
+          }
+          
+          if (i === 0) startPrices[token.symbol] = price;
+          if (i >= maxLength - step) endPrices[token.symbol] = price;
+          
+          const startPrice = startPrices[token.symbol] || price;
+          point[token.symbol] = ((price - startPrice) / startPrice) * 100;
+        }
+      });
+      
+      if (point.timestamp) normalizedData.push(point);
+    }
+    
+    const finalReturns: Record<string, number> = {};
+    TOKENS.forEach(token => {
+      const start = startPrices[token.symbol];
+      const end = endPrices[token.symbol];
+      if (start && end) finalReturns[token.symbol] = ((end - start) / start) * 100;
+    });
+    
+    return { chartData: normalizedData, returns: finalReturns };
+  };
+
   useEffect(() => {
     const fetchPriceData = async () => {
       setIsLoading(true);
       try {
         const days = periodDays[timePeriod];
-        
-        // Fetch from our API route to avoid CORS and rate limits
         const response = await fetch(`/api/token-prices?days=${days}`);
         if (!response.ok) throw new Error("Failed to fetch");
         
         const json = await response.json();
         if (!json.success) throw new Error("API returned error");
         
-        // Track data source (live vs demo)
         setDataSource(json.source === "live" ? "live" : "demo");
         
-        // Transform data to match expected format - filter out empty results
         const results = json.data
           .map((item: { symbol: string; prices: [number, number][] }) => {
             const token = TOKENS.find(t => t.symbol === item.symbol) || TOKENS[0];
@@ -79,81 +136,11 @@ export default function TokenReturnsChart() {
           })
           .filter((r: { token: TokenData; prices: [number, number][] }) => r.prices.length > 0);
         
-        if (results.length === 0) {
-          setChartData([]);
-          setReturns({});
-          setIsLoading(false);
-          return;
-        }
-        
-        // Normalize to percentage returns from start
-        const normalizedData: PricePoint[] = [];
-        const startPrices: Record<string, number> = {};
-        const endPrices: Record<string, number> = {};
-        
-        // Use the maximum length and interpolate for shorter datasets
-        const maxLength = Math.max(...results.map((r: { token: TokenData; prices: [number, number][] }) => r.prices.length));
-        
-        // Sample data points (max 100 points for performance)
-        const step = Math.max(1, Math.floor(maxLength / 100));
-        
-        for (let i = 0; i < maxLength; i += step) {
-          const point: PricePoint = {
-            timestamp: 0,
-            date: "",
-          };
-          
-          results.forEach(({ token, prices }: { token: TokenData; prices: [number, number][] }) => {
-            // Scale index for tokens with different data lengths
-            const scaledIndex = Math.min(
-              Math.floor((i / maxLength) * prices.length),
-              prices.length - 1
-            );
-            
-            if (prices[scaledIndex]) {
-              const [timestamp, price] = prices[scaledIndex];
-              if (!point.timestamp) {
-                point.timestamp = timestamp;
-                point.date = new Date(timestamp).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  hour: timePeriod === "1d" ? "numeric" : undefined,
-                });
-              }
-              
-              if (i === 0) {
-                startPrices[token.symbol] = price;
-              }
-              if (i >= maxLength - step) {
-                endPrices[token.symbol] = price;
-              }
-              
-              // Calculate percentage return from start
-              const startPrice = startPrices[token.symbol] || price;
-              const returnPct = ((price - startPrice) / startPrice) * 100;
-              point[token.symbol] = returnPct;
-            }
-          });
-          
-          if (point.timestamp) {
-            normalizedData.push(point);
-          }
-        }
-        
-        // Calculate final returns
-        const finalReturns: Record<string, number> = {};
-        TOKENS.forEach((token) => {
-          const start = startPrices[token.symbol];
-          const end = endPrices[token.symbol];
-          if (start && end) {
-            finalReturns[token.symbol] = ((end - start) / start) * 100;
-          }
-        });
-        
-        setChartData(normalizedData);
-        setReturns(finalReturns);
+        const { chartData: newChartData, returns: newReturns } = processData(results, timePeriod);
+        setChartData(newChartData);
+        if (Object.keys(newReturns).length > 0) setReturns(newReturns);
       } catch {
-        // Error fetching price data
+        // Keep placeholder data on error
       }
       setIsLoading(false);
     };

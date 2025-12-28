@@ -19,17 +19,33 @@ interface RevenueAnalysisProps {
 
 type Period = "week" | "month" | "year";
 
+// Fallback data to show immediately while loading
+const FALLBACK_TANZANITE: TanzaniteData = {
+  week: { depositVolume: 15000000, percentChange: 5, found: false },
+  month: { depositVolume: 60000000, percentChange: 8, found: false },
+  year: { depositVolume: 700000000, percentChange: 15, found: false },
+};
+
 export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: RevenueAnalysisProps) {
-  const [tanzaniteData, setTanzaniteData] = useState<TanzaniteData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Start with fallback data - renders immediately
+  const [tanzaniteData, setTanzaniteData] = useState<TanzaniteData>(FALLBACK_TANZANITE);
+  const [isLoading, setIsLoading] = useState(false); // Don't block render
   const [dataSource, setDataSource] = useState<"live" | "estimated">("estimated");
 
   useEffect(() => {
     const fetchTanzanite = async () => {
-      setIsLoading(true);
       try {
         const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
-        const response = await fetch(`${scraperUrl}/api/tanzanite`);
+        
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(`${scraperUrl}/api/tanzanite`, {
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
         
         if (response.ok) {
           const json = await response.json();
@@ -38,18 +54,12 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
             setDataSource(json.data.week?.found ? "live" : "estimated");
           }
         }
-      } catch (error) {
-        // Error fetching Tanzanite data
-        setTanzaniteData({
-          week: { depositVolume: 15000000, percentChange: 5, found: false },
-          month: { depositVolume: 60000000, percentChange: 8, found: false },
-          year: { depositVolume: 700000000, percentChange: 15, found: false },
-        });
-      } finally {
-        setIsLoading(false);
+      } catch {
+        // Keep fallback data on error - already set
       }
     };
 
+    // Fetch in background without blocking render
     fetchTanzanite();
   }, []);
 
@@ -178,12 +188,8 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-terminal-accent border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col">
+      {/* Always render content - use fallback data while loading */}
+      <div className="flex-1 flex flex-col">
           {/* Data Rows */}
           <div className="space-y-3 flex-1">
             {periods.map(({ key, label }) => {
@@ -291,8 +297,7 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
   );
 }
 

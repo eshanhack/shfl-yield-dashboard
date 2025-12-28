@@ -168,22 +168,22 @@ export default function YieldCalculatorPanel({
   }, [shflAmount, shflPrice, historicalDraws, prizeSplit, stakingValueUSD]);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-6">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-6 lg:mb-8">
       {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-terminal-border">
+      <div className="p-3 sm:p-4 lg:p-5 xl:p-6 border-b border-terminal-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-              <Calculator className="w-4 h-4 text-terminal-accent" />
+          <div className="flex items-center gap-2 lg:gap-3 xl:gap-4">
+            <div className="p-1.5 lg:p-2 xl:p-2.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+              <Calculator className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
+                <h3 className="text-xs sm:text-sm lg:text-base xl:text-lg font-medium text-terminal-text">
                   Yield Calculator
                 </h3>
                 <InfoTooltip content={TOOLTIPS.yield} title="How Yield Works" />
               </div>
-              <p className="text-[10px] sm:text-xs text-terminal-textMuted hidden sm:block">
+              <p className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted hidden sm:block">
                 See how much you could earn from lottery prizes
               </p>
             </div>
@@ -191,20 +191,20 @@ export default function YieldCalculatorPanel({
         </div>
       </div>
 
-      <div className="p-3 sm:p-4">
+      <div className="p-3 sm:p-4 lg:p-6 xl:p-8">
         {/* Input Section */}
-        <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-terminal-border">
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <label className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-3 sm:gap-4 lg:gap-8 xl:gap-12 mb-4 sm:mb-6 lg:mb-8 pb-4 sm:pb-6 lg:pb-8 border-b border-terminal-border">
+          <div className="w-full lg:flex-1">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2 lg:mb-3">
+              <label className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">
                 {inputMode === "shfl" ? "SHFL Staked Amount" : "Number of Tickets"}
               </label>
               <button
                 onClick={handleFlipMode}
-                className="flex items-center gap-1.5 px-2 py-1 text-[10px] sm:text-xs text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-md transition-all"
+                className="flex items-center gap-1.5 px-2 lg:px-3 xl:px-4 py-1 lg:py-1.5 xl:py-2 text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-md transition-all"
                 title={inputMode === "shfl" ? "Switch to ticket input" : "Switch to SHFL input"}
               >
-                <ArrowLeftRight className="w-3 h-3" />
+                <ArrowLeftRight className="w-3 h-3 lg:w-4 lg:h-4 xl:w-5 xl:h-5" />
                 <span className="hidden sm:inline">
                   {inputMode === "shfl" ? "Enter Tickets" : "Enter SHFL"}
                 </span>
@@ -217,32 +217,32 @@ export default function YieldCalculatorPanel({
                 inputMode="numeric"
                 value={inputValue}
                 onChange={handleInputChange}
-                className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
+                className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 sm:px-4 lg:px-5 xl:px-6 py-2.5 sm:py-3 lg:py-4 xl:py-5 text-base sm:text-lg lg:text-2xl xl:text-3xl font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
                 placeholder={inputMode === "shfl" ? "100000" : "2000"}
               />
-              <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-terminal-textMuted text-xs sm:text-sm">
+              <span className="absolute right-3 sm:right-4 lg:right-5 xl:right-6 top-1/2 -translate-y-1/2 text-terminal-textMuted text-xs sm:text-sm lg:text-base xl:text-lg">
                 {inputMode === "shfl" ? "SHFL" : "Tickets"}
               </span>
             </div>
           </div>
           
           {/* Stats row - shows the opposite of what user input */}
-          <div className="flex items-center justify-between sm:justify-start sm:gap-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1">
+          <div className="flex items-center justify-between sm:justify-start sm:gap-6 lg:gap-10 xl:gap-14">
+            <div className="text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-1 text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">
                 {inputMode === "shfl" ? "Tickets" : "SHFL"}
                 <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
               </div>
-              <div className="text-base sm:text-lg font-bold text-terminal-accent tabular-nums">
+              <div className="text-base sm:text-lg lg:text-2xl xl:text-3xl font-bold text-terminal-accent tabular-nums">
                 {inputMode === "shfl" 
                   ? formatNumber(ticketCount)
                   : formatNumber(shflAmount)
                 }
               </div>
             </div>
-            <div className="text-center">
-              <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1">Value</div>
-              <div className="text-base sm:text-lg font-bold text-terminal-text">
+            <div className="text-center lg:text-left">
+              <div className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">Value</div>
+              <div className="text-base sm:text-lg lg:text-2xl xl:text-3xl font-bold text-terminal-text">
                 <CurrencyAmount amount={stakingValueUSD} />
               </div>
             </div>
@@ -250,70 +250,70 @@ export default function YieldCalculatorPanel({
         </div>
 
         {/* Yield Projections Grid - 2x2 on mobile, 4 cols on desktop */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-5 xl:gap-6 mb-4 sm:mb-6 lg:mb-8">
           {/* Upcoming Draw */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4">
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
-              <span className="text-[9px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">Upcoming</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4 lg:p-5 xl:p-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 lg:mb-4">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-yellow-400" />
+              <span className="text-[9px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">Upcoming</span>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1 sm:space-y-2 lg:space-y-3">
               <div className="flex items-center gap-1 sm:gap-2">
-                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5" />
-                <CurrencyAmount amount={thisWeekYield.weeklyExpectedUSD} className="text-base sm:text-xl font-bold text-terminal-text" />
+                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7" />
+                <CurrencyAmount amount={thisWeekYield.weeklyExpectedUSD} className="text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold text-terminal-text" />
               </div>
-              <div className="text-xs sm:text-sm font-medium text-yellow-400 tabular-nums">
+              <div className="text-xs sm:text-sm lg:text-base xl:text-lg font-medium text-yellow-400 tabular-nums">
                 {((thisWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100).toFixed(2)}%
               </div>
             </div>
           </div>
 
           {/* Average Week */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4">
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
-              <span className="text-[9px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">Avg Week</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4 lg:p-5 xl:p-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 lg:mb-4">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
+              <span className="text-[9px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">Avg Week</span>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1 sm:space-y-2 lg:space-y-3">
               <div className="flex items-center gap-1 sm:gap-2">
-                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5" />
-                <CurrencyAmount amount={avgWeekYield.weeklyExpectedUSD} className="text-base sm:text-xl font-bold text-terminal-text" />
+                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7" />
+                <CurrencyAmount amount={avgWeekYield.weeklyExpectedUSD} className="text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold text-terminal-text" />
               </div>
-              <div className="text-xs sm:text-sm font-medium text-terminal-accent tabular-nums">
+              <div className="text-xs sm:text-sm lg:text-base xl:text-lg font-medium text-terminal-accent tabular-nums">
                 {((avgWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100).toFixed(2)}%
               </div>
             </div>
           </div>
 
           {/* Monthly */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4">
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400" />
-              <span className="text-[9px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">Monthly</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-4 lg:p-5 xl:p-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 lg:mb-4">
+              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-green-400" />
+              <span className="text-[9px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">Monthly</span>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1 sm:space-y-2 lg:space-y-3">
               <div className="flex items-center gap-1 sm:gap-2">
-                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5" />
-                <CurrencyAmount amount={monthlyYield} className="text-base sm:text-xl font-bold text-terminal-text" />
+                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7" />
+                <CurrencyAmount amount={monthlyYield} className="text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold text-terminal-text" />
               </div>
-              <div className="text-xs sm:text-sm font-medium text-green-400 tabular-nums">
+              <div className="text-xs sm:text-sm lg:text-base xl:text-lg font-medium text-green-400 tabular-nums">
                 {((monthlyYield / stakingValueUSD) * 100).toFixed(2)}%
               </div>
             </div>
           </div>
 
           {/* Annual */}
-          <div className="bg-gradient-to-br from-terminal-accent/10 to-purple-900/20 border border-terminal-accent/30 rounded-lg p-2.5 sm:p-4">
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
-              <span className="text-[9px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">Annual</span>
+          <div className="bg-gradient-to-br from-terminal-accent/10 to-purple-900/20 border border-terminal-accent/30 rounded-lg p-2.5 sm:p-4 lg:p-5 xl:p-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 lg:mb-4">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
+              <span className="text-[9px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">Annual</span>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1 sm:space-y-2 lg:space-y-3">
               <div className="flex items-center gap-1 sm:gap-2">
-                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5" />
-                <CurrencyAmount amount={annualYield} className="text-base sm:text-xl font-bold text-terminal-text" />
+                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7" />
+                <CurrencyAmount amount={annualYield} className="text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold text-terminal-text" />
               </div>
-              <div className="text-sm sm:text-lg font-bold text-terminal-accent tabular-nums">
+              <div className="text-sm sm:text-lg lg:text-xl xl:text-2xl font-bold text-terminal-accent tabular-nums">
                 {formatPercent(annualAPY)} APY
               </div>
             </div>
@@ -322,9 +322,9 @@ export default function YieldCalculatorPanel({
 
         {/* Historical Yields - Scrollable on mobile */}
         <div>
-          <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-textSecondary" />
-            <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3 lg:mb-4">
+            <History className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-textSecondary" />
+            <span className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wider">
               Historical Expected Yields
             </span>
           </div>
@@ -333,19 +333,19 @@ export default function YieldCalculatorPanel({
               <table className="w-full min-w-[500px]">
                 <thead>
                   <tr className="border-b border-terminal-border bg-terminal-card/50">
-                    <th className="px-2 sm:px-4 py-2 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-left text-[9px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wider">
                       Draw
                     </th>
-                    <th className="px-2 sm:px-4 py-2 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-left text-[9px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-2 sm:px-4 py-2 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right text-[9px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wider">
                       NGR
                     </th>
-                    <th className="px-2 sm:px-4 py-2 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right text-[9px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wider">
                       Expected
                     </th>
-                    <th className="px-2 sm:px-4 py-2 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">
+                    <th className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right text-[9px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wider">
                       %
                     </th>
                   </tr>
@@ -354,31 +354,31 @@ export default function YieldCalculatorPanel({
                   {/* Upcoming Draw Row */}
                   {upcomingYield && (
                     <tr className="border-b border-terminal-border/50 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10 border-l-2 border-l-cyan-500">
-                      <td className="px-2 sm:px-4 py-2">
-                        <span className="text-xs sm:text-sm font-medium text-cyan-100">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3">
+                        <span className="text-xs sm:text-sm lg:text-base font-medium text-cyan-100">
                           #{upcomingYield.draw.drawNumber}
                         </span>
-                        <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase font-bold">
+                        <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase font-bold">
                           ⏳ Next
                         </span>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-cyan-200">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm lg:text-base text-cyan-200">
                         {new Date(upcomingYield.draw.date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                         })}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right text-xs sm:text-sm text-cyan-200">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right text-xs sm:text-sm lg:text-base text-cyan-200">
                         <CurrencyAmount amount={upcomingYield.draw.ngrUSD} />
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <CurrencyAmount amount={upcomingYield.weeklyUSD} className="text-xs sm:text-sm font-medium text-cyan-100" />
+                          <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                          <CurrencyAmount amount={upcomingYield.weeklyUSD} className="text-xs sm:text-sm lg:text-base font-medium text-cyan-100" />
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right">
-                        <span className="text-xs sm:text-sm font-bold tabular-nums text-cyan-300">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
+                        <span className="text-xs sm:text-sm lg:text-base font-bold tabular-nums text-cyan-300">
                           {upcomingYield.weeklyPercent.toFixed(2)}%
                         </span>
                       </td>
@@ -393,47 +393,47 @@ export default function YieldCalculatorPanel({
                         index === 0 ? "bg-terminal-accent/5" : ""
                       } ${hadJackpotReplenishment ? "bg-orange-500/5" : ""}`}
                     >
-                      <td className="px-2 sm:px-4 py-2">
-                        <span className="text-xs sm:text-sm font-medium text-terminal-text">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3">
+                        <span className="text-xs sm:text-sm lg:text-base font-medium text-terminal-text">
                           #{draw.drawNumber}
                         </span>
                         {index === 0 && (
-                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
+                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
                           </span>
                         )}
                         {hadJackpotReplenishment && (
-                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" title={`Jackpot replenishment: $${jackpotReplenishment.toLocaleString()}`}>
+                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" title={`Jackpot replenishment: $${jackpotReplenishment.toLocaleString()}`}>
                             🎰 JP
                           </span>
                         )}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-terminal-textSecondary">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm lg:text-base text-terminal-textSecondary">
                         {new Date(draw.date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                         })}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         {hadJackpotReplenishment ? (
                           <div className="flex flex-col items-end">
-                            <CurrencyAmount amount={adjustedNGR} className="text-xs sm:text-sm text-terminal-textMuted" />
-                            <span className="text-[9px] text-orange-400 line-through opacity-70">
+                            <CurrencyAmount amount={adjustedNGR} className="text-xs sm:text-sm lg:text-base text-terminal-textMuted" />
+                            <span className="text-[9px] lg:text-[10px] text-orange-400 line-through opacity-70">
                               <CurrencyAmount amount={draw.ngrUSD} />
                             </span>
                           </div>
                         ) : (
-                          <CurrencyAmount amount={draw.ngrUSD} className="text-xs sm:text-sm text-terminal-textMuted" />
+                          <CurrencyAmount amount={draw.ngrUSD} className="text-xs sm:text-sm lg:text-base text-terminal-textMuted" />
                         )}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right">
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <CurrencyAmount amount={weeklyUSD} className="text-xs sm:text-sm font-medium text-terminal-text" />
+                          <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                          <CurrencyAmount amount={weeklyUSD} className="text-xs sm:text-sm lg:text-base font-medium text-terminal-text" />
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 text-right">
-                        <span className={`text-xs sm:text-sm font-bold tabular-nums ${
+                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
+                        <span className={`text-xs sm:text-sm lg:text-base font-bold tabular-nums ${
                           weeklyPercent > (avgWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100
                             ? "text-terminal-positive"
                             : "text-terminal-text"

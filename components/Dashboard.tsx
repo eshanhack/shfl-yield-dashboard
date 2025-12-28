@@ -425,7 +425,7 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-[1800px] mx-auto px-3 sm:px-4 py-4 sm:py-6 overflow-safe">
+      <main id="main-content" className="max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8 overflow-safe">
         {/* Section Selector */}
         <SectionSelector 
           activeSection={activeSection} 
@@ -433,54 +433,54 @@ export default function Dashboard() {
         />
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
-        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-6">
-          <div className="flex items-center gap-2 text-xs text-terminal-textMuted">
+        <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
+          <div className="flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-terminal-textMuted">
             <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             <button
               onClick={() => loadData(true)}
               disabled={isRefreshing}
-              className="p-2 hover:text-terminal-accent hover:bg-terminal-accent/10 rounded-lg transition-all disabled:opacity-50 touch-target"
+              className="p-2 lg:p-2.5 hover:text-terminal-accent hover:bg-terminal-accent/10 rounded-lg transition-all disabled:opacity-50 touch-target"
               aria-label="Refresh data"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 lg:w-5 lg:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
         {/* ==================== UNIFIED KPI ROW ==================== */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-5 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
           {/* Card 1 - Primary (highlighted) */}
-          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 shadow-glow-sm h-full min-h-[140px] sm:min-h-[180px]">
+          <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-3 sm:p-4 lg:p-5 xl:p-7 shadow-glow-sm h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] xl:min-h-[220px]">
             <div key={`card1-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                        <Percent className="w-4 h-4 text-terminal-accent" />
+                  <div className="flex items-start justify-between mb-3 lg:mb-4 xl:mb-5">
+                    <div className="flex items-center gap-2 xl:gap-3">
+                      <div className="p-1.5 lg:p-2 xl:p-2.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Percent className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
                       </div>
-                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Annual Yield
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
                     {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${apyChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm xl:text-base font-medium px-1.5 sm:px-2 lg:px-2.5 xl:px-3 py-0.5 sm:py-1 xl:py-1.5 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 ${apyChange < 0 ? "rotate-180" : ""}`} />
                         <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
+                  <div className="mb-1 sm:mb-2 lg:mb-3 xl:mb-4">
+                    <span className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 xl:space-y-2 mt-auto pt-1.5 sm:pt-2 lg:pt-3 xl:pt-4 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Highest</span>
                       <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
                     </div>
@@ -489,54 +489,54 @@ export default function Dashboard() {
               )}
               {activeSection === "revenue" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                        <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Annual GGR
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl font-bold text-terminal-accent" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
+                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-terminal-accent" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Gross Gaming Revenue</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Gross Gaming Revenue</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Annual NGR</span>
-                      <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Lottery NGR</span>
-                      <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                   </div>
                 </>
               )}
               {activeSection === "token" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                        <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Market Cap
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
+                    <span className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-terminal-accent tabular-nums">${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Circulating</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Circulating</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">FDV</span>
                       <span className="font-medium text-terminal-text tabular-nums">${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Price</span>
                       <span className="font-medium text-terminal-text tabular-nums">${price.usd.toFixed(4)}</span>
                     </div>
@@ -547,65 +547,65 @@ export default function Dashboard() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 card-glow h-full min-h-[140px] sm:min-h-[180px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-7 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] xl:min-h-[220px]">
             <div key={`card2-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                        <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4 xl:mb-5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3">
+                      <div className="p-1 sm:p-1.5 lg:p-2 xl:p-2.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Upcoming Draw
                       </span>
                     </div>
                     {prizePoolChange !== 0 && !isNaN(prizePoolChange) && isFinite(prizePoolChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${prizePoolChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${prizePoolChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm xl:text-base font-medium px-1.5 sm:px-2 lg:px-2.5 xl:px-3 py-0.5 sm:py-1 xl:py-1.5 rounded ${prizePoolChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 ${prizePoolChange < 0 ? "rotate-180" : ""}`} />
                         <span>{prizePoolChange > 0 ? "+" : ""}{prizePoolChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl font-bold text-terminal-text" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3 xl:mb-4">
+                    <CurrencyAmount amount={weeklyPoolUSD} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-terminal-text" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Draw #{lotteryStats.drawNumber || 64}</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-1 lg:mb-2">Draw #{lotteryStats.drawNumber || 64}</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 xl:space-y-2 mt-auto pt-1.5 sm:pt-2 lg:pt-3 xl:pt-4 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Last Week</span>
-                      <CurrencyAmount amount={completedDraws[0]?.totalPoolUSD || 0} className="font-medium text-terminal-text text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={completedDraws[0]?.totalPoolUSD || 0} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm xl:text-base" />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Highest</span>
-                      <CurrencyAmount amount={highestPrizePoolData.pool} className="font-medium text-terminal-positive text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={highestPrizePoolData.pool} className="font-medium text-terminal-positive text-[10px] sm:text-xs lg:text-sm xl:text-base" />
                     </div>
                   </div>
                 </>
               )}
               {activeSection === "revenue" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className={`p-1 sm:p-1.5 rounded border ${overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" : overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" : "bg-terminal-accent/10 border-terminal-accent/20"}`}>
-                        <Activity className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${overallBusinessHealth.color}`} />
+                      <div className={`p-1 sm:p-1.5 lg:p-2 rounded border ${overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" : overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" : "bg-terminal-accent/10 border-terminal-accent/20"}`}>
+                        <Activity className={`w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 ${overallBusinessHealth.color}`} />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Health
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl">{overallBusinessHealth.emoji}</span>
-                    <span className={`text-base sm:text-2xl font-bold ${overallBusinessHealth.color}`}>{overallBusinessHealth.label}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-1 sm:mb-2 lg:mb-3">
+                    <span className="text-xl sm:text-3xl lg:text-4xl">{overallBusinessHealth.emoji}</span>
+                    <span className={`text-base sm:text-2xl lg:text-3xl font-bold ${overallBusinessHealth.color}`}>{overallBusinessHealth.label}</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Weekly & monthly trends</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Weekly & monthly trends</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Weekly</span>
                       <span className={`font-medium ${revenueStats.weeklyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{revenueStats.weeklyNGRGrowth >= 0 ? "+" : ""}{revenueStats.weeklyNGRGrowth.toFixed(1)}%</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Monthly</span>
                       <span className={`font-medium ${revenueStats.monthlyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{revenueStats.monthlyNGRGrowth >= 0 ? "+" : ""}{revenueStats.monthlyNGRGrowth.toFixed(1)}%</span>
                     </div>
@@ -614,26 +614,26 @@ export default function Dashboard() {
               )}
               {activeSection === "token" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Supply
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M</span>
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
+                    <span className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Circulating</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Circulating</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Total</span>
                       <span className="font-medium text-terminal-text tabular-nums">{formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Burned</span>
                       <span className="font-medium text-terminal-negative tabular-nums">{formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M</span>
                     </div>
@@ -644,36 +644,36 @@ export default function Dashboard() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 card-glow h-full min-h-[140px] sm:min-h-[180px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-7 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] xl:min-h-[220px]">
             <div key={`card3-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4 xl:mb-5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3">
+                      <div className="p-1 sm:p-1.5 lg:p-2 xl:p-2.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Staked
                       </span>
                     </div>
                     {stakedChange !== 0 && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${stakedChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${stakedChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm xl:text-base font-medium px-1.5 sm:px-2 lg:px-2.5 xl:px-3 py-0.5 sm:py-1 xl:py-1.5 rounded ${stakedChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 ${stakedChange < 0 ? "rotate-180" : ""}`} />
                         <span>{stakedChange > 0 ? "+" : ""}{stakedChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
+                  <div className="mb-1 sm:mb-2 lg:mb-3 xl:mb-4">
+                    <span className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-terminal-text tabular-nums">{formatNumber(Math.floor(lotteryStats.totalSHFLStaked / 1_000_000))}M</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">SHFL staked</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-1 lg:mb-2">SHFL staked</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 xl:space-y-2 mt-auto pt-1.5 sm:pt-2 lg:pt-3 xl:pt-4 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Circulating</span>
                       <span className="font-bold text-terminal-accent tabular-nums">{lotteryStats.circulatingSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(1) : "0"}%</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Total</span>
                       <span className="font-bold text-purple-400 tabular-nums">{lotteryStats.totalSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(1) : "0"}%</span>
                     </div>
@@ -682,55 +682,55 @@ export default function Dashboard() {
               )}
               {activeSection === "revenue" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                        <Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Growth
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-3xl">{businessGrowth.emoji}</span>
-                    <span className={`text-base sm:text-2xl font-bold ${businessGrowth.color}`}>{businessGrowth.label}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-1 sm:mb-2 lg:mb-3">
+                    <span className="text-xl sm:text-3xl lg:text-4xl">{businessGrowth.emoji}</span>
+                    <span className={`text-base sm:text-2xl lg:text-3xl font-bold ${businessGrowth.color}`}>{businessGrowth.label}</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week trend</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week trend</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Rate</span>
                       <span className={`font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>{businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}%</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Avg Pool</span>
-                      <CurrencyAmount amount={revenueStats.avgPoolSize} className="font-medium text-terminal-text text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={revenueStats.avgPoolSize} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                   </div>
                 </>
               )}
               {activeSection === "token" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                        <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-positive" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                        <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-positive" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Value/Year
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <CurrencyAmount amount={tokenMetrics.annualLotteryNGR} className="text-xl sm:text-3xl font-bold text-terminal-positive" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
+                    <CurrencyAmount amount={tokenMetrics.annualLotteryNGR} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-terminal-positive" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Lottery NGR</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Lottery NGR</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">P/E</span>
                       <span className={`font-medium tabular-nums ${tokenMetrics.peRatio < 10 ? "text-terminal-positive" : tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"}`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Staked</span>
                       <span className="font-medium text-purple-400 tabular-nums">{tokenMetrics.stakedPercent.toFixed(1)}%</span>
                     </div>
@@ -741,93 +741,93 @@ export default function Dashboard() {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 card-glow h-full min-h-[140px] sm:min-h-[180px]">
+          <div className="bg-terminal-card border border-terminal-border rounded-lg p-3 sm:p-4 lg:p-5 xl:p-7 card-glow h-full min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] xl:min-h-[220px]">
             <div key={`card4-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                        <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-accent" />
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4 xl:mb-5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3">
+                      <div className="p-1 sm:p-1.5 lg:p-2 xl:p-2.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                        <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Weekly NGR
                       </span>
                     </div>
                     {ngrChange !== 0 && !isNaN(ngrChange) && isFinite(ngrChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${ngrChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${ngrChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm xl:text-base font-medium px-1.5 sm:px-2 lg:px-2.5 xl:px-3 py-0.5 sm:py-1 xl:py-1.5 rounded ${ngrChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 ${ngrChange < 0 ? "rotate-180" : ""}`} />
                         <span>{ngrChange > 0 ? "+" : ""}{ngrChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl font-bold text-terminal-text" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3 xl:mb-4">
+                    <CurrencyAmount amount={ngrStats.current4WeekAvg} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-terminal-text" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm xl:text-base text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 xl:space-y-2 mt-auto pt-1.5 sm:pt-2 lg:pt-3 xl:pt-4 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Last Week</span>
-                      <CurrencyAmount amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} className="font-medium text-terminal-accent text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} className="font-medium text-terminal-accent text-[10px] sm:text-xs lg:text-sm xl:text-base" />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm xl:text-base">
                       <span className="text-terminal-textMuted">Highest</span>
-                      <CurrencyAmount amount={highestNGRData.ngr} className="font-medium text-terminal-positive text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={highestNGRData.ngr} className="font-medium text-terminal-positive text-[10px] sm:text-xs lg:text-sm xl:text-base" />
                     </div>
                   </div>
                 </>
               )}
               {activeSection === "revenue" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                        <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-terminal-positive" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                        <PiggyBank className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-positive" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         USDC Awarded
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
-                    <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5 sm:w-7 sm:h-7" />
-                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-xl sm:text-3xl font-bold text-terminal-positive" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3 flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+                    <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5 sm:w-7 sm:h-7 lg:w-9 lg:h-9" />
+                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-terminal-positive" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">Lifetime</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Lifetime</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Draws</span>
                       <span className="font-medium text-terminal-text">{completedDraws.length}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Avg/Draw</span>
-                      <CurrencyAmount amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} className="font-medium text-terminal-text text-[10px] sm:text-xs" />
+                      <CurrencyAmount amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                   </div>
                 </>
               )}
               {activeSection === "token" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
-                        <Droplets className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                        <Droplets className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-400" />
                       </div>
-                      <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Liquidity
                       </span>
                     </div>
                   </div>
-                  <div className="mb-1 sm:mb-2">
-                    <CurrencyAmount amount={liquidityData.volume24h} className="text-xl sm:text-3xl font-bold text-blue-400" />
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
+                    <CurrencyAmount amount={liquidityData.volume24h} className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-400" />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">24h volume</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">24h volume</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">MC/Vol</span>
                       <span className="font-medium text-terminal-text tabular-nums">{liquidityData.marketCapToVolume > 0 ? `${liquidityData.marketCapToVolume.toFixed(1)}x` : "-"}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Turnover</span>
                       <span className="font-medium text-terminal-text tabular-nums">{tokenMetrics.marketCap > 0 && liquidityData.volume24h > 0 ? `${((liquidityData.volume24h / tokenMetrics.marketCap) * 100).toFixed(2)}%` : "-"}</span>
                     </div>
@@ -861,7 +861,7 @@ export default function Dashboard() {
             />
 
             {/* Charts and Ticket EV Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8 items-stretch">
               {/* NGR vs Price Chart */}
               <div className="lg:col-span-2 h-full">
                 <YieldChart data={chartData} />
@@ -881,7 +881,7 @@ export default function Dashboard() {
             </div>
 
             {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
               <SensitivityTable
                 baseNGR={ngrStats.current4WeekAvg}
                 basePrice={price.usd}
@@ -916,7 +916,7 @@ export default function Dashboard() {
         {activeSection === "revenue" && (
           <div className="section-content">
             {/* Revenue Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
                 // For current week, use the latest completed draw's POSTED NGR
@@ -937,7 +937,7 @@ export default function Dashboard() {
         {activeSection === "token" && (
           <div className="section-content">
             {/* Token Comparison Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
               <TokenReturnsChart />
               <TokenValuationTable />
             </div>
@@ -945,7 +945,7 @@ export default function Dashboard() {
         )}
 
         {/* Disclaimer & Footer */}
-        <footer className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-terminal-border">
+        <footer className="mt-6 sm:mt-8 lg:mt-10 pt-4 sm:pt-6 lg:pt-8 border-t border-terminal-border">
           {/* Global Disclaimer */}
           <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-terminal-dark rounded border border-yellow-500/30 text-[10px] sm:text-xs text-terminal-textMuted">
             <p className="mb-1">

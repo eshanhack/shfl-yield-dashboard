@@ -19,14 +19,47 @@ interface PriceData {
 
 // Simple in-memory cache
 const cache: Record<string, { data: PriceData[]; timestamp: number }> = {};
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes (increased from 5)
+
+// Fetch a single token with timeout
+async function fetchTokenWithTimeout(
+  token: { id: string; symbol: string },
+  baseUrl: string,
+  days: string,
+  apiKeyHeader: Record<string, string>,
+  timeoutMs: number = 5000
+): Promise<PriceData> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const url = `${baseUrl}/coins/${token.id}/market_chart?vs_currency=usd&days=${days}`;
+    const response = await fetch(url, {
+      headers: { "Accept": "application/json", ...apiKeyHeader },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.prices?.length > 0) {
+        return { symbol: token.symbol, prices: data.prices };
+      }
+    }
+  } catch {
+    clearTimeout(timeoutId);
+  }
+  return { symbol: token.symbol, prices: [] };
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const days = searchParams.get("days") || "30";
   const cacheKey = `prices_${days}`;
 
-  // Check cache first
+  // Check cache first - return immediately if valid
   const cached = cache[cacheKey];
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return NextResponse.json({
@@ -38,13 +71,10 @@ export async function GET(request: Request) {
     });
   }
 
-  const results: PriceData[] = [];
-  
-  // Check for API keys (support both Demo and Pro)
+  // Check for API keys
   const demoKey = process.env.COINGECKO_API_KEY || process.env.COINGECKO_DEMO_KEY;
   const proKey = process.env.COINGECKO_PRO_KEY;
   
-  // Determine which API to use
   let baseUrl = "https://api.coingecko.com/api/v3";
   let apiKeyHeader: Record<string, string> = {};
   
@@ -52,44 +82,13 @@ export async function GET(request: Request) {
     baseUrl = "https://pro-api.coingecko.com/api/v3";
     apiKeyHeader = { "x-cg-pro-api-key": proKey };
   } else if (demoKey) {
-    baseUrl = "https://api.coingecko.com/api/v3";
     apiKeyHeader = { "x-cg-demo-api-key": demoKey };
   }
 
-  // Fetch tokens sequentially to avoid rate limits
-  for (const token of TOKENS) {
-    try {
-      const url = `${baseUrl}/coins/${token.id}/market_chart?vs_currency=usd&days=${days}`;
-      
-      const response = await fetch(url, {
-        headers: {
-          "Accept": "application/json",
-          ...apiKeyHeader,
-        },
-        cache: "no-store",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.prices && data.prices.length > 0) {
-          results.push({
-            symbol: token.symbol,
-            prices: data.prices,
-          });
-        } else {
-          results.push({ symbol: token.symbol, prices: [] });
-        }
-      } else {
-        results.push({ symbol: token.symbol, prices: [] });
-      }
-    } catch {
-      results.push({ symbol: token.symbol, prices: [] });
-    }
-
-    // Small delay between requests (shorter if we have API key)
-    const delay = (demoKey || proKey) ? 100 : 400;
-    await new Promise(resolve => setTimeout(resolve, delay));
-  }
+  // OPTIMIZATION: Fetch ALL tokens in PARALLEL with timeout
+  const results = await Promise.all(
+    TOKENS.map(token => fetchTokenWithTimeout(token, baseUrl, days, apiKeyHeader, 8000))
+  );
 
   // Sort by preferred order
   const order = ["SHFL", "PUMP", "BTC", "ETH", "SOL", "RLB", "HYPE"];

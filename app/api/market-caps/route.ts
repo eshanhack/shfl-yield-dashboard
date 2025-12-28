@@ -9,8 +9,19 @@ const COINGECKO_TOKENS = [
   { id: "rollbit-coin", symbol: "RLB" },
 ];
 
-// NO cache - always fetch fresh
+// In-memory cache for market caps
+let mcCache: { data: any; timestamp: number } | null = null;
+const MC_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export async function GET() {
+  // Return cached data if fresh
+  if (mcCache && Date.now() - mcCache.timestamp < MC_CACHE_DURATION) {
+    return NextResponse.json({
+      ...mcCache.data,
+      cached: true,
+      cacheAge: Math.round((Date.now() - mcCache.timestamp) / 1000) + "s",
+    });
+  }
   const marketCaps: Record<string, number> = {};
   const volumes: Record<string, number> = {};
   const liquidityData: Record<string, { volume24h: number; marketCapToVolume: number; liquidity?: number }> = {};
@@ -150,12 +161,18 @@ export async function GET() {
     };
   }
   
-  return NextResponse.json({
+  const responseData = {
     success: true,
     data: marketCaps,
     volumes,
     shflLiquidity: liquidityData["SHFL"],
     source: Object.keys(marketCaps).length >= 4 ? "live" : "partial",
     fetchedAt: new Date().toISOString(),
-  });
+    cached: false,
+  };
+
+  // Cache the response
+  mcCache = { data: responseData, timestamp: Date.now() };
+
+  return NextResponse.json(responseData);
 }
