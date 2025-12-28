@@ -268,19 +268,19 @@ export default function Dashboard() {
     if (completedDraws.length === 0) return { 
       annualGGR: 0, annualNGR: 0, annualLotteryNGR: 0,
       weeklyNGRGrowth: 0, monthlyNGRGrowth: 0, annualNGRGrowth: 0,
-      totalPrizesPaid: 0, avgPoolSize: 0
+      totalLotteryNGRAdded: 0, avgPoolSize: 0
     };
     
-    // Calculate average weekly lottery NGR
-    const totalLotteryNGR = completedDraws.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0);
-    const avgWeeklyLotteryNGR = totalLotteryNGR / completedDraws.length;
+    // Calculate total lottery NGR added across ALL draws (this is the actual prizes distributed)
+    const totalLotteryNGRAdded = completedDraws.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0);
+    const avgWeeklyLotteryNGR = totalLotteryNGRAdded / completedDraws.length;
     
     // Annual values (Lottery NGR is 15% of Shuffle NGR)
     const annualLotteryNGR = avgWeeklyLotteryNGR * 52;
     const annualNGR = annualLotteryNGR / 0.15;  // Total Shuffle NGR
     const annualGGR = annualNGR * 2;  // GGR is roughly 2x NGR
     
-    // Growth calculations
+    // Growth calculations - compare recent 4 weeks vs prior 4 weeks
     const recent4 = completedDraws.slice(0, 4);
     const prior4 = completedDraws.slice(4, 8);
     const recentNGR = recent4.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / recent4.length;
@@ -292,7 +292,7 @@ export default function Dashboard() {
     const priorWeekNGR = completedDraws[1]?.ngrUSD + (completedDraws[1]?.singlesAdded || 0) * 0.85 || weekNGR;
     const weeklyNGRGrowth = priorWeekNGR > 0 ? ((weekNGR - priorWeekNGR) / priorWeekNGR) * 100 : 0;
     
-    // Annual growth (first half vs second half)
+    // Annual growth (first half vs second half of all draws)
     const halfPoint = Math.floor(completedDraws.length / 2);
     const recentHalf = completedDraws.slice(0, halfPoint);
     const olderHalf = completedDraws.slice(halfPoint);
@@ -300,33 +300,35 @@ export default function Dashboard() {
     const olderAvg = olderHalf.length > 0 ? olderHalf.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / olderHalf.length : recentAvg;
     const annualNGRGrowth = olderAvg > 0 ? ((recentAvg - olderAvg) / olderAvg) * 100 : 0;
     
-    // Total prizes paid
-    const totalPrizesPaid = completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0);
-    const avgPoolSize = totalPrizesPaid / completedDraws.length;
+    // Average pool size
+    const avgPoolSize = completedDraws.reduce((sum, d) => sum + d.totalPoolUSD, 0) / completedDraws.length;
     
     return { 
       annualGGR, annualNGR, annualLotteryNGR,
       weeklyNGRGrowth, monthlyNGRGrowth, annualNGRGrowth,
-      totalPrizesPaid, avgPoolSize
+      totalLotteryNGRAdded, avgPoolSize
     };
   }, [completedDraws]);
 
-  // Overall business health (aggregate)
+  // Overall business health - use same logic as Revenue Analysis component
+  // Based on recent NGR trends (weekly + monthly average)
   const overallBusinessHealth = useMemo(() => {
-    const { weeklyNGRGrowth, monthlyNGRGrowth, annualNGRGrowth } = revenueStats;
-    const avgGrowth = (weeklyNGRGrowth + monthlyNGRGrowth + annualNGRGrowth) / 3;
+    const { weeklyNGRGrowth, monthlyNGRGrowth } = revenueStats;
+    // Use weighted average: more weight on monthly trend
+    const avgGrowth = (weeklyNGRGrowth * 0.3 + monthlyNGRGrowth * 0.7);
     
-    if (avgGrowth > 10) return { status: "hot", emoji: "🔥", label: "Running Hot", color: "text-orange-400", bgColor: "bg-orange-500/10" };
-    if (avgGrowth < -10) return { status: "cold", emoji: "🥶", label: "Running Cold", color: "text-blue-400", bgColor: "bg-blue-500/10" };
+    if (avgGrowth > 5) return { status: "hot", emoji: "🔥", label: "Running Hot", color: "text-orange-400", bgColor: "bg-orange-500/10" };
+    if (avgGrowth < -5) return { status: "cold", emoji: "🥶", label: "Running Cold", color: "text-blue-400", bgColor: "bg-blue-500/10" };
     return { status: "neutral", emoji: "📊", label: "As Expected", color: "text-terminal-textSecondary", bgColor: "bg-terminal-border/30" };
   }, [revenueStats]);
 
-  // Business growth trend
+  // Business growth trend - based on recent NGR performance
   const businessGrowth = useMemo(() => {
-    const { monthlyNGRGrowth, annualNGRGrowth } = revenueStats;
-    const avgGrowth = (monthlyNGRGrowth + annualNGRGrowth) / 2;
+    const { weeklyNGRGrowth, monthlyNGRGrowth } = revenueStats;
+    // Weight monthly more heavily
+    const avgGrowth = (weeklyNGRGrowth * 0.3 + monthlyNGRGrowth * 0.7);
     
-    if (avgGrowth > 20) return { status: "skyrocketing", emoji: "🚀", label: "Skyrocketing", color: "text-terminal-positive", change: avgGrowth };
+    if (avgGrowth > 15) return { status: "skyrocketing", emoji: "🚀", label: "Skyrocketing", color: "text-terminal-positive", change: avgGrowth };
     if (avgGrowth > 5) return { status: "growing", emoji: "📈", label: "Growing", color: "text-terminal-positive", change: avgGrowth };
     if (avgGrowth < -5) return { status: "slowing", emoji: "📉", label: "Slowing", color: "text-terminal-negative", change: avgGrowth };
     return { status: "steady", emoji: "➡️", label: "Steady", color: "text-terminal-textSecondary", change: avgGrowth };
@@ -337,7 +339,9 @@ export default function Dashboard() {
   // Token metrics
   const tokenMetrics = useMemo(() => {
     const circulatingSupply = lotteryStats.circulatingSupply || 361000000;
-    const totalSupply = lotteryStats.totalSupply || 1000000000;
+    const burnedTokens = lotteryStats.burnedTokens || 53693902;
+    // Total supply = 1 billion - burned tokens
+    const totalSupply = 1000000000 - burnedTokens;
     const marketCap = price.usd * circulatingSupply;
     const fdv = price.usd * totalSupply;
     
@@ -357,6 +361,7 @@ export default function Dashboard() {
       fdv,
       circulatingSupply,
       totalSupply,
+      burnedTokens,
       annualLotteryNGR,
       valueToHoldersRatio,
       peRatio,
@@ -730,24 +735,24 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Total Prizes Paid */}
+              {/* Total Lottery NGR Added */}
               <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
                     <PiggyBank className="w-4 h-4 text-terminal-positive" />
                   </div>
                   <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Total Prizes Paid
+                    Total NGR Added
                   </span>
                 </div>
                 <div className="mb-1">
                   <CurrencyAmount 
-                    amount={revenueStats.totalPrizesPaid} 
+                    amount={revenueStats.totalLotteryNGRAdded} 
                     className="text-2xl font-bold text-terminal-positive"
                   />
                 </div>
                 <div className="text-xs text-terminal-textMuted">
-                  Avg pool: <CurrencyAmount amount={revenueStats.avgPoolSize} className="text-terminal-text" />
+                  Across {completedDraws.length} draws
                 </div>
               </div>
             </div>
@@ -794,25 +799,26 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Circulating Supply */}
+              {/* Supply */}
               <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
                     <Wallet className="w-4 h-4 text-terminal-accent" />
                   </div>
                   <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Circulating Supply
+                    Supply
                   </span>
                 </div>
                 <div className="mb-1">
                   <span className="text-2xl font-bold text-terminal-text tabular-nums">
                     {formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M
                   </span>
+                  <span className="text-xs text-terminal-textMuted ml-1">circulating</span>
                 </div>
                 <div className="text-xs text-terminal-textMuted">
                   Total: <span className="text-terminal-text">{formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M</span>
-                  <span className="text-terminal-textMuted ml-2">
-                    ({((tokenMetrics.circulatingSupply / tokenMetrics.totalSupply) * 100).toFixed(1)}% circulating)
+                  <span className="text-terminal-negative ml-2">
+                    ({formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M burned)
                   </span>
                 </div>
               </div>
