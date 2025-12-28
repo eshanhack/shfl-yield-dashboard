@@ -860,8 +860,28 @@ export default function Dashboard() {
               }}
             />
 
-            {/* Charts and Ticket EV Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8 items-stretch">
+            {/* ===== DESKTOP BENTO GRID (xl+): Chart spans wider, EV Panel on right ===== */}
+            <div className="hidden xl:grid xl:grid-cols-[2fr_1fr] xl:gap-8 mb-8">
+              {/* Main Chart - Takes 2/3 width */}
+              <div className="h-[500px]">
+                <YieldChart data={chartData} />
+              </div>
+
+              {/* Ticket EV Panel - Takes 1/3 width */}
+              <div className="h-[500px]">
+                <TicketEVPanel
+                  totalPool={weeklyPoolUSD}
+                  prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+                  totalTickets={lotteryStats.totalTickets}
+                  shflPrice={price.usd}
+                  historicalDraws={completedDraws}
+                  currentDrawNumber={lotteryStats.drawNumber}
+                />
+              </div>
+            </div>
+
+            {/* ===== MOBILE/TABLET: Stacked layout ===== */}
+            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8 items-stretch">
               {/* NGR vs Price Chart */}
               <div className="lg:col-span-2 h-full">
                 <YieldChart data={chartData} />
@@ -881,7 +901,7 @@ export default function Dashboard() {
             </div>
 
             {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-10 mb-4 sm:mb-6 lg:mb-8">
               <SensitivityTable
                 baseNGR={ngrStats.current4WeekAvg}
                 basePrice={price.usd}
@@ -915,8 +935,8 @@ export default function Dashboard() {
         {/* ==================== REVENUE SECTION ==================== */}
         {activeSection === "revenue" && (
           <div className="section-content">
-            {/* Revenue Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+            {/* Revenue Cards - Side by side on desktop with better proportions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-10 mb-4 sm:mb-6 lg:mb-8 xl:mb-10">
               <ShuffleRevenueCard
                 historicalDraws={completedDraws}
                 // For current week, use the latest completed draw's POSTED NGR
@@ -928,27 +948,33 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Revenue History Chart */}
-            <ShuffleRevenueChart historicalDraws={completedDraws} />
+            {/* Revenue History Chart - Full width with enhanced height on desktop */}
+            <div className="xl:min-h-[500px]">
+              <ShuffleRevenueChart historicalDraws={completedDraws} />
+            </div>
           </div>
         )}
 
         {/* ==================== TOKEN SECTION ==================== */}
         {activeSection === "token" && (
           <div className="section-content">
-            {/* Token Comparison Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
-              <TokenReturnsChart />
-              <TokenValuationTable />
+            {/* Token Comparison Charts - Equal width on desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-10 mb-4 sm:mb-6 lg:mb-8">
+              <div className="xl:min-h-[450px]">
+                <TokenReturnsChart />
+              </div>
+              <div className="xl:min-h-[450px]">
+                <TokenValuationTable />
+              </div>
             </div>
           </div>
         )}
 
         {/* Disclaimer & Footer */}
-        <footer className="mt-6 sm:mt-8 lg:mt-10 pt-4 sm:pt-6 lg:pt-8 border-t border-terminal-border">
+        <footer className="mt-6 sm:mt-8 lg:mt-10 xl:mt-12 pt-4 sm:pt-6 lg:pt-8 xl:pt-10 border-t border-terminal-border">
           {/* Global Disclaimer */}
-          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-terminal-dark rounded border border-yellow-500/30 text-[10px] sm:text-xs text-terminal-textMuted">
-            <p className="mb-1">
+          <div className="mb-3 sm:mb-4 xl:mb-6 p-2 sm:p-3 xl:p-4 bg-terminal-dark rounded xl:rounded-lg border border-yellow-500/30 text-[10px] sm:text-xs xl:text-sm text-terminal-textMuted">
+            <p className="mb-1 xl:mb-2">
               <span className="text-yellow-400 font-medium">⚠️ Disclaimer:</span>{" "}
               This platform is not affiliated with, endorsed by, or associated with Shuffle.com.
             </p>
@@ -958,7 +984,7 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 text-[10px] sm:text-xs text-terminal-textMuted">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 xl:gap-6 text-[10px] sm:text-xs xl:text-sm text-terminal-textMuted">
             <div className="flex items-center gap-4">
               <span>SHFLPro Terminal v1.0</span>
               <span>•</span>

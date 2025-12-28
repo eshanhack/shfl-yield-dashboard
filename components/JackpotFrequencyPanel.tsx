@@ -149,105 +149,105 @@ export default function JackpotFrequencyPanel({
   const currentDrawProbability = 1 - Math.pow(1 - JACKPOT_PROBABILITY, currentTickets);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg xl:rounded-xl card-glow">
       {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-terminal-border">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-yellow-500/10 border border-yellow-500/20">
-            <Trophy className="w-4 h-4 text-yellow-400" />
+      <div className="p-3 sm:p-4 xl:p-6 border-b border-terminal-border">
+        <div className="flex items-center gap-2 xl:gap-3">
+          <div className="p-1.5 xl:p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
+            <Trophy className="w-4 h-4 xl:w-5 xl:h-5 text-yellow-400" />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
+            <h3 className="text-xs sm:text-sm xl:text-base font-medium text-terminal-text">
               Jackpot Frequency
             </h3>
-            <p className="text-[10px] sm:text-xs text-terminal-textMuted">
+            <p className="text-[10px] sm:text-xs xl:text-sm text-terminal-textMuted">
               Historical patterns & probability predictions
             </p>
           </div>
         </div>
       </div>
 
-      <div className="p-3 sm:p-4">
+      <div className="p-3 sm:p-4 xl:p-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 xl:gap-4 mb-4 sm:mb-6 xl:mb-8">
           {/* Total Jackpots */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">Jackpots Won</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl p-2.5 sm:p-3 xl:p-4">
+            <div className="flex items-center gap-1.5 xl:gap-2 mb-1.5 xl:mb-2">
+              <Trophy className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-yellow-400" />
+              <span className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textSecondary uppercase tracking-wider">Jackpots Won</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-yellow-400 tabular-nums">
+            <div className="text-lg sm:text-xl xl:text-2xl font-bold text-yellow-400 tabular-nums">
               {jackpotWins.length}
             </div>
-            <div className="text-[9px] sm:text-[10px] text-terminal-textMuted">
+            <div className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textMuted">
               in {historicalDraws.length} draws
             </div>
           </div>
 
           {/* Current Streak */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Clock className="w-3.5 h-3.5 text-orange-400" />
-              <span className="text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">Current Streak</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl p-2.5 sm:p-3 xl:p-4">
+            <div className="flex items-center gap-1.5 xl:gap-2 mb-1.5 xl:mb-2">
+              <Clock className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-orange-400" />
+              <span className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textSecondary uppercase tracking-wider">Current Streak</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-orange-400 tabular-nums">
+            <div className="text-lg sm:text-xl xl:text-2xl font-bold text-orange-400 tabular-nums">
               {currentStreak}
             </div>
-            <div className="text-[9px] sm:text-[10px] text-terminal-textMuted">
+            <div className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textMuted">
               draws since last
             </div>
           </div>
 
           {/* Average Gap */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Calendar className="w-3.5 h-3.5 text-terminal-accent" />
-              <span className="text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">Avg Gap</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl p-2.5 sm:p-3 xl:p-4">
+            <div className="flex items-center gap-1.5 xl:gap-2 mb-1.5 xl:mb-2">
+              <Calendar className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-terminal-accent" />
+              <span className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textSecondary uppercase tracking-wider">Avg Gap</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-terminal-accent tabular-nums">
+            <div className="text-lg sm:text-xl xl:text-2xl font-bold text-terminal-accent tabular-nums">
               {avgGap.toFixed(1)}
             </div>
-            <div className="text-[9px] sm:text-[10px] text-terminal-textMuted">
+            <div className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textMuted">
               draws between wins
             </div>
           </div>
 
           {/* Draw Probability */}
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Target className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider">This Draw</span>
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl p-2.5 sm:p-3 xl:p-4">
+            <div className="flex items-center gap-1.5 xl:gap-2 mb-1.5 xl:mb-2">
+              <Target className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-green-400" />
+              <span className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textSecondary uppercase tracking-wider">This Draw</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold text-green-400 tabular-nums">
+            <div className="text-lg sm:text-xl xl:text-2xl font-bold text-green-400 tabular-nums">
               {(currentDrawProbability * 100).toFixed(2)}%
             </div>
-            <div className="text-[9px] sm:text-[10px] text-terminal-textMuted">
+            <div className="text-[9px] sm:text-[10px] xl:text-xs text-terminal-textMuted">
               chance of jackpot
             </div>
           </div>
         </div>
 
         {/* Jackpot History Timeline */}
-        <div className="mb-4 sm:mb-6">
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">
+        <div className="mb-4 sm:mb-6 xl:mb-8">
+          <div className="flex items-center justify-between mb-2 sm:mb-3 xl:mb-4">
+            <div className="flex items-center gap-1.5 xl:gap-2">
+              <Sparkles className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-yellow-400" />
+              <span className="text-[10px] sm:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                 Jackpot Timeline
               </span>
             </div>
             {jackpotWins.length > 3 && (
               <button
                 onClick={() => setShowAllHistory(!showAllHistory)}
-                className="text-[10px] sm:text-xs text-terminal-accent hover:text-terminal-text transition-colors flex items-center gap-1"
+                className="text-[10px] sm:text-xs xl:text-sm text-terminal-accent hover:text-terminal-text transition-colors flex items-center gap-1"
               >
                 {showAllHistory ? "Show Less" : `Show All (${jackpotWins.length})`}
-                <ChevronRight className={cn("w-3 h-3 transition-transform", showAllHistory && "rotate-90")} />
+                <ChevronRight className={cn("w-3 h-3 xl:w-4 xl:h-4 transition-transform", showAllHistory && "rotate-90")} />
               </button>
             )}
           </div>
           
-          <div className="bg-terminal-dark border border-terminal-border rounded-lg p-3 sm:p-4 overflow-x-auto">
+          <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl p-3 sm:p-4 xl:p-5 overflow-x-auto xl:overflow-visible">
             {/* Visual timeline */}
             <div className="relative min-w-[400px]">
               {/* Draw markers - all draws */}
