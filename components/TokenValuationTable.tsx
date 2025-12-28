@@ -25,10 +25,10 @@ const TOKEN_INFO: TokenBase[] = [
 interface TokenWithCalculations extends TokenBase {
   marketCap: number;
   weeklyRevenue: number;
-  revenueAccrualPct: number;
   weeklyEarnings: number;
   annualRevenue: number;
   annualEarnings: number;
+  revenueAccrualPct: number;
   psRatio: number;
   peRatio: number;
   revenueSource: "live" | "estimated";
@@ -64,22 +64,23 @@ export default function TokenValuationTable() {
         const tokensWithCalcs: TokenWithCalculations[] = TOKEN_INFO.map(token => {
           const marketCap = marketCaps[token.symbol] || 100000000;
           const revData = revenues.find((r: any) => r.symbol === token.symbol);
+          
+          // Use pre-calculated values from API
           const weeklyRevenue = revData?.weeklyRevenue || 1000000;
+          const weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * 0.15;
+          const annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
+          const annualEarnings = revData?.annualEarnings || weeklyEarnings * 52;
           const revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
           const revenueSource = revData?.source || "estimated";
-          
-          const weeklyEarnings = weeklyRevenue * revenueAccrualPct;
-          const annualRevenue = weeklyRevenue * 52;
-          const annualEarnings = weeklyEarnings * 52;
           
           return {
             ...token,
             marketCap,
             weeklyRevenue,
-            revenueAccrualPct,
             weeklyEarnings,
             annualRevenue,
             annualEarnings,
+            revenueAccrualPct,
             psRatio: marketCap / annualRevenue,
             peRatio: marketCap / annualEarnings,
             revenueSource,
