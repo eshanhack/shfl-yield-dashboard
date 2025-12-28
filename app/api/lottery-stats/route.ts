@@ -387,6 +387,12 @@ export async function GET() {
       stats,
       source: lotteryData ? "shuffle.com GraphQL API (live)" : "fallback",
       lastUpdated: new Date().toISOString(),
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   } catch {
     return NextResponse.json({
@@ -406,6 +412,12 @@ export async function GET() {
         priorWeekSHFLStaked: 0,
       },
       lastUpdated: new Date().toISOString(),
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   }
 }

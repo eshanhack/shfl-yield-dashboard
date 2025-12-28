@@ -190,8 +190,9 @@ function generateMockPriceHistory(days: number): PriceHistoryPoint[] {
  */
 export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
   try {
-    const response = await fetch("/api/lottery-history", {
+    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
+      headers: { 'Cache-Control': 'no-cache' }
     });
     
     if (!response.ok) {
@@ -272,8 +273,12 @@ export async function fetchNGRStats(): Promise<NGRStats> {
  */
 export async function fetchLotteryStats(): Promise<LotteryStats> {
   try {
-    const response = await fetch("/api/lottery-stats", {
+    // Add timestamp to bust cache
+    const response = await fetch(`/api/lottery-stats?t=${Date.now()}`, {
       cache: "no-store", // Always fetch fresh data
+      headers: {
+        'Cache-Control': 'no-cache',
+      }
     });
     
     if (!response.ok) {

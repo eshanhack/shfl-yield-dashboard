@@ -76,16 +76,15 @@ export default function Dashboard() {
   // Toast hook
   const { addToast } = useToast();
   
-  // State
-  const [price, setPrice] = useState<SHFLPrice>({
-    usd: 0.15,
-    usd_24h_change: 0,
-    last_updated: new Date().toISOString(),
-  });
+  // Track if initial data has been loaded (prevents showing stale/default values)
+  const [hasInitialData, setHasInitialData] = useState(false);
+  
+  // State - use null/empty initial values to prevent showing incorrect data
+  const [price, setPrice] = useState<SHFLPrice | null>(null);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [historicalDraws, setHistoricalDraws] = useState<HistoricalDraw[]>([]);
-  const [lotteryStats, setLotteryStats] = useState<LotteryStats>(getMockLotteryStats());
-  const [ngrStats, setNgrStats] = useState<NGRStats>({ current4WeekAvg: 500_000, prior4WeekAvg: 500_000 });
+  const [lotteryStats, setLotteryStats] = useState<LotteryStats | null>(null);
+  const [ngrStats, setNgrStats] = useState<NGRStats | null>(null);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -135,6 +134,9 @@ export default function Dashboard() {
       } catch {
         // Liquidity fetch failed silently
       }
+      
+      // Mark that we have initial data
+      setHasInitialData(true);
       
       // Show success toast only on manual refresh
       if (showRefreshing) {
@@ -396,7 +398,8 @@ export default function Dashboard() {
     };
   }, [price.usd, lotteryStats, revenueStats.annualLotteryNGR]);
 
-  if (isLoading) {
+  // Show loader until we have initial data
+  if (isLoading || !hasInitialData || !price || !lotteryStats || !ngrStats) {
     return <Loader />;
   }
 
