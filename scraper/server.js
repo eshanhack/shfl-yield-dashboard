@@ -13,11 +13,12 @@ let cache = {
   data: null,
   timestamp: 0,
 };
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour (longer cache since scraping is expensive)
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // Scrape PUMP from fees.pump.fun
+// Strategy: Find "Token Purchases" table, extract "Amount (USD)" column, sum rows
 async function scrapePUMP(browser) {
-  console.log('Scraping PUMP from fees.pump.fun...');
+  console.log('=== Scraping PUMP from fees.pump.fun ===');
   let page;
   try {
     page = await browser.newPage();
@@ -26,125 +27,93 @@ async function scrapePUMP(browser) {
     
     await page.goto('https://fees.pump.fun/', { 
       waitUntil: 'networkidle0',
-      timeout: 45000 
+      timeout: 60000 
     });
     
-    // Wait for page to load
-    await new Promise(r => setTimeout(r, 3000));
+    // Wait for data to load
+    await new Promise(r => setTimeout(r, 5000));
     
-    // Try to click 30D filter button
-    try {
-      const filterClicked = await page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        const btn30d = buttons.find(b => 
-          b.innerText.includes('30') || 
-          b.innerText.toLowerCase().includes('month') ||
-          b.innerText.toLowerCase().includes('30d')
-        );
-        if (btn30d) {
-          btn30d.click();
-          return btn30d.innerText;
-        }
-        // Also try tabs or links
-        const tabs = Array.from(document.querySelectorAll('[role="tab"], a'));
-        const tab30d = tabs.find(t => t.innerText.includes('30'));
-        if (tab30d) {
-          tab30d.click();
-          return tab30d.innerText;
-        }
-        return null;
-      });
-      if (filterClicked) {
-        console.log('PUMP: Clicked filter:', filterClicked);
-        await new Promise(r => setTimeout(r, 3000));
-      }
-    } catch (e) {
-      console.log('PUMP: Could not click filter:', e.message);
-    }
-    
-    // Wait for table to load
-    await new Promise(r => setTimeout(r, 2000));
-    
-    // Try to find Token Purchases table and sum USD amounts
+    // Extract daily USD amounts from Token Purchases table
     const data = await page.evaluate(() => {
       const results = {
-        amounts: [],
-        foundTable: false,
+        dailyAmounts: [],
         debug: '',
       };
       
-      // Look for tables
+      // Find all tables
       const tables = document.querySelectorAll('table');
       results.debug = `Found ${tables.length} tables. `;
       
-      tables.forEach((table, i) => {
-        const headerText = table.innerText.toLowerCase();
-        if (headerText.includes('token') || headerText.includes('purchase') || headerText.includes('amount')) {
-          results.foundTable = true;
-          results.debug += `Table ${i} looks relevant. `;
-          
-          const rows = table.querySelectorAll('tbody tr');
-          rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            cells.forEach(cell => {
-              const text = cell.innerText || '';
-              // Match dollar amounts like $1,234.56 or 1234.56
-              const matches = text.match(/\$?([\d,]+\.?\d*)/g);
-              if (matches) {
-                matches.forEach(m => {
-                  const num = parseFloat(m.replace(/[$,]/g, ''));
-                  if (num > 100 && num < 100000000) {
-                    results.amounts.push(num);
-                  }
-                });
-              }
-            });
-          });
+      for (const table of tables) {
+        const headerRow = table.querySelector('thead tr, tr:first-child');
+        if (!headerRow) continue;
+        
+        const headers = Array.from(headerRow.querySelectorAll('th, td')).map(h => h.innerText.toLowerCase().trim());
+        results.debug += `Headers: ${headers.join(', ')}. `;
+        
+        // Find "amount" column index (looking for "Amount (USD)" or similar)
+        const amountIndex = headers.findIndex(h => h.includes('amount') && h.includes('usd'));
+        const altAmountIndex = headers.findIndex(h => h.includes('amount'));
+        const finalAmountIndex = amountIndex !== -1 ? amountIndex : altAmountIndex;
+        
+        if (finalAmountIndex === -1) continue;
+        
+        results.debug += `Amount column at index ${finalAmountIndex}. `;
+        
+        // Get all data rows
+        const rows = table.querySelectorAll('tbody tr');
+        results.debug += `Found ${rows.length} data rows. `;
+        
+        rows.forEach((row, i) => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length > finalAmountIndex) {
+            const amountText = cells[finalAmountIndex].innerText;
+            // Parse amount - remove $ and , then parse
+            const amount = parseFloat(amountText.replace(/[$,]/g, ''));
+            if (!isNaN(amount) && amount > 0) {
+              results.dailyAmounts.push(amount);
+            }
+          }
+        });
+        
+        // If we found amounts, break (we found the right table)
+        if (results.dailyAmounts.length > 0) {
+          results.debug += `Extracted ${results.dailyAmounts.length} daily amounts. `;
+          break;
         }
-      });
-      
-      // Also look for any prominent revenue/fee numbers on the page
-      const allText = document.body.innerText;
-      const bigNumbers = allText.match(/\$\s*([\d,]+(?:\.\d+)?)\s*[MmKk]?/g);
-      if (bigNumbers) {
-        results.debug += `Found big numbers: ${bigNumbers.slice(0, 5).join(', ')}`;
       }
       
       return results;
     });
     
-    console.log('PUMP scrape debug:', data.debug);
-    console.log('PUMP amounts found:', data.amounts.length);
+    console.log('PUMP debug:', data.debug);
+    console.log('PUMP daily amounts (first 10):', data.dailyAmounts.slice(0, 10));
     
     await page.close();
     
-    // Calculate 30-day revenue
-    // The page shows lifetime total (~$221M) but we need 30-day data (~$33M)
-    // User verified: 30-day token purchases = $33M
-    let monthlyRevenue = 33000000; // Default to verified 30-day value
+    // Calculate revenues
+    // Rows are already sorted latest to oldest
+    const weeklyRevenue = data.dailyAmounts.slice(0, 7).reduce((sum, a) => sum + a, 0);
+    const monthlyRevenue = data.dailyAmounts.slice(0, 30).reduce((sum, a) => sum + a, 0);
+    const annualRevenue = monthlyRevenue * 12;
     
-    // If we found amounts that look like 30-day data (not lifetime)
-    if (data.amounts.length >= 5) {
-      const total = data.amounts.reduce((sum, a) => sum + a, 0);
-      // Only use scraped total if it's in reasonable monthly range ($10M-$100M)
-      if (total > 10000000 && total < 100000000) {
-        monthlyRevenue = total;
-        console.log('PUMP using scraped 30-day total:', monthlyRevenue);
-      } else {
-        console.log('PUMP scraped total out of range, using verified value:', total);
-      }
+    console.log('PUMP calculated - weekly:', weeklyRevenue, 'monthly:', monthlyRevenue, 'annual:', annualRevenue);
+    
+    if (data.dailyAmounts.length >= 7 && weeklyRevenue > 100000) {
+      return {
+        symbol: 'PUMP',
+        weeklyRevenue,
+        annualRevenue,
+        weeklyEarnings: weeklyRevenue, // 100% to token
+        annualEarnings: annualRevenue,
+        revenueAccrualPct: 1.0,
+        source: 'live',
+        dataPoints: data.dailyAmounts.length,
+      };
     }
     
-    return {
-      symbol: 'PUMP',
-      weeklyRevenue: monthlyRevenue / 4.33,
-      annualRevenue: monthlyRevenue * 12,
-      weeklyEarnings: monthlyRevenue / 4.33,
-      annualEarnings: monthlyRevenue * 12,
-      revenueAccrualPct: 1.0,
-      source: data.amounts.length >= 5 ? 'live' : 'estimated',
-      debug: data.debug,
-    };
+    throw new Error('Not enough data extracted');
+    
   } catch (error) {
     console.error('PUMP scraping error:', error.message);
     if (page) await page.close().catch(() => {});
@@ -163,144 +132,151 @@ async function scrapePUMP(browser) {
   }
 }
 
-// Scrape RLB from rollbit.com/rlb/buy-and-burn
+// Scrape RLB from rollshare.io/buyback
+// Strategy: Click "Day" dropdown, select "Year (365d)", extract "365 Days Combined Revenue"
 async function scrapeRLB(browser) {
-  console.log('Scraping RLB from rollbit.com/rlb/buy-and-burn...');
+  console.log('=== Scraping RLB from rollshare.io/buyback ===');
   let page;
   try {
     page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     await page.setViewport({ width: 1920, height: 1080 });
     
-    await page.goto('https://rollbit.com/rlb/buy-and-burn', { 
+    await page.goto('https://rollshare.io/buyback', { 
       waitUntil: 'networkidle0',
-      timeout: 45000 
+      timeout: 60000 
     });
     
     // Wait for page to load
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 3000));
     
-    // Try to click 30d filter button
+    // Click the dropdown that says "Day" and select "Year (365d)"
     try {
-      const filterClicked = await page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        const btn30d = buttons.find(b => b.innerText.includes('30') || b.innerText.toLowerCase().includes('month'));
-        if (btn30d) {
-          btn30d.click();
-          return true;
+      await page.evaluate(() => {
+        // Find dropdown/select element
+        const selects = document.querySelectorAll('select');
+        for (const select of selects) {
+          const options = Array.from(select.options);
+          const yearOption = options.find(o => o.text.includes('365') || o.text.includes('Year'));
+          if (yearOption) {
+            select.value = yearOption.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            return true;
+          }
+        }
+        
+        // Try clicking a dropdown button
+        const buttons = document.querySelectorAll('button, [role="button"]');
+        for (const btn of buttons) {
+          if (btn.innerText.includes('Day') || btn.innerText.includes('1 Day')) {
+            btn.click();
+            return 'clicked dropdown';
+          }
         }
         return false;
       });
-      if (filterClicked) {
-        console.log('Clicked 30d filter');
-        await new Promise(r => setTimeout(r, 3000));
-      }
+      
+      await new Promise(r => setTimeout(r, 2000));
+      
+      // Try to select Year option if dropdown opened
+      await page.evaluate(() => {
+        const options = document.querySelectorAll('[role="option"], li, a');
+        for (const opt of options) {
+          if (opt.innerText.includes('365') || opt.innerText.includes('Year')) {
+            opt.click();
+            return true;
+          }
+        }
+        return false;
+      });
+      
+      await new Promise(r => setTimeout(r, 3000));
+      
     } catch (e) {
-      console.log('Could not click filter:', e.message);
+      console.log('RLB: Error with dropdown:', e.message);
     }
     
-    // Extract revenue numbers
+    // Extract the combined revenue number
     const data = await page.evaluate(() => {
-      const text = document.body.innerText;
       const results = {
-        casino: 0,
-        futures: 0,
-        sports: 0,
-        total: 0,
+        revenue: 0,
+        period: '',
         debug: '',
       };
       
-      // Helper to parse numbers with K/M suffix
-      const parseNum = (str) => {
-        if (!str) return 0;
-        let num = parseFloat(str.replace(/[$,]/g, ''));
-        if (str.toLowerCase().includes('k')) num *= 1000;
-        if (str.toLowerCase().includes('m')) num *= 1000000;
-        return num;
-      };
+      const bodyText = document.body.innerText;
       
-      // Look for revenue categories
-      const casinoMatch = text.match(/casino[:\s]*\$?([\d,\.]+\s*[KkMm]?)/i);
-      const futuresMatch = text.match(/(?:crypto\s*)?futures[:\s]*\$?([\d,\.]+\s*[KkMm]?)/i);
-      const sportsMatch = text.match(/sports(?:book)?[:\s]*\$?([\d,\.]+\s*[KkMm]?)/i);
-      const totalMatch = text.match(/total[:\s]*\$?([\d,\.]+\s*[KkMm]?)/i);
-      
-      if (casinoMatch) {
-        results.casino = parseNum(casinoMatch[1]);
-        results.debug += `Casino: ${casinoMatch[1]}. `;
-      }
-      if (futuresMatch) {
-        results.futures = parseNum(futuresMatch[1]);
-        results.debug += `Futures: ${futuresMatch[1]}. `;
-      }
-      if (sportsMatch) {
-        results.sports = parseNum(sportsMatch[1]);
-        results.debug += `Sports: ${sportsMatch[1]}. `;
-      }
-      if (totalMatch) {
-        results.total = parseNum(totalMatch[1]);
-        results.debug += `Total: ${totalMatch[1]}. `;
+      // Look for "X Day(s) Combined Revenue" followed by a dollar amount
+      const revenueMatch = bodyText.match(/(\d+)\s*Day\(?s?\)?\s*Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
+      if (revenueMatch) {
+        results.period = revenueMatch[1] + ' days';
+        results.revenue = parseFloat(revenueMatch[2].replace(/,/g, ''));
+        results.debug = `Found ${results.period} revenue: $${results.revenue}`;
       }
       
-      // If no categories found, look for any big dollar amounts
-      if (results.casino === 0 && results.futures === 0 && results.sports === 0) {
-        const dollarAmounts = text.match(/\$[\d,]+(?:\.\d+)?(?:\s*[MmKk])?/g);
-        if (dollarAmounts) {
-          results.debug += `Found amounts: ${dollarAmounts.slice(0, 5).join(', ')}`;
-        }
+      // Also try to find any large revenue number
+      const allAmounts = bodyText.match(/\$([\d,]+(?:\.\d+)?)/g);
+      if (allAmounts) {
+        results.debug += ` All amounts found: ${allAmounts.slice(0, 5).join(', ')}`;
       }
       
       return results;
     });
     
-    console.log('RLB scrape debug:', data.debug);
-    console.log('RLB data:', { casino: data.casino, futures: data.futures, sports: data.sports, total: data.total });
+    console.log('RLB debug:', data.debug);
+    console.log('RLB revenue:', data.revenue, 'period:', data.period);
     
     await page.close();
     
-    // Calculate monthly revenue
-    let monthlyRevenue = data.total || (data.casino + data.futures + data.sports);
-    
-    // If we got reasonable data, use it
-    if (monthlyRevenue < 1000000) {
-      monthlyRevenue = 19137445; // Fallback to user-verified value
-    }
-    
-    // Calculate earnings: 10% casino + 30% futures + 20% sports
-    let monthlyEarnings;
-    if (data.casino > 0 || data.futures > 0 || data.sports > 0) {
-      monthlyEarnings = (data.casino * 0.10) + (data.futures * 0.30) + (data.sports * 0.20);
+    // Calculate based on what period we got
+    let annualRevenue;
+    if (data.period.includes('365')) {
+      annualRevenue = data.revenue;
+    } else if (data.period.includes('30')) {
+      annualRevenue = data.revenue * 12;
+    } else if (data.period.includes('7')) {
+      annualRevenue = data.revenue * 52;
+    } else if (data.period.includes('1')) {
+      annualRevenue = data.revenue * 365;
     } else {
-      monthlyEarnings = monthlyRevenue * 0.17;
+      // Default: assume it's daily
+      annualRevenue = data.revenue * 365;
     }
     
-    const weeklyRevenue = monthlyRevenue / 4.33;
-    const weeklyEarnings = monthlyEarnings / 4.33;
+    const weeklyRevenue = annualRevenue / 52;
     
-    return {
-      symbol: 'RLB',
-      weeklyRevenue,
-      annualRevenue: monthlyRevenue * 12,
-      weeklyEarnings,
-      annualEarnings: monthlyEarnings * 12,
-      revenueAccrualPct: monthlyEarnings / monthlyRevenue,
-      source: (data.casino > 0 || data.total > 1000000) ? 'live' : 'estimated',
-      debug: data.debug,
-    };
+    // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
+    const earningsRate = 0.17;
+    
+    console.log('RLB calculated - annual revenue:', annualRevenue);
+    
+    if (data.revenue > 100000) {
+      return {
+        symbol: 'RLB',
+        weeklyRevenue,
+        annualRevenue,
+        weeklyEarnings: weeklyRevenue * earningsRate,
+        annualEarnings: annualRevenue * earningsRate,
+        revenueAccrualPct: earningsRate,
+        source: 'live',
+        period: data.period,
+      };
+    }
+    
+    throw new Error('Revenue too low or not found');
+    
   } catch (error) {
     console.error('RLB scraping error:', error.message);
     if (page) await page.close().catch(() => {});
     
     // Fallback: $19.14M/month from user verification
     const monthlyRevenue = 19137445;
-    const monthlyEarnings = monthlyRevenue * 0.17;
-    
     return {
       symbol: 'RLB',
       weeklyRevenue: monthlyRevenue / 4.33,
       annualRevenue: monthlyRevenue * 12,
-      weeklyEarnings: monthlyEarnings / 4.33,
-      annualEarnings: monthlyEarnings * 12,
+      weeklyEarnings: monthlyRevenue * 0.17 / 4.33,
+      annualEarnings: monthlyRevenue * 12 * 0.17,
       revenueAccrualPct: 0.17,
       source: 'estimated',
       error: error.message,
@@ -310,7 +286,7 @@ async function scrapeRLB(browser) {
 
 // HYPE - Use DeFiLlama API (most reliable)
 async function fetchHYPE() {
-  console.log('Fetching HYPE from DeFiLlama API...');
+  console.log('=== Fetching HYPE from DeFiLlama API ===');
   try {
     const response = await fetch('https://api.llama.fi/summary/fees/hyperliquid?dataType=dailyFees', {
       headers: { 'Accept': 'application/json' },
@@ -358,7 +334,9 @@ async function fetchHYPE() {
 
 // Main scraping function
 async function scrapeAll() {
-  console.log('=== Starting scrape at', new Date().toISOString(), '===');
+  console.log('\n========================================');
+  console.log('Starting scrape at', new Date().toISOString());
+  console.log('========================================\n');
   
   // Fetch HYPE first (no browser needed)
   const hype = await fetchHYPE();
@@ -416,7 +394,10 @@ async function scrapeAll() {
     };
   }
   
-  console.log('=== Scrape complete ===');
+  console.log('\n========================================');
+  console.log('Scrape complete');
+  console.log('========================================\n');
+  
   return { pump, rlb, hype };
 }
 
@@ -425,9 +406,9 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
     service: 'SHFL Revenue Scraper',
-    version: '3.0 (Puppeteer)',
+    version: '4.0',
     endpoints: ['/api/revenue', '/api/health'],
-    cacheStatus: cache.data ? 'populated' : 'empty',
+    cacheStatus: cache.data ? `populated (${Math.round((Date.now() - cache.timestamp) / 60000)}m ago)` : 'empty',
   });
 });
 
@@ -469,7 +450,7 @@ app.get('/api/revenue', async (req, res) => {
   } catch (error) {
     console.error('Scraping error:', error);
     
-    // Return cached data if available, otherwise fallbacks
+    // Return cached data if available
     if (cache.data) {
       return res.json({
         success: true,
@@ -488,6 +469,8 @@ app.get('/api/revenue', async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Revenue scraper v3.0 running on port ${PORT}`);
-  console.log(`Puppeteer enabled for PUMP and RLB scraping`);
+  console.log(`Revenue scraper v4.0 running on port ${PORT}`);
+  console.log(`- PUMP: fees.pump.fun (Token Purchases table)`);
+  console.log(`- RLB: rollshare.io/buyback (365d Combined Revenue)`);
+  console.log(`- HYPE: DeFiLlama API`);
 });
