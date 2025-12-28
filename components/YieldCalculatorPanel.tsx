@@ -19,6 +19,14 @@ import {
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 
+interface UpcomingDrawData {
+  drawNumber: number;
+  date: string;
+  ngrUSD: number;
+  totalTickets: number;
+  prizeSplit: string;
+}
+
 interface YieldCalculatorPanelProps {
   shflPrice: number;
   currentWeekNGR: number;
@@ -26,6 +34,7 @@ interface YieldCalculatorPanelProps {
   totalTickets: number;
   historicalDraws: HistoricalDraw[];
   prizeSplit: string;
+  upcomingDraw?: UpcomingDrawData;
 }
 
 export default function YieldCalculatorPanel({
@@ -35,6 +44,7 @@ export default function YieldCalculatorPanel({
   totalTickets,
   historicalDraws,
   prizeSplit,
+  upcomingDraw,
 }: YieldCalculatorPanelProps) {
   const [inputValue, setInputValue] = useState<string>("100000");
 
@@ -89,6 +99,23 @@ export default function YieldCalculatorPanel({
   const monthlyAPY = (monthlyYield / stakingValueUSD) * 100 * 12;
   const annualYield = avgWeekYield.annualExpectedUSD;
   const annualAPY = avgWeekYield.effectiveAPY;
+
+  // Calculate upcoming draw yield
+  const upcomingYield = useMemo(() => {
+    if (!upcomingDraw) return null;
+    const yieldResult = calculateYield(
+      shflAmount,
+      shflPrice,
+      upcomingDraw.ngrUSD,
+      upcomingDraw.totalTickets,
+      upcomingDraw.prizeSplit || prizeSplit
+    );
+    return {
+      draw: upcomingDraw,
+      weeklyUSD: yieldResult.weeklyExpectedUSD,
+      weeklyPercent: (yieldResult.weeklyExpectedUSD / stakingValueUSD) * 100,
+    };
+  }, [shflAmount, shflPrice, upcomingDraw, prizeSplit, stakingValueUSD]);
 
   // Historical yields for each draw (historicalDraws should already be filtered to completed draws)
   const historicalYields = useMemo(() => {
@@ -276,6 +303,41 @@ export default function YieldCalculatorPanel({
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Upcoming Draw Row */}
+                  {upcomingYield && (
+                    <tr className="border-b border-terminal-border/50 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10 border-l-2 border-l-cyan-500">
+                      <td className="px-2 sm:px-4 py-2">
+                        <span className="text-xs sm:text-sm font-medium text-cyan-100">
+                          #{upcomingYield.draw.drawNumber}
+                        </span>
+                        <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-300 uppercase font-bold">
+                          ⏳ Next
+                        </span>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm text-cyan-200">
+                        {new Date(upcomingYield.draw.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 text-right text-xs sm:text-sm text-cyan-200">
+                        <CurrencyAmount amount={upcomingYield.draw.ngrUSD} />
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <CurrencyAmount amount={upcomingYield.weeklyUSD} className="text-xs sm:text-sm font-medium text-cyan-100" />
+                        </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 text-right">
+                        <span className="text-xs sm:text-sm font-bold tabular-nums text-cyan-300">
+                          {upcomingYield.weeklyPercent.toFixed(2)}%
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  {/* Historical Draws */}
                   {historicalYields.map(({ draw, weeklyUSD, weeklyPercent }, index) => (
                     <tr 
                       key={draw.drawNumber}

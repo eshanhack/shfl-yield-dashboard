@@ -850,6 +850,13 @@ export default function Dashboard() {
               totalTickets={lotteryStats.totalTickets}
               historicalDraws={completedDraws}
               prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+              upcomingDraw={{
+                drawNumber: lotteryStats.drawNumber || 64,
+                date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
+                ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
+                totalTickets: lotteryStats.totalTickets,
+                prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+              }}
             />
 
             {/* Charts and Ticket EV Grid */}
