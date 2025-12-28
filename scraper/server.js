@@ -132,151 +132,86 @@ async function scrapePUMP(browser) {
   }
 }
 
-// Scrape RLB from rollshare.io/buyback
-// Strategy: Click "Day" dropdown, select "Year (365d)", extract "365 Days Combined Revenue"
+// Scrape RLB from rollshare.io/buyback?days=365
+// Strategy: Go directly to 365-day URL, extract "365 Days Combined Revenue"
 async function scrapeRLB(browser) {
-  console.log('=== Scraping RLB from rollshare.io/buyback ===');
+  console.log('=== Scraping RLB from rollshare.io/buyback?days=365 ===');
   let page;
   try {
     page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     await page.setViewport({ width: 1920, height: 1080 });
     
-    await page.goto('https://rollshare.io/buyback', { 
+    // Go directly to 365-day filtered URL
+    await page.goto('https://rollshare.io/buyback?days=365', { 
       waitUntil: 'networkidle0',
       timeout: 60000 
     });
     
-    // Wait for page to load
+    // Wait for data to load
     await new Promise(r => setTimeout(r, 3000));
     
-    // Click the dropdown that says "Day" and select "Year (365d)"
-    try {
-      await page.evaluate(() => {
-        // Find dropdown/select element
-        const selects = document.querySelectorAll('select');
-        for (const select of selects) {
-          const options = Array.from(select.options);
-          const yearOption = options.find(o => o.text.includes('365') || o.text.includes('Year'));
-          if (yearOption) {
-            select.value = yearOption.value;
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-            return true;
-          }
-        }
-        
-        // Try clicking a dropdown button
-        const buttons = document.querySelectorAll('button, [role="button"]');
-        for (const btn of buttons) {
-          if (btn.innerText.includes('Day') || btn.innerText.includes('1 Day')) {
-            btn.click();
-            return 'clicked dropdown';
-          }
-        }
-        return false;
-      });
-      
-      await new Promise(r => setTimeout(r, 2000));
-      
-      // Try to select Year option if dropdown opened
-      await page.evaluate(() => {
-        const options = document.querySelectorAll('[role="option"], li, a');
-        for (const opt of options) {
-          if (opt.innerText.includes('365') || opt.innerText.includes('Year')) {
-            opt.click();
-            return true;
-          }
-        }
-        return false;
-      });
-      
-      await new Promise(r => setTimeout(r, 3000));
-      
-    } catch (e) {
-      console.log('RLB: Error with dropdown:', e.message);
-    }
-    
-    // Extract the combined revenue number
+    // Extract "365 Days Combined Revenue" number
     const data = await page.evaluate(() => {
       const results = {
-        revenue: 0,
-        period: '',
+        annualRevenue: 0,
         debug: '',
       };
       
       const bodyText = document.body.innerText;
       
-      // Look for "X Day(s) Combined Revenue" followed by a dollar amount
-      const revenueMatch = bodyText.match(/(\d+)\s*Day\(?s?\)?\s*Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
+      // Look for "365 Days Combined Revenue" followed by dollar amount
+      const revenueMatch = bodyText.match(/365\s*Days?\s*Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
       if (revenueMatch) {
-        results.period = revenueMatch[1] + ' days';
-        results.revenue = parseFloat(revenueMatch[2].replace(/,/g, ''));
-        results.debug = `Found ${results.period} revenue: $${results.revenue}`;
-      }
-      
-      // Also try to find any large revenue number
-      const allAmounts = bodyText.match(/\$([\d,]+(?:\.\d+)?)/g);
-      if (allAmounts) {
-        results.debug += ` All amounts found: ${allAmounts.slice(0, 5).join(', ')}`;
+        results.annualRevenue = parseFloat(revenueMatch[1].replace(/,/g, ''));
+        results.debug = `Found 365 Days Combined Revenue: $${results.annualRevenue.toLocaleString()}`;
+      } else {
+        // Fallback: look for any large dollar amount after "Combined Revenue"
+        const altMatch = bodyText.match(/Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
+        if (altMatch) {
+          results.annualRevenue = parseFloat(altMatch[1].replace(/,/g, ''));
+          results.debug = `Found Combined Revenue: $${results.annualRevenue.toLocaleString()}`;
+        }
       }
       
       return results;
     });
     
     console.log('RLB debug:', data.debug);
-    console.log('RLB revenue:', data.revenue, 'period:', data.period);
+    console.log('RLB annual revenue:', data.annualRevenue);
     
     await page.close();
     
-    // Calculate based on what period we got
-    let annualRevenue;
-    if (data.period.includes('365')) {
-      annualRevenue = data.revenue;
-    } else if (data.period.includes('30')) {
-      annualRevenue = data.revenue * 12;
-    } else if (data.period.includes('7')) {
-      annualRevenue = data.revenue * 52;
-    } else if (data.period.includes('1')) {
-      annualRevenue = data.revenue * 365;
-    } else {
-      // Default: assume it's daily
-      annualRevenue = data.revenue * 365;
-    }
-    
-    const weeklyRevenue = annualRevenue / 52;
-    
-    // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
-    const earningsRate = 0.17;
-    
-    console.log('RLB calculated - annual revenue:', annualRevenue);
-    
-    if (data.revenue > 100000) {
+    if (data.annualRevenue > 1000000) {
+      const weeklyRevenue = data.annualRevenue / 52;
+      // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
+      const earningsRate = 0.17;
+      
       return {
         symbol: 'RLB',
         weeklyRevenue,
-        annualRevenue,
+        annualRevenue: data.annualRevenue,
         weeklyEarnings: weeklyRevenue * earningsRate,
-        annualEarnings: annualRevenue * earningsRate,
+        annualEarnings: data.annualRevenue * earningsRate,
         revenueAccrualPct: earningsRate,
         source: 'live',
-        period: data.period,
       };
     }
     
-    throw new Error('Revenue too low or not found');
+    throw new Error('Revenue not found or too low');
     
   } catch (error) {
     console.error('RLB scraping error:', error.message);
     if (page) await page.close().catch(() => {});
     
-    // Fallback: $19.14M/month from user verification
-    const monthlyRevenue = 19137445;
+    // Fallback based on rollshare.io data: $277M annual
+    const annualRevenue = 277489012;
     return {
       symbol: 'RLB',
-      weeklyRevenue: monthlyRevenue / 4.33,
-      annualRevenue: monthlyRevenue * 12,
-      weeklyEarnings: monthlyRevenue * 0.17 / 4.33,
-      annualEarnings: monthlyRevenue * 12 * 0.17,
+      weeklyRevenue: annualRevenue / 52,
+      annualRevenue,
+      weeklyEarnings: annualRevenue * 0.17 / 52,
+      annualEarnings: annualRevenue * 0.17,
       revenueAccrualPct: 0.17,
       source: 'estimated',
       error: error.message,
@@ -469,8 +404,8 @@ app.get('/api/revenue', async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Revenue scraper v4.0 running on port ${PORT}`);
-  console.log(`- PUMP: fees.pump.fun (Token Purchases table)`);
-  console.log(`- RLB: rollshare.io/buyback (365d Combined Revenue)`);
+  console.log(`Revenue scraper v4.1 running on port ${PORT}`);
+  console.log(`- PUMP: fees.pump.fun (Token Purchases table - sum daily amounts)`);
+  console.log(`- RLB: rollshare.io/buyback?days=365 (365 Days Combined Revenue)`);
   console.log(`- HYPE: DeFiLlama API`);
 });
