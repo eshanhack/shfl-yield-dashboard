@@ -22,6 +22,7 @@ const TOKENS: TokenData[] = [
   { id: "solana", symbol: "SOL", name: "Solana", color: "#00FFA3" },
   { id: "rollbit-coin", symbol: "RLB", name: "Rollbit", color: "#FFD700" },
   { id: "hyperliquid", symbol: "HYPE", name: "Hyperliquid", color: "#00D4AA" },
+  { id: "pump-fun", symbol: "PUMP", name: "Pump.fun", color: "#FF6B6B" },
 ];
 
 interface PricePoint {
