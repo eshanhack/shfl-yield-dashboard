@@ -681,99 +681,156 @@ export default function Dashboard() {
             {/* Revenue KPI Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {/* Annual GGR */}
-              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                    <Building2 className="w-4 h-4 text-terminal-accent" />
+              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                      <Building2 className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Annual GGR
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Annual GGR
-                  </span>
                 </div>
-                <div className="mb-1">
+                <div className="mb-2">
                   <CurrencyAmount 
                     amount={revenueStats.annualGGR} 
-                    className="text-2xl font-bold text-terminal-accent"
+                    className="text-3xl font-bold text-terminal-accent"
                   />
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  NGR: <CurrencyAmount amount={revenueStats.annualNGR} className="text-terminal-text" />
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Estimated Gross Gaming Revenue
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Annual NGR</span>
+                    <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Lottery NGR</span>
+                    <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive" />
+                  </div>
                 </div>
               </div>
 
               {/* Business Health */}
-              <div className={`bg-terminal-card border rounded-lg p-4 ${
+              <div className={`bg-terminal-card border rounded-lg p-4 card-glow h-full ${
                 overallBusinessHealth.status === "hot" ? "border-orange-500/30" :
                 overallBusinessHealth.status === "cold" ? "border-blue-500/30" :
                 "border-terminal-border"
               }`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`p-1.5 rounded border ${
-                    overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" :
-                    overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" :
-                    "bg-terminal-accent/10 border-terminal-accent/20"
-                  }`}>
-                    <Activity className={`w-4 h-4 ${overallBusinessHealth.color}`} />
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded border ${
+                      overallBusinessHealth.status === "hot" ? "bg-orange-500/20 border-orange-500/30" :
+                      overallBusinessHealth.status === "cold" ? "bg-blue-500/20 border-blue-500/30" :
+                      "bg-terminal-accent/10 border-terminal-accent/20"
+                    }`}>
+                      <Activity className={`w-4 h-4 ${overallBusinessHealth.color}`} />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Business Health
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Business Health
-                  </span>
                 </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-2xl">{overallBusinessHealth.emoji}</span>
-                  <span className={`text-xl font-bold ${overallBusinessHealth.color}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-3xl">{overallBusinessHealth.emoji}</span>
+                  <span className={`text-2xl font-bold ${overallBusinessHealth.color}`}>
                     {overallBusinessHealth.label}
                   </span>
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  Based on weekly, monthly & annual trends
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Based on weekly & monthly trends
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Weekly NGR Δ</span>
+                    <span className={`font-medium ${revenueStats.weeklyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
+                      {revenueStats.weeklyNGRGrowth >= 0 ? "+" : ""}{revenueStats.weeklyNGRGrowth.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Monthly NGR Δ</span>
+                    <span className={`font-medium ${revenueStats.monthlyNGRGrowth >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
+                      {revenueStats.monthlyNGRGrowth >= 0 ? "+" : ""}{revenueStats.monthlyNGRGrowth.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Business Growth */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                    <Rocket className="w-4 h-4 text-terminal-accent" />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                      <Rocket className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Business Growth
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Business Growth
-                  </span>
                 </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-2xl">{businessGrowth.emoji}</span>
-                  <span className={`text-xl font-bold ${businessGrowth.color}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-3xl">{businessGrowth.emoji}</span>
+                  <span className={`text-2xl font-bold ${businessGrowth.color}`}>
                     {businessGrowth.label}
                   </span>
                 </div>
-                <div className={`text-xs font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
-                  {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}% over last 4 weeks
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  4-week growth trend
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Growth Rate</span>
+                    <span className={`font-medium ${businessGrowth.change >= 0 ? "text-terminal-positive" : "text-terminal-negative"}`}>
+                      {businessGrowth.change >= 0 ? "+" : ""}{businessGrowth.change.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Avg Pool Size</span>
+                    <CurrencyAmount amount={revenueStats.avgPoolSize} className="font-medium text-terminal-text" />
+                  </div>
                 </div>
               </div>
 
               {/* USDC Awarded to Stakers */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                    <PiggyBank className="w-4 h-4 text-terminal-positive" />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                      <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      USDC Awarded (Lifetime)
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    USDC Awarded (Lifetime)
-                  </span>
                 </div>
-                <div className="mb-1 flex items-center gap-2">
+                <div className="mb-2 flex items-center gap-2">
                   <img 
                     src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" 
                     alt="USDC" 
-                    className="w-6 h-6"
+                    className="w-7 h-7"
                   />
                   <CurrencyAmount 
                     amount={revenueStats.totalLotteryNGRAdded} 
-                    className="text-2xl font-bold text-terminal-positive"
+                    className="text-3xl font-bold text-terminal-positive"
                   />
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  To SHFL stakers across {completedDraws.length} draws
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Distributed to stakers
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Total Draws</span>
+                    <span className="font-medium text-terminal-text">{completedDraws.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Avg per Draw</span>
+                    <CurrencyAmount 
+                      amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} 
+                      className="font-medium text-terminal-text" 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -801,93 +858,137 @@ export default function Dashboard() {
             {/* Token KPI Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {/* Market Cap */}
-              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                    <Coins className="w-4 h-4 text-terminal-accent" />
+              <div className="bg-terminal-card border border-terminal-accent/30 rounded-lg p-4 shadow-glow-sm h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                      <Coins className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Market Cap
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Market Cap
-                  </span>
                 </div>
-                <div className="mb-1">
-                  <span className="text-2xl font-bold text-terminal-accent tabular-nums">
+                <div className="mb-2">
+                  <span className="text-3xl font-bold text-terminal-accent tabular-nums">
                     ${formatNumber(Math.round(tokenMetrics.marketCap / 1000000))}M
                   </span>
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  FDV: <span className="text-terminal-text">${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M</span>
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Circulating market cap
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">FDV</span>
+                    <span className="font-medium text-terminal-text tabular-nums">
+                      ${formatNumber(Math.round(tokenMetrics.fdv / 1000000))}M
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Price</span>
+                    <span className="font-medium text-terminal-text tabular-nums">
+                      ${price.usd.toFixed(4)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Supply */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-                    <Wallet className="w-4 h-4 text-terminal-accent" />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+                      <Wallet className="w-4 h-4 text-terminal-accent" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Supply
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Supply
-                  </span>
                 </div>
-                <div className="mb-1">
-                  <span className="text-2xl font-bold text-terminal-text tabular-nums">
+                <div className="mb-2">
+                  <span className="text-3xl font-bold text-terminal-text tabular-nums">
                     {formatNumber(Math.round(tokenMetrics.circulatingSupply / 1000000))}M
                   </span>
-                  <span className="text-xs text-terminal-textMuted ml-1">circulating</span>
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  Total: <span className="text-terminal-text">{formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M</span>
-                  <span className="text-terminal-negative ml-2">
-                    ({formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M burned)
-                  </span>
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Circulating supply
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Total Supply</span>
+                    <span className="font-medium text-terminal-text tabular-nums">
+                      {formatNumber(Math.round(tokenMetrics.totalSupply / 1000000))}M
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Burned</span>
+                    <span className="font-medium text-terminal-negative tabular-nums">
+                      {formatNumber(Math.round(tokenMetrics.burnedTokens / 1000000))}M
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Value to Tokenholders */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
-                    <PiggyBank className="w-4 h-4 text-terminal-positive" />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
+                      <PiggyBank className="w-4 h-4 text-terminal-positive" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Annual Value to Holders
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Annual Value to Holders
-                  </span>
                 </div>
-                <div className="mb-1">
+                <div className="mb-2">
                   <CurrencyAmount 
                     amount={tokenMetrics.annualLotteryNGR} 
-                    className="text-2xl font-bold text-terminal-positive"
+                    className="text-3xl font-bold text-terminal-positive"
                   />
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  P/E Ratio: <span className={`font-medium ${
-                    tokenMetrics.peRatio < 10 ? "text-terminal-positive" : 
-                    tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"
-                  }`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  Lottery NGR distributed
+                </div>
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">P/E Ratio</span>
+                    <span className={`font-medium tabular-nums ${
+                      tokenMetrics.peRatio < 10 ? "text-terminal-positive" : 
+                      tokenMetrics.peRatio < 20 ? "text-yellow-400" : "text-terminal-negative"
+                    }`}>{tokenMetrics.peRatio.toFixed(1)}x</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Staked %</span>
+                    <span className="font-medium text-purple-400 tabular-nums">
+                      {tokenMetrics.stakedPercent.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Liquidity */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
-                    <Droplets className="w-4 h-4 text-blue-400" />
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
+                      <Droplets className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      Liquidity
+                    </span>
                   </div>
-                  <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Liquidity
-                  </span>
                 </div>
-                <div className="mb-1">
+                <div className="mb-2">
                   <CurrencyAmount 
                     amount={liquidityData.volume24h} 
-                    className="text-2xl font-bold text-blue-400"
+                    className="text-3xl font-bold text-blue-400"
                   />
                 </div>
                 <div className="text-xs text-terminal-textMuted mb-1">
-                  24h Trading Volume
+                  24h trading volume
                 </div>
-                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+                <div className="space-y-1 mt-2 pt-2 border-t border-terminal-border/50">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-terminal-textMuted">MC/Vol Ratio</span>
                     <span className="font-medium text-terminal-text tabular-nums">
