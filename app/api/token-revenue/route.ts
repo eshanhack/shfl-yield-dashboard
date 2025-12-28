@@ -134,14 +134,15 @@ function getEstimatedRevenues(): TokenRevenue[] {
     },
     {
       // RLB - Rollbit (Dec 2025)
-      // User verified: $19.14M last 30 days from rollbit.com/rlb/buy-and-burn
-      // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
+      // From rollshare.io: $277M annual (Casino $213.5M, Trading $34.6M, Sports $29.3M)
+      // Accrual: Casino 10%, Trading 30%, Sports 20%
+      // Earnings = ($213.5M × 10%) + ($34.6M × 30%) + ($29.3M × 20%) = $37.6M
       symbol: "RLB",
-      weeklyRevenue: 19137445 / 4.33,
-      annualRevenue: 19137445 * 12, // $229.6M
-      weeklyEarnings: 19137445 / 4.33 * 0.17,
-      annualEarnings: 19137445 * 12 * 0.17, // ~$39M
-      revenueAccrualPct: 0.17,
+      weeklyRevenue: 277489012 / 52,
+      annualRevenue: 277489012,
+      weeklyEarnings: 37605000 / 52,
+      annualEarnings: 37605000,
+      revenueAccrualPct: 0.1355, // 37.6M / 277.5M = 13.55%
       source: "estimated",
     },
   ];

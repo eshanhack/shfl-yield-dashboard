@@ -172,10 +172,13 @@ async function scrapeRLB(browser) {
     // Wait for data to load
     await new Promise(r => setTimeout(r, 3000));
     
-    // Extract "365 Days Combined Revenue" number
+    // Extract revenue numbers including breakdown by category
     const data = await page.evaluate(() => {
       const results = {
         annualRevenue: 0,
+        casinoRevenue: 0,
+        tradingRevenue: 0,
+        sportsRevenue: 0,
         debug: '',
       };
       
@@ -185,14 +188,29 @@ async function scrapeRLB(browser) {
       const revenueMatch = bodyText.match(/365\s*Days?\s*Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
       if (revenueMatch) {
         results.annualRevenue = parseFloat(revenueMatch[1].replace(/,/g, ''));
-        results.debug = `Found 365 Days Combined Revenue: $${results.annualRevenue.toLocaleString()}`;
-      } else {
-        // Fallback: look for any large dollar amount after "Combined Revenue"
-        const altMatch = bodyText.match(/Combined\s*Revenue[\s\S]*?\$([\d,]+(?:\.\d+)?)/i);
-        if (altMatch) {
-          results.annualRevenue = parseFloat(altMatch[1].replace(/,/g, ''));
-          results.debug = `Found Combined Revenue: $${results.annualRevenue.toLocaleString()}`;
-        }
+        results.debug = `Found 365 Days Combined Revenue: $${results.annualRevenue.toLocaleString()}. `;
+      }
+      
+      // Extract individual revenue categories for accurate accrual calculation
+      // Casino revenue - 10% accrual
+      const casinoMatch = bodyText.match(/Casino[:\s]*\(?\$?([\d,]+(?:\.\d+)?)/i);
+      if (casinoMatch) {
+        results.casinoRevenue = parseFloat(casinoMatch[1].replace(/,/g, ''));
+        results.debug += `Casino: $${results.casinoRevenue.toLocaleString()}. `;
+      }
+      
+      // Trading/Futures revenue - 30% accrual
+      const tradingMatch = bodyText.match(/Trading[:\s]*\(?\$?([\d,]+(?:\.\d+)?)/i);
+      if (tradingMatch) {
+        results.tradingRevenue = parseFloat(tradingMatch[1].replace(/,/g, ''));
+        results.debug += `Trading: $${results.tradingRevenue.toLocaleString()}. `;
+      }
+      
+      // Sports revenue - 20% accrual
+      const sportsMatch = bodyText.match(/Sportsbook[:\s]*\(?\$?([\d,]+(?:\.\d+)?)/i);
+      if (sportsMatch) {
+        results.sportsRevenue = parseFloat(sportsMatch[1].replace(/,/g, ''));
+        results.debug += `Sports: $${results.sportsRevenue.toLocaleString()}. `;
       }
       
       return results;
@@ -205,16 +223,27 @@ async function scrapeRLB(browser) {
     
     if (data.annualRevenue > 1000000) {
       const weeklyRevenue = data.annualRevenue / 52;
-      // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
-      const earningsRate = 0.17;
+      
+      // Calculate ACTUAL accrual based on revenue breakdown:
+      // Casino: 10%, Trading/Futures: 30%, Sportsbook: 20%
+      let annualEarnings = 0;
+      let accrualPct = 0.17; // Default weighted average
+      
+      if (data.casinoRevenue > 0 || data.tradingRevenue > 0 || data.sportsRevenue > 0) {
+        annualEarnings = (data.casinoRevenue * 0.10) + (data.tradingRevenue * 0.30) + (data.sportsRevenue * 0.20);
+        accrualPct = data.annualRevenue > 0 ? annualEarnings / data.annualRevenue : 0.17;
+        console.log('RLB calculated accrual:', (accrualPct * 100).toFixed(1) + '%', 'earnings:', annualEarnings);
+      } else {
+        annualEarnings = data.annualRevenue * accrualPct;
+      }
       
       return {
         symbol: 'RLB',
         weeklyRevenue,
         annualRevenue: data.annualRevenue,
-        weeklyEarnings: weeklyRevenue * earningsRate,
-        annualEarnings: data.annualRevenue * earningsRate,
-        revenueAccrualPct: earningsRate,
+        weeklyEarnings: annualEarnings / 52,
+        annualEarnings,
+        revenueAccrualPct: accrualPct,
         source: 'live',
       };
     }
@@ -225,15 +254,19 @@ async function scrapeRLB(browser) {
     console.error('RLB scraping error:', error.message);
     if (page) await page.close().catch(() => {});
     
-    // Fallback based on rollshare.io data: $277M annual
+    // Fallback based on rollshare.io Dec 2025 data: $277M annual
+    // Breakdown: Casino $213.5M (10%), Trading $34.6M (30%), Sports $29.3M (20%)
     const annualRevenue = 277489012;
+    const annualEarnings = (213546803 * 0.10) + (34618572 * 0.30) + (29323636 * 0.20);
+    const accrualPct = annualEarnings / annualRevenue;
+    
     return {
       symbol: 'RLB',
       weeklyRevenue: annualRevenue / 52,
       annualRevenue,
-      weeklyEarnings: annualRevenue * 0.17 / 52,
-      annualEarnings: annualRevenue * 0.17,
-      revenueAccrualPct: 0.17,
+      weeklyEarnings: annualEarnings / 52,
+      annualEarnings,
+      revenueAccrualPct: accrualPct,
       source: 'estimated',
       error: error.message,
     };

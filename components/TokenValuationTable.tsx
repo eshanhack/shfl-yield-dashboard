@@ -65,13 +65,15 @@ export default function TokenValuationTable() {
           const marketCap = marketCaps[token.symbol] || 100000000;
           const revData = revenues.find((r: any) => r.symbol === token.symbol);
           
-          // Use pre-calculated values from API
+          // Get values from API
           const weeklyRevenue = revData?.weeklyRevenue || 1000000;
-          const weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * 0.15;
           const annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
-          const annualEarnings = revData?.annualEarnings || weeklyEarnings * 52;
           const revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
           const revenueSource = revData?.source || "estimated";
+          
+          // ALWAYS calculate earnings as revenue × accrual %
+          const annualEarnings = annualRevenue * revenueAccrualPct;
+          const weeklyEarnings = weeklyRevenue * revenueAccrualPct;
           
           return {
             ...token,
