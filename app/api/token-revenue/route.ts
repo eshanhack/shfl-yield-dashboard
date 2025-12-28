@@ -112,7 +112,7 @@ async function scrapePUMPRevenue(browser: any): Promise<TokenRevenue> {
     });
     
     // Sum all amounts for estimate
-    const totalVisible = amounts.reduce((sum, a) => sum + a, 0);
+    const totalVisible = amounts.reduce((sum: number, a: number) => sum + a, 0);
     
     // Estimate weekly from visible data (rough approximation)
     const weeklyRevenue = totalVisible > 0 ? totalVisible : 3000000;
