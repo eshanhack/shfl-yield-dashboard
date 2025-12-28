@@ -56,15 +56,15 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
         const annualGGR = annualShuffleNGR * 2;
         const weeklyGGR = annualGGR / 52;
         
-        // Accrual % = Lottery NGR / GGR
-        const accrualPct = annualLotteryNGR / annualGGR;
+        // Earnings = 15% of Shuffle NGR (lottery allocation)
+        // Display accrual as 15% (the rate from NGR to lottery)
         
         console.log("SHFL revenue calc:", {
           draws: data.draws.length,
           annualLotteryNGR,
           annualShuffleNGR,
           annualGGR,
-          accrualPct: (accrualPct * 100).toFixed(2) + "%",
+          accrualPct: "15% (of NGR)",
         });
         
         return {
@@ -72,8 +72,8 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
           weeklyRevenue: weeklyGGR,
           annualRevenue: annualGGR,  // GGR as revenue
           weeklyEarnings: avgWeeklyLotteryNGR,
-          annualEarnings: annualLotteryNGR,  // Lottery NGR as earnings
-          revenueAccrualPct: accrualPct,  // ~7.5% (lottery is 15% of NGR, NGR is 50% of GGR)
+          annualEarnings: annualLotteryNGR,  // 15% of NGR
+          revenueAccrualPct: 0.15,  // Show 15% (lottery allocation rate from NGR)
           source: "live",
         };
       }

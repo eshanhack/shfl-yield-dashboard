@@ -65,15 +65,16 @@ export default function TokenValuationTable() {
           const marketCap = marketCaps[token.symbol] || 100000000;
           const revData = revenues.find((r: any) => r.symbol === token.symbol);
           
-          // Get values from API
+          // Get values from API (use pre-calculated earnings for accuracy)
           const weeklyRevenue = revData?.weeklyRevenue || 1000000;
           const annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
           const revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
           const revenueSource = revData?.source || "estimated";
           
-          // ALWAYS calculate earnings as revenue × accrual %
-          const annualEarnings = annualRevenue * revenueAccrualPct;
-          const weeklyEarnings = weeklyRevenue * revenueAccrualPct;
+          // Use API's pre-calculated earnings (more accurate for tokens like SHFL
+          // where earnings = 15% of NGR, not 15% of GGR)
+          const annualEarnings = revData?.annualEarnings || annualRevenue * revenueAccrualPct;
+          const weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * revenueAccrualPct;
           
           return {
             ...token,
