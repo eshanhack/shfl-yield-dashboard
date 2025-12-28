@@ -12,8 +12,8 @@ import {
   Rocket,
   Coins,
   PiggyBank,
-  BarChart3,
   Wallet,
+  Droplets,
 } from "lucide-react";
 
 import Header from "./Header";
@@ -86,6 +86,10 @@ export default function Dashboard() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeSection, setActiveSection] = useState<DashboardSection>("lottery");
+  const [liquidityData, setLiquidityData] = useState<{ volume24h: number; marketCapToVolume: number }>({ 
+    volume24h: 0, 
+    marketCapToVolume: 0 
+  });
 
   // Fetch initial data
   const loadData = async (showRefreshing = false) => {
@@ -113,6 +117,19 @@ export default function Dashboard() {
       setLotteryStats(stats);
       setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
+      
+      // Fetch liquidity data
+      try {
+        const liquidityRes = await fetch("/api/market-caps");
+        if (liquidityRes.ok) {
+          const liquidityJson = await liquidityRes.json();
+          if (liquidityJson.shflLiquidity) {
+            setLiquidityData(liquidityJson.shflLiquidity);
+          }
+        }
+      } catch {
+        // Liquidity fetch failed
+      }
     } catch {
       // Error loading data - will use fallback values
     } finally {
@@ -714,7 +731,7 @@ export default function Dashboard() {
               </div>
 
               {/* Business Growth */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
                     <Rocket className="w-4 h-4 text-terminal-accent" />
@@ -735,7 +752,7 @@ export default function Dashboard() {
               </div>
 
               {/* USDC Awarded to Stakers */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
                     <PiggyBank className="w-4 h-4 text-terminal-positive" />
@@ -804,7 +821,7 @@ export default function Dashboard() {
               </div>
 
               {/* Supply */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
                     <Wallet className="w-4 h-4 text-terminal-accent" />
@@ -828,7 +845,7 @@ export default function Dashboard() {
               </div>
 
               {/* Value to Tokenholders */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1.5 rounded bg-terminal-positive/10 border border-terminal-positive/20">
                     <PiggyBank className="w-4 h-4 text-terminal-positive" />
@@ -851,28 +868,45 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Staking Stats */}
-              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4">
+              {/* Liquidity */}
+              <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded bg-purple-500/10 border border-purple-500/20">
-                    <BarChart3 className="w-4 h-4 text-purple-400" />
+                  <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20">
+                    <Droplets className="w-4 h-4 text-blue-400" />
                   </div>
                   <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
-                    Staked Supply
+                    Liquidity
                   </span>
                 </div>
                 <div className="mb-1">
-                  <span className="text-2xl font-bold text-purple-400 tabular-nums">
-                    {tokenMetrics.stakedPercent.toFixed(1)}%
-                  </span>
+                  <CurrencyAmount 
+                    amount={liquidityData.volume24h} 
+                    className="text-2xl font-bold text-blue-400"
+                  />
                 </div>
-                <div className="text-xs text-terminal-textMuted">
-                  {formatNumber(Math.round(tokenMetrics.stakedSupply / 1000000))}M SHFL staked
+                <div className="text-xs text-terminal-textMuted mb-1">
+                  24h Trading Volume
+                </div>
+                <div className="space-y-1 pt-2 border-t border-terminal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">MC/Vol Ratio</span>
+                    <span className="font-medium text-terminal-text tabular-nums">
+                      {liquidityData.marketCapToVolume > 0 ? `${liquidityData.marketCapToVolume.toFixed(1)}x` : "-"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-terminal-textMuted">Daily Turnover</span>
+                    <span className="font-medium text-terminal-text tabular-nums">
+                      {tokenMetrics.marketCap > 0 && liquidityData.volume24h > 0 
+                        ? `${((liquidityData.volume24h / tokenMetrics.marketCap) * 100).toFixed(2)}%` 
+                        : "-"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Token Price Bar */}
+            {/* Token Price Bar - Simplified */}
             <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 mb-6">
               <div className="flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-3">
@@ -894,16 +928,6 @@ export default function Dashboard() {
                   <TrendingUp className={`w-4 h-4 ${price.usd_24h_change < 0 ? "rotate-180" : ""}`} />
                   <span className="font-medium">{price.usd_24h_change >= 0 ? "+" : ""}{price.usd_24h_change.toFixed(2)}%</span>
                   <span className="text-xs opacity-70">24h</span>
-                </div>
-                <div className="hidden md:flex items-center gap-6 ml-auto text-sm">
-                  <div>
-                    <span className="text-terminal-textMuted">24h Volume: </span>
-                    <span className="font-medium text-terminal-text">-</span>
-                  </div>
-                  <div>
-                    <span className="text-terminal-textMuted">ATH: </span>
-                    <span className="font-medium text-terminal-text">$0.85</span>
-                  </div>
                 </div>
               </div>
             </div>
