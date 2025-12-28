@@ -104,43 +104,43 @@ async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
   }
 }
 
-// Estimated data for other tokens based on public information (Dec 2025)
+// Estimated data for other tokens based on verified Dec 2025 data
 function getEstimatedRevenues(): TokenRevenue[] {
+  // User verified: PUMP $33M/month, RLB $19.14M/month
   return [
     {
       // HYPE - Hyperliquid (Dec 2025)
-      // Based on ~$20M/week from DeFi revenue reports (Oct 2025: $21.15M/week)
-      // 100% accrues to token through buybacks/assistance fund
+      // ~$20M/week from DeFi revenue reports
+      // 54% accrues to token through buybacks/assistance fund
       symbol: "HYPE",
       weeklyRevenue: 20000000,
       annualRevenue: 1040000000,
-      weeklyEarnings: 20000000,
-      annualEarnings: 1040000000,
-      revenueAccrualPct: 1.0,
+      weeklyEarnings: 20000000 * 0.54,
+      annualEarnings: 1040000000 * 0.54,
+      revenueAccrualPct: 0.54,
       source: "estimated",
     },
     {
       // PUMP - Pump.fun (Dec 2025)
-      // Volatile: ranged from $1.7M to $13.5M/week in 2025
-      // Using ~$8M/week average for late 2025
+      // User verified: $33M last 30 days from fees.pump.fun
       // 100% accrues to token through buybacks
       symbol: "PUMP",
-      weeklyRevenue: 8000000,
-      annualRevenue: 416000000,
-      weeklyEarnings: 8000000,
-      annualEarnings: 416000000,
+      weeklyRevenue: 33000000 / 4.33,
+      annualRevenue: 33000000 * 12, // $396M
+      weeklyEarnings: 33000000 / 4.33,
+      annualEarnings: 33000000 * 12,
       revenueAccrualPct: 1.0,
       source: "estimated",
     },
     {
       // RLB - Rollbit (Dec 2025)
-      // Based on ~$6M/month total revenue
+      // User verified: $19.14M last 30 days from rollbit.com/rlb/buy-and-burn
       // Earnings: 10% casino + 30% futures + 20% sports ≈ 17% average
       symbol: "RLB",
-      weeklyRevenue: 1500000,
-      annualRevenue: 78000000,
-      weeklyEarnings: 255000,
-      annualEarnings: 13260000,
+      weeklyRevenue: 19137445 / 4.33,
+      annualRevenue: 19137445 * 12, // $229.6M
+      weeklyEarnings: 19137445 / 4.33 * 0.17,
+      annualEarnings: 19137445 * 12 * 0.17, // ~$39M
       revenueAccrualPct: 0.17,
       source: "estimated",
     },
