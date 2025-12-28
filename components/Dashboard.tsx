@@ -32,6 +32,8 @@ import TokenReturnsChart from "./TokenReturnsChart";
 import TokenValuationTable from "./TokenValuationTable";
 import RevenueAnalysis from "./RevenueAnalysis";
 import Loader from "./Loader";
+import LoadingBar from "./LoadingBar";
+import { useToast } from "@/contexts/ToastContext";
 
 import {
   fetchSHFLPrice,
@@ -71,6 +73,9 @@ function formatTimeAgo(weeksAgo: number): string {
 }
 
 export default function Dashboard() {
+  // Toast hook
+  const { addToast } = useToast();
+  
   // State
   const [price, setPrice] = useState<SHFLPrice>({
     usd: 0.15,
@@ -128,10 +133,15 @@ export default function Dashboard() {
           }
         }
       } catch {
-        // Liquidity fetch failed
+        // Liquidity fetch failed silently
+      }
+      
+      // Show success toast only on manual refresh
+      if (showRefreshing) {
+        addToast("Data refreshed successfully", "success", 2500);
       }
     } catch {
-      // Error loading data - will use fallback values
+      addToast("Failed to load some data. Using cached values.", "warning", 4000);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -392,6 +402,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-terminal-black terminal-grid">
+      {/* Loading Progress Bar */}
+      <LoadingBar isLoading={isRefreshing} />
+      
       {/* Header */}
       <Header
         price={price.usd}
@@ -400,7 +413,7 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main className="max-w-[1800px] mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-[1800px] mx-auto px-4 py-6">
         {/* Section Selector */}
         <SectionSelector 
           activeSection={activeSection} 
@@ -414,9 +427,10 @@ export default function Dashboard() {
             <button
               onClick={() => loadData(true)}
               disabled={isRefreshing}
-              className="p-1 hover:text-terminal-accent transition-colors disabled:opacity-50"
+              className="p-2 hover:text-terminal-accent hover:bg-terminal-accent/10 rounded-lg transition-all disabled:opacity-50 touch-target"
+              aria-label="Refresh data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>

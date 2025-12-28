@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { HistoricalDraw, formatUSD, formatNumber, calculateYieldPer1KSHFL } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
-import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock, Inbox } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
+import EmptyState from "./EmptyState";
 
 interface UpcomingDraw {
   drawNumber: number;
@@ -145,9 +146,9 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <table className="w-full sticky-header">
+            <thead className="bg-terminal-card">
               <tr className="border-b border-terminal-border">
                 <th className="px-4 py-3 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                   <div className="flex items-center gap-1.5">
@@ -190,6 +191,19 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
               </tr>
             </thead>
             <tbody>
+              {/* Empty State */}
+              {draws.length === 0 && !upcomingDraw && (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      icon={<Inbox className="w-8 h-8 text-terminal-accent" />}
+                      title="No lottery data available"
+                      description="Lottery history will appear here once draws are completed. Check back after the next weekly draw."
+                    />
+                  </td>
+                </tr>
+              )}
+              
               {/* Upcoming Draw Row - Only show on first page */}
               {currentPage === 0 && upcomingDraw && (
                 <tr

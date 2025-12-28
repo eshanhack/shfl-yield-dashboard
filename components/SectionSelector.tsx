@@ -33,14 +33,23 @@ const sections: { id: DashboardSection; label: string; icon: React.ReactNode; de
 
 export default function SectionSelector({ activeSection, onSectionChange }: SectionSelectorProps) {
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-1.5 mb-6">
+    <nav 
+      className="bg-terminal-card border border-terminal-border rounded-lg p-1.5 mb-6"
+      role="tablist"
+      aria-label="Dashboard sections"
+    >
       <div className="flex gap-1">
         {sections.map((section) => (
           <button
             key={section.id}
             onClick={() => onSectionChange(section.id)}
+            role="tab"
+            aria-selected={activeSection === section.id}
+            aria-controls={`${section.id}-panel`}
+            tabIndex={activeSection === section.id ? 0 : -1}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all duration-200",
+              "min-h-[48px] focus-visible:ring-2 focus-visible:ring-terminal-accent focus-visible:ring-offset-2 focus-visible:ring-offset-terminal-card",
               activeSection === section.id
                 ? "bg-terminal-accent/20 border border-terminal-accent/50 text-terminal-accent shadow-glow-sm"
                 : "hover:bg-terminal-border/50 text-terminal-textSecondary hover:text-terminal-text border border-transparent"
@@ -69,7 +78,7 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
           </button>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }
 

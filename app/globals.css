@@ -277,3 +277,382 @@ body {
   transition: all 0.3s ease-out;
 }
 
+/* ==================== UX ENHANCEMENTS ==================== */
+
+/* Toast Animations */
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-toast-enter {
+  animation: toastEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Focus States - Accessibility */
+*:focus-visible {
+  outline: 2px solid var(--terminal-accent);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--terminal-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to content link for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--terminal-accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* Touch Targets - Minimum 44x44px */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Enhanced Button Interactions */
+button,
+[role="button"] {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+button:not(:disabled):hover,
+[role="button"]:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active,
+[role="button"]:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+button:disabled,
+[role="button"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Loading Button State */
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Micro-interactions */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Table Sticky Header */
+.sticky-header thead {
+  position: sticky;
+  top: 0;
+  background: var(--terminal-card);
+  z-index: 10;
+}
+
+.sticky-header thead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--terminal-border);
+}
+
+/* Responsive Text - Prevent overflow */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile input zoom prevention */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Modal/Overlay animations */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-overlay {
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dropdown/Menu animations */
+@keyframes dropdownOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-enter {
+  animation: dropdownOpen 0.2s ease-out forwards;
+}
+
+/* Number counting animation */
+@keyframes countUp {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.count-animation {
+  animation: countUp 0.3s ease-out;
+}
+
+/* Pulse for attention */
+@keyframes attention-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(138, 43, 226, 0);
+  }
+}
+
+.pulse-attention {
+  animation: attention-pulse 2s infinite;
+}
+
+/* Selection color */
+::selection {
+  background: var(--terminal-accent);
+  color: white;
+}
+
+/* Better link underlines */
+a {
+  text-decoration-skip-ink: auto;
+}
+
+/* Improved placeholder contrast */
+::placeholder {
+  color: var(--terminal-text-muted);
+  opacity: 0.7;
+}
+
+/* Row hover effects */
+tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Card hover animation */
+.card-interactive {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--terminal-accent);
+}
+
+/* Skeleton pulse animation */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: skeleton-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Progress bar glow */
+.progress-glow {
+  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+}
+
+/* Icon button base style */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.icon-btn:hover {
+  background: var(--terminal-accent);
+  background-opacity: 0.1;
+  border-color: var(--terminal-accent);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Tab transitions */
+.tab-content {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+/* Error shake animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.error-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Success checkmark animation */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 50;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.checkmark-animate {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: checkmark 0.5s ease-out forwards;
+}
+
+/* Ripple effect for buttons */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.ripple:active::after {
+  width: 200%;
+  height: 200%;
+}
+
