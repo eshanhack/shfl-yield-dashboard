@@ -143,26 +143,34 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
     <div
       ref={navRef}
       className={cn(
-        // Sticky positioning with -1px overlap to prevent white line gap
-        "sticky -top-px z-40 -mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12 mb-4 sm:mb-5",
-        // GPU acceleration to prevent repaint lag during fast scrolling
-        "will-change-transform transform-gpu",
-        // Smooth transitions
-        "transition-all duration-200",
-        isSticky 
-          ? "bg-terminal-black backdrop-blur-md border-b border-terminal-border/50 py-2 shadow-lg" 
-          : "bg-terminal-black py-1"
+        // Sticky positioning - use relative wrapper approach
+        "sticky top-0 z-40 mb-4 sm:mb-5",
+        // GPU acceleration
+        "will-change-transform transform-gpu"
       )}
       style={{
-        // Force GPU layer and prevent 3D rendering jitter
         backfaceVisibility: "hidden",
         WebkitBackfaceVisibility: "hidden",
-        perspective: 1000,
-        // Prevent browser scroll anchor adjustments on high-refresh displays
-        overflowAnchor: "none",
       }}
     >
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+      {/* Inner container with negative margins for full-width background */}
+      <div
+        className={cn(
+          "-mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12",
+          "transition-all duration-200",
+          // Always use solid black background to match page - no gap possible
+          "bg-terminal-black",
+          isSticky 
+            ? "border-b border-terminal-border/50 py-2 shadow-lg" 
+            : "py-1"
+        )}
+        style={{
+          // Extend background 2px below to cover any sub-pixel gaps
+          paddingBottom: isSticky ? "calc(0.5rem + 2px)" : "calc(0.25rem + 2px)",
+          marginBottom: "-2px",
+        }}
+      >
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
         <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
           Jump to:
         </span>
@@ -184,6 +192,7 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
             </button>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

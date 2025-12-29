@@ -147,8 +147,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
           </div>
         </div>
 
-        {/* Table with horizontal scroll on mobile */}
-        <div className="overflow-x-auto touch-scroll max-h-[500px] sm:max-h-[600px] overflow-y-auto">
+        {/* Table with horizontal scroll on mobile - removed max-height to prevent scroll trap */}
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] sticky-header">
             <thead className="bg-terminal-card">
               <tr className="border-b border-terminal-border">
