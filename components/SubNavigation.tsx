@@ -37,7 +37,6 @@ interface SubNavigationProps {
 
 export default function SubNavigation({ activeSection }: SubNavigationProps) {
   const [activeId, setActiveId] = useState<string>("");
-  const [isSticky, setIsSticky] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   
@@ -111,18 +110,6 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
     };
   }, [activeSection, sections]);
 
-  // Track sticky state
-  useEffect(() => {
-    const handleScroll = () => {
-      if (navRef.current) {
-        const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= 0);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -142,27 +129,7 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   return (
     <div
       ref={navRef}
-      className={cn(
-        // Sticky positioning with anti-flicker fix
-        "sticky top-0 z-40 mb-4 sm:mb-5",
-        // Full-width background with negative margins
-        "-mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12",
-        // GPU acceleration for smooth scrolling
-        "will-change-transform transform-gpu",
-        // Anti-flicker: pseudo-element covers gaps below
-        "sticky-nav-fix",
-        // Always solid black background
-        "bg-[#000000]",
-        isSticky 
-          ? "border-b border-terminal-border/50 py-2 shadow-lg" 
-          : "py-1"
-      )}
-      style={{
-        backfaceVisibility: "hidden",
-        WebkitBackfaceVisibility: "hidden",
-        // Ensure no transparency
-        backgroundColor: "#000000",
-      }}
+      className="py-1"
     >
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
         <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
