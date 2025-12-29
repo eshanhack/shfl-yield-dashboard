@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import Header from "./Header";
 import SectionSelector, { DashboardSection } from "./SectionSelector";
 import SubNavigation from "./SubNavigation";
+import AnimatedTabContent from "./AnimatedTabContent";
 import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
 import JackpotFrequencyPanel from "./JackpotFrequencyPanel";
@@ -994,7 +995,8 @@ export default function Dashboard() {
 
         {/* ==================== LOTTERY SECTION ==================== */}
         {activeSection === "lottery" && (
-          <div className="section-content">
+          <AnimatedTabContent tabKey="lottery">
+            <div className="section-content">
 
             {/* Yield Calculator Panel */}
             <section id="yield-calculator">
@@ -1071,12 +1073,14 @@ export default function Dashboard() {
                 }}
               />
             </section>
-          </div>
+            </div>
+          </AnimatedTabContent>
         )}
 
         {/* ==================== REVENUE SECTION ==================== */}
         {activeSection === "revenue" && (
-          <div className="section-content">
+          <AnimatedTabContent tabKey="revenue">
+            <div className="section-content">
             {/* Revenue Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <section id="shuffle-revenue">
@@ -1098,12 +1102,14 @@ export default function Dashboard() {
             <section id="revenue-chart">
               <ShuffleRevenueChart historicalDraws={completedDraws} />
             </section>
-          </div>
+            </div>
+          </AnimatedTabContent>
         )}
 
         {/* ==================== TOKEN SECTION ==================== */}
         {activeSection === "token" && (
-          <div className="section-content">
+          <AnimatedTabContent tabKey="token">
+            <div className="section-content">
             {/* Token Comparison Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <section id="price-returns">
@@ -1113,7 +1119,8 @@ export default function Dashboard() {
                 <TokenValuationTable />
               </section>
             </div>
-          </div>
+            </div>
+          </AnimatedTabContent>
         )}
 
         {/* Disclaimer & Footer */}

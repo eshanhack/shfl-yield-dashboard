@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DashboardSection } from "./SectionSelector";
 
@@ -137,24 +138,38 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
         </span>
         <div className="flex items-center gap-1">
           {sections.map((section) => (
-            <button
+            <motion.button
               key={section.id}
               onClick={() => scrollToSection(section.id)}
+              // Press feedback - subtle scale on tap
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.1 }}
               className={cn(
-                "px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all whitespace-nowrap",
-                "hover:bg-terminal-accent/10 hover:text-terminal-accent",
+                "relative px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap",
+                "hover:bg-terminal-accent/10 hover:text-terminal-accent transition-colors duration-150",
                 activeId === section.id
-                  ? "bg-terminal-accent/20 text-terminal-accent border border-terminal-accent/30"
-                  : "text-terminal-textSecondary border border-transparent"
+                  ? "text-terminal-accent"
+                  : "text-terminal-textSecondary"
               )}
             >
-              <span className="sm:hidden">{section.shortLabel || section.label}</span>
-              <span className="hidden sm:inline">{section.label}</span>
-            </button>
+              {/* Animated indicator */}
+              {activeId === section.id && (
+                <motion.div
+                  layoutId="subnav-indicator"
+                  className="absolute inset-0 bg-terminal-accent/20 border border-terminal-accent/30 rounded-md"
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 35,
+                  }}
+                />
+              )}
+              <span className="relative z-10 sm:hidden">{section.shortLabel || section.label}</span>
+              <span className="relative z-10 hidden sm:inline">{section.label}</span>
+            </motion.button>
           ))}
         </div>
       </div>
     </div>
   );
 }
-

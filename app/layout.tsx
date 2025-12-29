@@ -30,8 +30,37 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preload critical font */}
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap"
+          as="style"
+        />
+        
+        {/* Preload critical API endpoints for faster initial load */}
+        <link
+          rel="preconnect"
+          href="https://api.coingecko.com"
+          crossOrigin="anonymous"
+        />
+        
         <link rel="icon" href="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png" />
         <meta name="color-scheme" content="dark" />
+        
+        {/* DNS prefetch for external resources */}
+        <link rel="dns-prefetch" href="https://shfl.shuffle.com" />
+        <link rel="dns-prefetch" href="https://api.coingecko.com" />
+        <link rel="dns-prefetch" href="https://cryptologos.cc" />
       </head>
       <body className="min-h-screen bg-terminal-black text-terminal-text font-mono antialiased">
         {/* Skip to main content link for accessibility */}
@@ -47,4 +76,3 @@ export default function RootLayout({
     </html>
   );
 }
-

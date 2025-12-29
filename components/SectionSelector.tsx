@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Trophy, DollarSign, Coins } from "lucide-react";
 
@@ -41,9 +42,9 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
       role="tablist"
       aria-label="Dashboard sections"
     >
-      <div className="flex gap-0.5 sm:gap-1 lg:gap-1.5">
+      <div className="flex gap-0.5 sm:gap-1 lg:gap-1.5 relative">
         {sections.map((section) => (
-          <button
+          <motion.button
             key={section.id}
             onClick={() => {
               if (activeSection !== section.id) {
@@ -55,16 +56,33 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
             aria-selected={activeSection === section.id}
             aria-controls={`${section.id}-panel`}
             tabIndex={activeSection === section.id ? 0 : -1}
+            // Press feedback - subtle scale on tap
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.1 }}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 lg:px-5 py-2.5 sm:py-3 rounded-md transition-all duration-200",
+              "relative flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 lg:px-5 py-2.5 sm:py-3 rounded-md",
               "min-h-[44px] sm:min-h-[48px] focus-visible:ring-2 focus-visible:ring-terminal-accent focus-visible:ring-offset-2 focus-visible:ring-offset-terminal-card",
+              "transition-colors duration-200",
               activeSection === section.id
-                ? "bg-terminal-accent/20 border border-terminal-accent/50 text-terminal-accent shadow-glow-sm"
-                : "hover:bg-terminal-border/50 text-terminal-textSecondary hover:text-terminal-text border border-transparent"
+                ? "text-terminal-accent"
+                : "hover:bg-terminal-border/50 text-terminal-textSecondary hover:text-terminal-text"
             )}
           >
+            {/* Animated background indicator with layoutId for smooth sliding */}
+            {activeSection === section.id && (
+              <motion.div
+                layoutId="tab-indicator"
+                className="absolute inset-0 bg-terminal-accent/20 border border-terminal-accent/50 rounded-md shadow-glow-sm"
+                transition={{
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 35,
+                }}
+              />
+            )}
+            
             <span className={cn(
-              "p-1 sm:p-1.5 rounded-md transition-colors flex-shrink-0",
+              "relative z-10 p-1 sm:p-1.5 rounded-md transition-colors flex-shrink-0",
               activeSection === section.id 
                 ? "bg-terminal-accent/30" 
                 : "bg-terminal-border/50"
@@ -73,10 +91,10 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
             </span>
             
             {/* Mobile: Short label only */}
-            <span className="sm:hidden text-xs font-semibold">{section.shortLabel}</span>
+            <span className="relative z-10 sm:hidden text-xs font-semibold">{section.shortLabel}</span>
             
             {/* Tablet+: Full layout */}
-            <div className="text-left hidden sm:block">
+            <div className="relative z-10 text-left hidden sm:block">
               <div className={cn(
                 "text-sm font-semibold",
                 activeSection === section.id ? "text-terminal-accent" : ""
@@ -87,7 +105,7 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
                 {section.description}
               </div>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
     </nav>

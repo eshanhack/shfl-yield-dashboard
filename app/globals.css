@@ -57,6 +57,20 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Skeleton shimmer animation - soft shimmer, not hard pulse */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer::before {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 /* Terminal grid lines effect */
 .terminal-grid {
   background-image: 
