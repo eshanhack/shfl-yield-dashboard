@@ -495,9 +495,9 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer to account for fixed nav height */}
-      <div className="h-[165px] sm:h-[185px]" />
+      <div className="h-[148px] sm:h-[168px]" />
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-0 pb-4 sm:pb-6">
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-4 sm:pb-6">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
