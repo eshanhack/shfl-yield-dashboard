@@ -37,7 +37,7 @@ const sections: { id: DashboardSection; label: string; shortLabel: string; icon:
 export default function SectionSelector({ activeSection, onSectionChange }: SectionSelectorProps) {
   return (
     <nav 
-      className="bg-terminal-card border border-terminal-border rounded-lg p-1 sm:p-1.5 mb-2"
+      className="bg-terminal-card border border-terminal-border rounded-lg p-1 sm:p-1.5"
       role="tablist"
       aria-label="Dashboard sections"
     >

@@ -480,12 +480,14 @@ export default function Dashboard() {
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-2 pb-2">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-3">
           {/* Section Selector */}
-          <SectionSelector 
-            activeSection={activeSection} 
-            onSectionChange={setActiveSection} 
-          />
+          <div className="mb-2">
+            <SectionSelector 
+              activeSection={activeSection} 
+              onSectionChange={setActiveSection} 
+            />
+          </div>
 
           {/* Sub Navigation - Quick jump to sections */}
           <SubNavigation activeSection={activeSection} />
@@ -493,7 +495,7 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer to account for fixed nav height */}
-      <div className="h-[140px] sm:h-[150px]" />
+      <div className="h-[130px] sm:h-[140px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6">
 

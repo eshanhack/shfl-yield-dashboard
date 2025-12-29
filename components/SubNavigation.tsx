@@ -129,7 +129,6 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   return (
     <div
       ref={navRef}
-      className="py-1"
     >
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
         <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
