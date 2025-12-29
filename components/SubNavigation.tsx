@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, LayoutGroup } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DashboardSection } from "./SectionSelector";
 
 interface SectionConfig {
   id: string;
   label: string;
-  shortLabel?: string; // For mobile
+  shortLabel?: string;
 }
 
-// Section configurations per tab
 const SECTION_CONFIGS: Record<DashboardSection, SectionConfig[]> = {
   lottery: [
     { id: "yield-calculator", label: "Yield Calculator", shortLabel: "Calculator" },
@@ -38,19 +37,37 @@ interface SubNavigationProps {
 
 export default function SubNavigation({ activeSection }: SubNavigationProps) {
   const [activeId, setActiveId] = useState<string>("");
-  const navRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   
   const sections = SECTION_CONFIGS[activeSection];
 
-  // Set up intersection observer to track visible sections
+  // Update indicator position
   useEffect(() => {
-    // Clean up previous observer
+    if (!containerRef.current || !activeId) return;
+    
+    const activeIndex = sections.findIndex(s => s.id === activeId);
+    const buttons = containerRef.current.querySelectorAll('button');
+    const activeButton = buttons[activeIndex];
+    
+    if (activeButton) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const buttonRect = activeButton.getBoundingClientRect();
+      
+      setIndicatorStyle({
+        left: buttonRect.left - containerRect.left,
+        width: buttonRect.width,
+      });
+    }
+  }, [activeId, sections]);
+
+  // Set up intersection observer
+  useEffect(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
 
-    // Small delay to let DOM update after tab switch
     const timeout = setTimeout(() => {
       const sectionElements = sections
         .map(s => document.getElementById(s.id))
@@ -58,7 +75,6 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
 
       if (sectionElements.length === 0) return;
 
-      // Track which sections are visible and their positions
       const visibleSections = new Map<string, number>();
 
       observerRef.current = new IntersectionObserver(
@@ -71,13 +87,12 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
             }
           });
 
-          // Find the section closest to top of viewport
           if (visibleSections.size > 0) {
             let closestId = "";
             let closestDistance = Infinity;
             
             visibleSections.forEach((top, id) => {
-              const distance = Math.abs(top - 150); // 150px from top is "active zone"
+              const distance = Math.abs(top - 150);
               if (distance < closestDistance) {
                 closestDistance = distance;
                 closestId = id;
@@ -99,7 +114,6 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
         observerRef.current?.observe(el);
       });
 
-      // Set initial active section
       if (sectionElements[0]) {
         setActiveId(sectionElements[0].id);
       }
@@ -111,11 +125,9 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
     };
   }, [activeSection, sections]);
 
-
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      // Account for fixed header (~60px) + fixed nav (~140px) + breathing room (20px)
       const yOffset = -220;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
@@ -129,47 +141,49 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   };
 
   return (
-    <LayoutGroup id={`subnav-${activeSection}`}>
-      <div ref={navRef}>
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-          <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
-            Jump to:
-          </span>
-          <div className="flex items-center gap-1">
-            {sections.map((section) => (
-              <motion.button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.1 }}
-                className={cn(
-                  "relative px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap",
-                  "hover:bg-terminal-accent/10 hover:text-terminal-accent transition-colors duration-150",
-                  activeId === section.id
-                    ? "text-terminal-accent"
-                    : "text-terminal-textSecondary"
-                )}
-              >
-                {/* Animated sliding indicator */}
-                {activeId === section.id && (
-                  <motion.div
-                    layoutId="subnav-active-indicator"
-                    className="absolute inset-0 bg-terminal-accent/20 border border-terminal-accent/30 rounded-md"
-                    initial={false}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 30,
-                    }}
-                  />
-                )}
-                <span className="relative z-10 sm:hidden">{section.shortLabel || section.label}</span>
-                <span className="relative z-10 hidden sm:inline">{section.label}</span>
-              </motion.button>
-            ))}
-          </div>
+    <div>
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+        <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
+          Jump to:
+        </span>
+        <div ref={containerRef} className="flex items-center gap-1 relative">
+          {/* Sliding indicator */}
+          {indicatorStyle.width > 0 && (
+            <motion.div
+              className="absolute top-0 bottom-0 bg-terminal-accent/20 border border-terminal-accent/30 rounded-md pointer-events-none"
+              initial={false}
+              animate={{
+                left: indicatorStyle.left,
+                width: indicatorStyle.width,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 30,
+              }}
+            />
+          )}
+          
+          {sections.map((section) => (
+            <motion.button
+              key={section.id}
+              onClick={() => scrollToSection(section.id)}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.1 }}
+              className={cn(
+                "relative z-10 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap",
+                "hover:bg-terminal-accent/10 hover:text-terminal-accent transition-colors duration-150",
+                activeId === section.id
+                  ? "text-terminal-accent"
+                  : "text-terminal-textSecondary"
+              )}
+            >
+              <span className="sm:hidden">{section.shortLabel || section.label}</span>
+              <span className="hidden sm:inline">{section.label}</span>
+            </motion.button>
+          ))}
         </div>
       </div>
-    </LayoutGroup>
+    </div>
   );
 }
