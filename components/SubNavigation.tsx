@@ -114,7 +114,8 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = -120; // Account for sticky header + sub-nav
+      // Account for fixed header (~60px) + fixed nav (~140px) + breathing room (20px)
+      const yOffset = -220;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
       window.scrollTo({
