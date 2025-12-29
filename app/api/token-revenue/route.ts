@@ -76,7 +76,7 @@ async function fetchSHFLRevenue(request: Request): Promise<TokenRevenue> {
   };
 }
 
-// Fetch from dedicated scraper server
+// Fetch from dedicated scraper server with timeout
 async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
   const scraperUrl = process.env.SCRAPER_URL;
   
@@ -85,12 +85,18 @@ async function fetchFromScraper(): Promise<TokenRevenue[] | null> {
   }
   
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout - don't block
+    
     const response = await fetch(`${scraperUrl}/api/revenue`, {
       cache: "no-store",
       headers: {
         "Accept": "application/json",
       },
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       return null;
@@ -155,7 +161,7 @@ function getEstimatedRevenues(): TokenRevenue[] {
 }
 
 export async function GET(request: Request) {
-  // Check cache first
+  // Check cache first - instant response
   if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
     const liveCount = cache.data.filter(t => t.source === "live").length;
     return NextResponse.json({
@@ -169,27 +175,22 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Fetch SHFL revenue (live from our own API)
-    const shflData = await fetchSHFLRevenue(request);
+    // Fetch SHFL and scraper data in PARALLEL for speed
+    const [shflData, scraperData] = await Promise.all([
+      fetchSHFLRevenue(request),
+      fetchFromScraper(), // Has 5s timeout, won't block long
+    ]);
     
-    // Try to get live data from scraper for other tokens
-    const scraperData = await fetchFromScraper();
     const estimates = getEstimatedRevenues();
-    
     let revenues: TokenRevenue[] = [shflData];
     
     // For each token, use scraper data ONLY if it looks valid
-    // SPECIAL HANDLING: Always use estimates for correct accrual rates
     for (const estimate of estimates) {
       const scraped = scraperData?.find(s => s.symbol === estimate.symbol);
       
       // For RLB: Use scraped revenue but ALWAYS use our calculated accrual (13.55%)
-      // because the scraper doesn't reliably get the breakdown
       if (estimate.symbol === "RLB" && scraped && scraped.annualRevenue > 100000000) {
         const annualRevenue = scraped.annualRevenue;
-        // Known accrual breakdown: Casino 10%, Trading 30%, Sports 20%
-        // Based on Dec 2025 data: ~77% Casino, 12.5% Trading, 10.5% Sports
-        // Weighted average: 0.77*0.10 + 0.125*0.30 + 0.105*0.20 = 0.1355
         const accrualPct = 0.1355;
         const annualEarnings = annualRevenue * accrualPct;
         
@@ -213,7 +214,7 @@ export async function GET(request: Request) {
       // For PUMP: Use scraped data if looks valid
       else if (scraped && 
           scraped.annualRevenue > 10000000 && 
-          scraped.revenueAccrualPct >= 0.50 && // PUMP should be close to 100%
+          scraped.revenueAccrualPct >= 0.50 &&
           scraped.revenueAccrualPct <= 1.0) {
         revenues.push(scraped);
       } else {
@@ -224,26 +225,27 @@ export async function GET(request: Request) {
     // Cache results
     cache = { data: revenues, timestamp: Date.now() };
     
-    const liveCount = revenues.filter(t => t.source === "live").length;
+    // SHFL is always live from our own API - that's what matters
+    // Mark as live if SHFL is live (the primary data we care about)
+    const shflIsLive = shflData.source === "live";
     
     return NextResponse.json({
       success: true,
       data: revenues,
-      source: liveCount > 0 ? "live" : "estimated",
-      liveCount: `${liveCount}/${revenues.length}`,
+      source: shflIsLive ? "live" : "estimated", // SHFL determines overall status
+      liveCount: `${revenues.filter(t => t.source === "live").length}/${revenues.length}`,
       cached: false,
       details: revenues.map(r => ({ symbol: r.symbol, source: r.source })),
     });
   } catch (error) {
-    
-    // Return all estimated data on error - use exact values from Shuffle.com Revenue modal
+    // Return estimated data on error
     const fallbackData: TokenRevenue[] = [
       {
         symbol: "SHFL",
         weeklyRevenue: 275206896 / 52,
-        annualRevenue: 275206896,  // GGR
+        annualRevenue: 275206896,
         weeklyEarnings: 20640517 / 52,
-        annualEarnings: 20640517,  // Lottery NGR
+        annualEarnings: 20640517,
         revenueAccrualPct: 0.15,
         source: "estimated",
       },
