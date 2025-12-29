@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { Grid3X3 } from "lucide-react";
 import { SensitivityCell, generateSensitivityTable, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
@@ -90,6 +91,7 @@ export default function SensitivityTable({
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-2">
+          <Grid3X3 className="w-4 h-4 text-terminal-accent" />
           <h3 className="text-sm font-medium text-terminal-text">
             Yield Sensitivity Matrix
           </h3>

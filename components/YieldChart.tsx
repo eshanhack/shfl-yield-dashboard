@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { TrendingUp } from "lucide-react";
 import { ChartDataPoint } from "@/lib/api";
 
 interface YieldChartProps {
@@ -52,10 +53,13 @@ export default function YieldChart({ data }: YieldChartProps) {
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-medium text-terminal-text">
-            NGR vs Price
-          </h3>
-          <p className="text-xs text-terminal-textMuted">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-terminal-accent" />
+            <h3 className="text-sm font-medium text-terminal-text">
+              NGR vs Price
+            </h3>
+          </div>
+          <p className="text-xs text-terminal-textMuted mt-1">
             Since inception
           </p>
         </div>
