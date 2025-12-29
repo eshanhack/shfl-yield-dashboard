@@ -266,8 +266,9 @@ export async function fetchAvgWeeklyNGR(): Promise<number> {
  */
 export async function fetchNGRStats(): Promise<NGRStats> {
   try {
-    const response = await fetch("/api/lottery-history", {
+    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
+      headers: { 'Cache-Control': 'no-cache' }
     });
     
     if (!response.ok) {
@@ -350,8 +351,9 @@ function estimateTicketsFromPool(prizePool: number): number {
  */
 export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
   try {
-    const response = await fetch("/api/lottery-history", {
+    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
+      headers: { 'Cache-Control': 'no-cache' }
     });
     
     if (!response.ok) {

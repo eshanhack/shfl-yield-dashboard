@@ -125,9 +125,9 @@ export default function Dashboard() {
       setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
       
-      // Fetch liquidity data
+      // Fetch liquidity data with cache-busting
       try {
-        const liquidityRes = await fetch("/api/market-caps");
+        const liquidityRes = await fetch(`/api/market-caps?_t=${Date.now()}`);
         if (liquidityRes.ok) {
           const liquidityJson = await liquidityRes.json();
           if (liquidityJson.shflLiquidity) {
@@ -183,14 +183,31 @@ export default function Dashboard() {
       setPrice(priceData);
     }, 30000);
 
-    // Refresh all data every 5 minutes
+    // Refresh all data every 2 minutes (more frequent to catch stale data)
     const dataInterval = setInterval(() => {
-      loadData(true);
-    }, 300000);
+      loadData(false); // Silent refresh
+    }, 120000);
+
+    // Refresh when user returns to tab (catches stale data from background)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadData(false); // Silent refresh on tab focus
+      }
+    };
+
+    // Refresh when window regains focus
+    const handleFocus = () => {
+      loadData(false); // Silent refresh on window focus
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       clearInterval(priceInterval);
       clearInterval(dataInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
