@@ -481,38 +481,40 @@ export default function Dashboard() {
       {/* Loading Progress Bar */}
       <LoadingBar isLoading={isRefreshing} />
       
-      {/* Header */}
-      <Header
-        price={price.usd}
-        priceChange24h={price.usd_24h_change}
-        nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
-      />
-
-      {/* Main Content */}
-      {/* Fixed Navigation Container - Always visible below header */}
+      {/* Fixed Header + Navigation Container - All stuck together */}
       <div 
-        className="fixed left-0 right-0 top-[52px] sm:top-[60px] z-40 bg-terminal-black border-b border-terminal-border/30"
+        className="fixed left-0 right-0 top-0 z-50 bg-terminal-black"
         style={{
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-6 sm:pt-8 pb-4">
-          {/* Section Selector */}
-          <div className="mb-3">
-            <SectionSelector 
-              activeSection={activeSection} 
-              onSectionChange={setActiveSection} 
-            />
-          </div>
+        {/* Header */}
+        <Header
+          price={price.usd}
+          priceChange24h={price.usd_24h_change}
+          nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
+        />
 
-          {/* Sub Navigation - Quick jump to sections */}
-          <SubNavigation activeSection={activeSection} />
+        {/* Tabs + Jump To Navigation */}
+        <div className="border-b border-terminal-border/30">
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 sm:pt-5 pb-3">
+            {/* Section Selector */}
+            <div className="mb-2">
+              <SectionSelector 
+                activeSection={activeSection} 
+                onSectionChange={setActiveSection} 
+              />
+            </div>
+
+            {/* Sub Navigation - Quick jump to sections */}
+            <SubNavigation activeSection={activeSection} />
+          </div>
         </div>
       </div>
 
-      {/* Spacer to account for fixed nav height */}
-      <div className="h-[148px] sm:h-[168px]" />
+      {/* Spacer to account for fixed header + nav height */}
+      <div className="h-[200px] sm:h-[220px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-4 sm:pb-6">
 

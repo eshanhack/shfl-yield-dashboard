@@ -59,7 +59,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
   const isPositive = priceChange24h >= 0;
 
   return (
-    <header className="border-b border-terminal-border bg-terminal-dark/50 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-terminal-border bg-terminal-dark/50 backdrop-blur-sm">
       <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-2 sm:py-3">
         {/* Mobile Layout */}
         <div className="flex items-center justify-between lg:hidden">
