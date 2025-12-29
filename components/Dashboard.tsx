@@ -18,6 +18,7 @@ import {
 
 import Header from "./Header";
 import SectionSelector, { DashboardSection } from "./SectionSelector";
+import SubNavigation from "./SubNavigation";
 import YieldChart from "./YieldChart";
 import SensitivityTable from "./SensitivityTable";
 import JackpotFrequencyPanel from "./JackpotFrequencyPanel";
@@ -432,6 +433,9 @@ export default function Dashboard() {
           onSectionChange={setActiveSection} 
         />
 
+        {/* Sub Navigation - Quick jump to sections */}
+        <SubNavigation activeSection={activeSection} />
+
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
           <div className="flex items-center gap-2 text-xs text-terminal-textMuted">
@@ -843,32 +847,34 @@ export default function Dashboard() {
           <div className="section-content">
 
             {/* Yield Calculator Panel */}
-            <YieldCalculatorPanel
-              shflPrice={price.usd}
-              // For upcoming draw, use the latest completed draw's POSTED NGR
-              currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
-              avgWeeklyNGR={ngrStats.current4WeekAvg}
-              totalTickets={lotteryStats.totalTickets}
-              historicalDraws={completedDraws}
-              prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-              upcomingDraw={{
-                drawNumber: lotteryStats.drawNumber || 64,
-                date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
-                ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
-                totalTickets: lotteryStats.totalTickets,
-                prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-              }}
-            />
+            <section id="yield-calculator">
+              <YieldCalculatorPanel
+                shflPrice={price.usd}
+                // For upcoming draw, use the latest completed draw's POSTED NGR
+                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                avgWeeklyNGR={ngrStats.current4WeekAvg}
+                totalTickets={lotteryStats.totalTickets}
+                historicalDraws={completedDraws}
+                prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+                upcomingDraw={{
+                  drawNumber: lotteryStats.drawNumber || 64,
+                  date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
+                  ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
+                  totalTickets: lotteryStats.totalTickets,
+                  prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+                }}
+              />
+            </section>
 
             {/* Charts and Ticket EV Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5 items-stretch">
               {/* NGR vs Price Chart */}
-              <div className="lg:col-span-2 h-full">
+              <section id="ngr-chart" className="lg:col-span-2 h-full">
                 <YieldChart data={chartData} />
-              </div>
+              </section>
 
               {/* Ticket Expected Value */}
-              <div className="h-full">
+              <section id="ticket-ev" className="h-full">
                 <TicketEVPanel
                   totalPool={weeklyPoolUSD}
                   prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
@@ -877,38 +883,44 @@ export default function Dashboard() {
                   historicalDraws={completedDraws}
                   currentDrawNumber={lotteryStats.drawNumber}
                 />
-              </div>
+              </section>
             </div>
 
             {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
-              <SensitivityTable
-                baseNGR={ngrStats.current4WeekAvg}
-                basePrice={price.usd}
-                totalTickets={lotteryStats.totalTickets}
-                prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-              />
-              <JackpotFrequencyPanel
-                historicalDraws={completedDraws}
-                currentTickets={lotteryStats.totalTickets}
-                currentJackpot={lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87}
-              />
+              <section id="sensitivity">
+                <SensitivityTable
+                  baseNGR={ngrStats.current4WeekAvg}
+                  basePrice={price.usd}
+                  totalTickets={lotteryStats.totalTickets}
+                  prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+                />
+              </section>
+              <section id="jackpot-frequency">
+                <JackpotFrequencyPanel
+                  historicalDraws={completedDraws}
+                  currentTickets={lotteryStats.totalTickets}
+                  currentJackpot={lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87}
+                />
+              </section>
             </div>
 
             {/* Lottery History Table */}
-            <LotteryHistoryTable 
-              draws={completedDraws} 
-              upcomingDraw={{
-                drawNumber: lotteryStats.drawNumber || 64,
-                date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
-                totalPoolUSD: weeklyPoolUSD,
-                jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
-                totalTickets: lotteryStats.totalTickets,
-                prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
-                // For upcoming draw, use the latest completed draw's POSTED NGR (what goes to next draw)
-                ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
-              }}
-            />
+            <section id="lottery-history">
+              <LotteryHistoryTable 
+                draws={completedDraws} 
+                upcomingDraw={{
+                  drawNumber: lotteryStats.drawNumber || 64,
+                  date: new Date(lotteryStats.nextDrawTimestamp).toISOString(),
+                  totalPoolUSD: weeklyPoolUSD,
+                  jackpotAmount: lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87,
+                  totalTickets: lotteryStats.totalTickets,
+                  prizeSplit: completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11",
+                  // For upcoming draw, use the latest completed draw's POSTED NGR (what goes to next draw)
+                  ngrUSD: completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg,
+                }}
+              />
+            </section>
           </div>
         )}
 
@@ -917,19 +929,25 @@ export default function Dashboard() {
           <div className="section-content">
             {/* Revenue Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
-              <ShuffleRevenueCard
-                historicalDraws={completedDraws}
-                // For current week, use the latest completed draw's POSTED NGR
-                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
-              />
-              <RevenueAnalysis
-                historicalDraws={completedDraws}
-                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
-              />
+              <section id="shuffle-revenue">
+                <ShuffleRevenueCard
+                  historicalDraws={completedDraws}
+                  // For current week, use the latest completed draw's POSTED NGR
+                  currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                />
+              </section>
+              <section id="revenue-analysis">
+                <RevenueAnalysis
+                  historicalDraws={completedDraws}
+                  currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                />
+              </section>
             </div>
 
             {/* Revenue History Chart */}
-            <ShuffleRevenueChart historicalDraws={completedDraws} />
+            <section id="revenue-chart">
+              <ShuffleRevenueChart historicalDraws={completedDraws} />
+            </section>
           </div>
         )}
 
@@ -938,8 +956,12 @@ export default function Dashboard() {
           <div className="section-content">
             {/* Token Comparison Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
-              <TokenReturnsChart />
-              <TokenValuationTable />
+              <section id="price-returns">
+                <TokenReturnsChart />
+              </section>
+              <section id="token-valuation">
+                <TokenValuationTable />
+              </section>
             </div>
           </div>
         )}
