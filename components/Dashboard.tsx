@@ -480,9 +480,9 @@ export default function Dashboard() {
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 sm:pt-5 pb-3">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-6 sm:pt-8 pb-4">
           {/* Section Selector */}
-          <div className="mb-2">
+          <div className="mb-3">
             <SectionSelector 
               activeSection={activeSection} 
               onSectionChange={setActiveSection} 
@@ -495,9 +495,9 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer to account for fixed nav height */}
-      <div className="h-[145px] sm:h-[160px]" />
+      <div className="h-[165px] sm:h-[185px]" />
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6">
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-0 pb-4 sm:pb-6">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
