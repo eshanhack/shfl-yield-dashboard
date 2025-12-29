@@ -143,11 +143,24 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
     <div
       ref={navRef}
       className={cn(
-        "sticky top-0 z-40 -mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12 mb-4 sm:mb-5 transition-all duration-200",
+        // Sticky positioning with -1px overlap to prevent white line gap
+        "sticky -top-px z-40 -mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12 mb-4 sm:mb-5",
+        // GPU acceleration to prevent repaint lag during fast scrolling
+        "will-change-transform transform-gpu",
+        // Smooth transitions
+        "transition-all duration-200",
         isSticky 
-          ? "bg-terminal-black/95 backdrop-blur-md border-b border-terminal-border/50 py-2 shadow-lg" 
-          : "bg-transparent py-1"
+          ? "bg-terminal-black backdrop-blur-md border-b border-terminal-border/50 py-2 shadow-lg" 
+          : "bg-terminal-black py-1"
       )}
+      style={{
+        // Force GPU layer and prevent 3D rendering jitter
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
+        perspective: 1000,
+        // Prevent browser scroll anchor adjustments on high-refresh displays
+        overflowAnchor: "none",
+      }}
     >
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
         <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
