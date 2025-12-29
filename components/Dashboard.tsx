@@ -152,6 +152,27 @@ export default function Dashboard() {
     }
   };
 
+  // Prefetch data for other tabs in the background
+  const prefetchOtherTabs = async () => {
+    // Small delay to not compete with initial load
+    await new Promise(r => setTimeout(r, 500));
+    
+    // Prefetch in parallel - these populate browser/API caches
+    // so when user switches tabs, data is instant
+    const prefetches = [
+      // Token tab data
+      fetch("/api/token-revenue").catch(() => {}),
+      fetch("/api/token-prices?days=30").catch(() => {}),
+      // Revenue tab data (Tanzanite scraper)
+      fetch(
+        `${process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com"}/api/tanzanite`
+      ).catch(() => {}),
+    ];
+    
+    // Fire and forget - don't await
+    Promise.allSettled(prefetches);
+  };
+
   useEffect(() => {
     loadData();
 
@@ -171,6 +192,13 @@ export default function Dashboard() {
       clearInterval(dataInterval);
     };
   }, []);
+
+  // Prefetch other tabs' data once initial data is loaded
+  useEffect(() => {
+    if (hasInitialData) {
+      prefetchOtherTabs();
+    }
+  }, [hasInitialData]);
 
   // Filter to only completed draws (exclude upcoming/future draws)
   const completedDraws = useMemo(() => {
