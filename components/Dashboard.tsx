@@ -98,7 +98,7 @@ export default function Dashboard() {
     marketCapToVolume: 0 
   });
 
-  // Fetch initial data
+  // Fetch initial data (with loading states)
   const loadData = async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setIsLoading(true);
@@ -153,6 +153,45 @@ export default function Dashboard() {
     }
   };
 
+  // Silent background refresh - no loading states, no interruption
+  const silentRefresh = async () => {
+    try {
+      // Fetch all data in parallel without showing any loading state
+      const [priceData, priceHistory, ngrHistory, draws, stats, ngrStatsData] = await Promise.all([
+        fetchSHFLPrice(),
+        fetchPriceHistory(365),
+        fetchNGRHistory(),
+        fetchLotteryHistory(),
+        fetchLotteryStats(),
+        fetchNGRStats(),
+      ]);
+
+      // Update state quietly - React will batch these updates
+      setPrice(priceData);
+      const combined = await combineChartData(priceHistory, ngrHistory);
+      setChartData(combined);
+      setHistoricalDraws(draws);
+      setLotteryStats(stats);
+      setNgrStats(ngrStatsData);
+      setLastRefresh(new Date());
+      
+      // Silently update liquidity
+      try {
+        const liquidityRes = await fetch(`/api/market-caps?_t=${Date.now()}`);
+        if (liquidityRes.ok) {
+          const liquidityJson = await liquidityRes.json();
+          if (liquidityJson.shflLiquidity) {
+            setLiquidityData(liquidityJson.shflLiquidity);
+          }
+        }
+      } catch {
+        // Ignore errors in background refresh
+      }
+    } catch {
+      // Silently fail - don't interrupt user
+    }
+  };
+
   // Prefetch data for other tabs in the background
   const prefetchOtherTabs = async () => {
     // Small delay to not compete with initial load
@@ -177,37 +216,40 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
 
-    // Refresh price every 30 seconds
+    // Refresh price every 30 seconds (silent, just price)
     const priceInterval = setInterval(async () => {
-      const priceData = await fetchSHFLPrice();
-      setPrice(priceData);
+      try {
+        const priceData = await fetchSHFLPrice();
+        setPrice(priceData);
+      } catch {
+        // Silently fail
+      }
     }, 30000);
 
-    // Refresh all data every 2 minutes (more frequent to catch stale data)
+    // Background refresh all data every 3 minutes (completely silent)
     const dataInterval = setInterval(() => {
-      loadData(false); // Silent refresh
-    }, 120000);
+      silentRefresh();
+    }, 180000);
 
-    // Refresh when user returns to tab (catches stale data from background)
+    // Refresh when user returns to tab after being away
+    let lastActiveTime = Date.now();
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        loadData(false); // Silent refresh on tab focus
+        // Only refresh if away for more than 1 minute
+        if (Date.now() - lastActiveTime > 60000) {
+          silentRefresh();
+        }
+      } else {
+        lastActiveTime = Date.now();
       }
     };
 
-    // Refresh when window regains focus
-    const handleFocus = () => {
-      loadData(false); // Silent refresh on window focus
-    };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
 
     return () => {
       clearInterval(priceInterval);
       clearInterval(dataInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
