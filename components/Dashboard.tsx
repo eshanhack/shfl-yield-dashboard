@@ -227,7 +227,7 @@ export default function Dashboard() {
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats?.currentWeekPool || 0;
 
-  // Calculate 4-week vs prior 4-week NGR change
+  // Calculate Weekly NGR change: current 4-week avg vs prior 4-week avg (weeks 5-8)
   const ngrChange = useMemo(() => {
     if (!ngrStats) return 0;
     const current = ngrStats.current4WeekAvg;
@@ -237,13 +237,14 @@ export default function Dashboard() {
   }, [ngrStats]);
 
   // Calculate week-over-week staked change (current vs prior week from GraphQL)
+  // Calculate staked change: current tickets vs previous draw's tickets
   const stakedChange = useMemo(() => {
-    if (!lotteryStats) return 0;
+    if (!lotteryStats || completedDraws.length === 0) return 0;
     const currentTickets = lotteryStats.totalTickets;
-    const priorTickets = lotteryStats.priorWeekTickets || 0;
-    if (priorTickets === 0) return 0;
-    return ((currentTickets - priorTickets) / priorTickets) * 100;
-  }, [lotteryStats]);
+    const previousDrawTickets = completedDraws[0]?.totalTickets || 0;
+    if (previousDrawTickets === 0) return 0;
+    return ((currentTickets - previousDrawTickets) / previousDrawTickets) * 100;
+  }, [lotteryStats, completedDraws]);
 
   // Calculate last week's APY (from the most recent completed draw)
   const lastWeekAPY = useMemo(() => {
@@ -254,11 +255,27 @@ export default function Dashboard() {
     return calculateGlobalAPY(ngrContribution, totalTickets, price.usd, lastDraw.prizepoolSplit);
   }, [completedDraws, lotteryStats, price]);
 
-  // Calculate APY change from last week vs current 4-week avg
+  // Calculate prior 4-week average APY (weeks 5-8)
+  const prior4WeekAPY = useMemo(() => {
+    if (completedDraws.length < 5 || !lotteryStats || !price) return currentAPY;
+    
+    const priorDraws = completedDraws.slice(4, 8); // Weeks 5-8
+    if (priorDraws.length === 0) return currentAPY;
+    
+    const totalAPY = priorDraws.reduce((sum, draw) => {
+      const ngrContribution = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
+      const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
+      return sum + calculateGlobalAPY(ngrContribution, totalTickets, price.usd, draw.prizepoolSplit);
+    }, 0);
+    
+    return totalAPY / priorDraws.length;
+  }, [completedDraws, lotteryStats, price, currentAPY]);
+
+  // Calculate APY change: current 4-week avg vs prior 4-week avg
   const apyChange = useMemo(() => {
-    if (currentAPY === 0) return 0;
-    return ((currentAPY - lastWeekAPY) / lastWeekAPY) * 100;
-  }, [currentAPY, lastWeekAPY]);
+    if (prior4WeekAPY === 0 || currentAPY === 0) return 0;
+    return ((currentAPY - prior4WeekAPY) / prior4WeekAPY) * 100;
+  }, [currentAPY, prior4WeekAPY]);
 
   // Find highest APY draw
   const highestAPYData = useMemo(() => {
@@ -294,12 +311,12 @@ export default function Dashboard() {
     return highest;
   }, [completedDraws]);
 
-  // Calculate prize pool change vs last week
+  // Calculate Upcoming Draw prize pool change: upcoming pool vs previous draw's pool
   const prizePoolChange = useMemo(() => {
     if (completedDraws.length === 0) return 0;
-    const lastPool = completedDraws[0]?.totalPoolUSD || 0;
-    if (lastPool === 0) return 0;
-    return ((weeklyPoolUSD - lastPool) / lastPool) * 100;
+    const previousDrawPool = completedDraws[0]?.totalPoolUSD || 0;
+    if (previousDrawPool === 0) return 0;
+    return ((weeklyPoolUSD - previousDrawPool) / previousDrawPool) * 100;
   }, [weeklyPoolUSD, completedDraws]);
 
   // Last week's NGR (from most recent completed draw)
