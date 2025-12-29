@@ -287,33 +287,33 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   >
                     <td className="px-2 sm:px-4 py-2 sm:py-3">
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        {isJackpotWon && (
+                        {isJackpotWon ? (
                           <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0" />
-                        )}
+                        ) : null}
                         <span className={cn(
                           "text-xs sm:text-sm font-medium tabular-nums",
                           isJackpotWon ? "text-yellow-100" : "text-terminal-text"
                         )}>
                           #{draw.drawNumber}
                         </span>
-                        {isLatest && (
+                        {isLatest ? (
                           <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
                           </span>
-                        )}
-                        {isJackpotWon && (
+                        ) : null}
+                        {isJackpotWon ? (
                           <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase font-bold">
                             🎰 Jackpot
                           </span>
-                        )}
-                        {hadJackpotReplenishment && (
+                        ) : null}
+                        {hadJackpotReplenishment ? (
                           <span 
                             className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" 
                             title={`Jackpot replenished: $${draw.jackpotReplenishment?.toLocaleString() || 0} (yield adjusted)`}
                           >
                             Jackpot Replenish
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                     <td className={cn(

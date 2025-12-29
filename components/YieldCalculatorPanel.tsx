@@ -398,21 +398,21 @@ export default function YieldCalculatorPanel({
                         <span className="text-xs sm:text-sm font-medium text-terminal-text">
                           #{draw.drawNumber}
                         </span>
-                        {index === 0 && (
+                        {index === 0 ? (
                           <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
                           </span>
-                        )}
-                        {isJackpotWon && (
+                        ) : null}
+                        {isJackpotWon ? (
                           <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase font-bold">
                             🎰 Jackpot
                           </span>
-                        )}
-                        {hadJackpotReplenishment && (
+                        ) : null}
+                        {hadJackpotReplenishment ? (
                           <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" title={`Jackpot replenishment: $${jackpotReplenishment.toLocaleString()}`}>
                             Jackpot Replenish
                           </span>
-                        )}
+                        ) : null}
                       </td>
                       <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm  text-terminal-textSecondary">
                         {new Date(draw.date).toLocaleDateString("en-US", {
