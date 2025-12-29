@@ -301,12 +301,17 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                             Latest
                           </span>
                         )}
+                        {isJackpotWon && (
+                          <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase font-bold">
+                            🎰 Jackpot
+                          </span>
+                        )}
                         {hadJackpotReplenishment && (
                           <span 
                             className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" 
                             title={`Jackpot replenished: $${draw.jackpotReplenishment?.toLocaleString() || 0} (yield adjusted)`}
                           >
-                            🎰 JP
+                            Jackpot Replenish
                           </span>
                         )}
                       </div>

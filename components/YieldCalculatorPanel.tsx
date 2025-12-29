@@ -163,6 +163,7 @@ export default function YieldCalculatorPanel({
         jackpotReplenishment: draw.jackpotReplenishment || 0,
         originalNGR: draw.ngrUSD,
         adjustedNGR: effectiveNGR,
+        isJackpotWon: draw.jackpotWon || false,
       };
     });
   }, [shflAmount, shflPrice, historicalDraws, prizeSplit, stakingValueUSD]);
@@ -386,15 +387,15 @@ export default function YieldCalculatorPanel({
                   )}
                   
                   {/* Historical Draws */}
-                  {historicalYields.map(({ draw, weeklyUSD, weeklyPercent, hadJackpotReplenishment, jackpotReplenishment, adjustedNGR }, index) => (
+                  {historicalYields.map(({ draw, weeklyUSD, weeklyPercent, hadJackpotReplenishment, jackpotReplenishment, adjustedNGR, isJackpotWon }, index) => (
                     <tr 
                       key={draw.drawNumber}
                       className={`border-b border-terminal-border/50 ${
                         index === 0 ? "bg-terminal-accent/5" : ""
-                      } ${hadJackpotReplenishment ? "bg-orange-500/5" : ""}`}
+                      } ${isJackpotWon ? "bg-yellow-500/10" : hadJackpotReplenishment ? "bg-orange-500/5" : ""}`}
                     >
                       <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3">
-                        <span className="text-xs sm:text-sm  font-medium text-terminal-text">
+                        <span className="text-xs sm:text-sm font-medium text-terminal-text">
                           #{draw.drawNumber}
                         </span>
                         {index === 0 && (
@@ -402,9 +403,14 @@ export default function YieldCalculatorPanel({
                             Latest
                           </span>
                         )}
+                        {isJackpotWon && (
+                          <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/30 text-yellow-300 uppercase font-bold">
+                            🎰 Jackpot
+                          </span>
+                        )}
                         {hadJackpotReplenishment && (
                           <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 uppercase" title={`Jackpot replenishment: $${jackpotReplenishment.toLocaleString()}`}>
-                            🎰 JP
+                            Jackpot Replenish
                           </span>
                         )}
                       </td>
