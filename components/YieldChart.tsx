@@ -53,10 +53,10 @@ export default function YieldChart({ data }: YieldChartProps) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-medium text-terminal-text">
-            Weekly NGR vs SHFL Price
+            NGR vs Price
           </h3>
           <p className="text-xs text-terminal-textMuted">
-            {formattedData.length} weeks of lottery history
+            Since inception
           </p>
         </div>
         <div className="flex items-center gap-4">

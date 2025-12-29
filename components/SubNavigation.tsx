@@ -40,6 +40,9 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  // Lock to prevent observer from overriding manual clicks
+  const isManualClickRef = useRef(false);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const sections = SECTION_CONFIGS[activeSection];
 
@@ -79,6 +82,9 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
 
       observerRef.current = new IntersectionObserver(
         (entries) => {
+          // Skip observer updates during manual click scroll
+          if (isManualClickRef.current) return;
+          
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               visibleSections.set(entry.target.id, entry.boundingClientRect.top);
@@ -125,9 +131,30 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
     };
   }, [activeSection, sections]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
+      // Set activeId immediately
+      setActiveId(sectionId);
+      
+      // Lock observer for 800ms to prevent interference during scroll
+      isManualClickRef.current = true;
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+      clickTimeoutRef.current = setTimeout(() => {
+        isManualClickRef.current = false;
+      }, 800);
+      
       const yOffset = -220;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
@@ -135,8 +162,6 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
         top: y,
         behavior: "smooth",
       });
-      
-      setActiveId(sectionId);
     }
   };
 

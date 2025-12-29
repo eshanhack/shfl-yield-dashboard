@@ -555,8 +555,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Spacer: Desktop accounts for header + nav, Mobile just header */}
-      <div className="h-[60px] lg:h-[205px]" />
+      {/* Spacer: Desktop accounts for header + nav, Mobile accounts for header only but with enough padding */}
+      <div className="h-[75px] lg:h-[205px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1">
 

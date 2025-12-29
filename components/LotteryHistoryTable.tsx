@@ -137,7 +137,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
               )}
               <div className="text-left sm:text-right">
                 <div className="text-[10px] sm:text-xs text-terminal-textSecondary">
-                  Avg/{stakedLabel}
+                  USDC Avg/{stakedLabel}
                 </div>
                 <div className="text-xs sm:text-sm font-medium text-terminal-accent">
                   <CurrencyAmount amount={avgYield} />

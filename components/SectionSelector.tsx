@@ -88,8 +88,14 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
           <motion.button
             key={section.id}
             onClick={() => {
-              // Always scroll to top - if already active, this resets the view
-              window.scrollTo({ top: 0, behavior: "smooth" });
+              // Scroll to top first (instant for tab changes), then change section
+              if (activeSection !== section.id) {
+                // When switching tabs, use instant scroll to prevent jank
+                window.scrollTo({ top: 0, behavior: "instant" });
+              } else {
+                // When clicking same tab (reset), use smooth scroll
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
               onSectionChange(section.id);
             }}
             role="tab"
