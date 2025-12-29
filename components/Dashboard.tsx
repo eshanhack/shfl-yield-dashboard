@@ -539,8 +539,8 @@ export default function Dashboard() {
 
         {/* Desktop: Tabs + Jump To below header */}
         <div className="hidden lg:block border-b border-terminal-border/30">
-          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 pb-3">
-            <div className="mb-2">
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4">
+            <div className="mb-3">
               <SectionSelector 
                 activeSection={activeSection} 
                 onSectionChange={setActiveSection} 
@@ -559,7 +559,7 @@ export default function Dashboard() {
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="px-3 sm:px-4 pt-2 pb-3 safe-area-bottom">
+        <div className="px-3 sm:px-4 py-3 safe-area-bottom">
           <div className="mb-2">
             <SectionSelector 
               activeSection={activeSection} 
@@ -571,7 +571,7 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer: Desktop accounts for header + nav, Mobile just header */}
-      <div className="h-[60px] lg:h-[220px]" />
+      <div className="h-[60px] lg:h-[210px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6">
 
