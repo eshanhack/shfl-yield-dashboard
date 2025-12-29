@@ -695,6 +695,122 @@ html {
   color: white;
 }
 
+/* ==================== YIELD HEADLINE EFFECTS ==================== */
+
+/* Base Shine Animation - Diagonal shimmer across text */
+@keyframes yield-shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Fire glow pulse for hot yields */
+@keyframes fire-glow {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px rgba(255, 100, 0, 0.5),
+      0 0 20px rgba(255, 60, 0, 0.3),
+      0 0 30px rgba(255, 30, 0, 0.2);
+  }
+  50% {
+    text-shadow: 
+      0 0 15px rgba(255, 120, 0, 0.7),
+      0 0 30px rgba(255, 80, 0, 0.5),
+      0 0 45px rgba(255, 40, 0, 0.3);
+  }
+}
+
+/* Ice crystalline shimmer */
+@keyframes ice-shimmer {
+  0%, 100% {
+    text-shadow: 
+      0 0 8px rgba(100, 200, 255, 0.4),
+      0 0 16px rgba(150, 220, 255, 0.2);
+  }
+  50% {
+    text-shadow: 
+      0 0 12px rgba(120, 210, 255, 0.6),
+      0 0 24px rgba(180, 230, 255, 0.3);
+  }
+}
+
+/* Yield Headline Base Styles */
+.yield-headline {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  will-change: background-position;
+  transform: translateZ(0);
+}
+
+/* Neutral theme (15-30%) - Purple shine */
+.yield-headline-neutral {
+  background-image: linear-gradient(
+    110deg,
+    var(--terminal-accent) 0%,
+    var(--terminal-accent) 40%,
+    #c084fc 50%,
+    var(--terminal-accent) 60%,
+    var(--terminal-accent) 100%
+  );
+  animation: yield-shine 3s ease-in-out infinite;
+}
+
+/* Fire theme (>30%) - Hot gradient with glow */
+.yield-headline-fire {
+  background-image: linear-gradient(
+    110deg,
+    #ff6b00 0%,
+    #ff4500 30%,
+    #ffcc00 50%,
+    #ff4500 70%,
+    #ff6b00 100%
+  );
+  animation: 
+    yield-shine 2.5s ease-in-out infinite,
+    fire-glow 2s ease-in-out infinite;
+  filter: brightness(1.1);
+}
+
+/* Ice theme (<15%) - Cold gradient with crystalline effect */
+.yield-headline-ice {
+  background-image: linear-gradient(
+    110deg,
+    #60a5fa 0%,
+    #38bdf8 30%,
+    #e0f2fe 50%,
+    #38bdf8 70%,
+    #60a5fa 100%
+  );
+  animation: 
+    yield-shine 4s ease-in-out infinite,
+    ice-shimmer 3s ease-in-out infinite;
+}
+
+/* Responsive sizing for yield headline */
+.yield-headline-size {
+  font-size: 2rem;      /* 32px base */
+}
+
+@media (min-width: 640px) {
+  .yield-headline-size {
+    font-size: 2.5rem;  /* 40px on sm */
+  }
+}
+
+@media (min-width: 1024px) {
+  .yield-headline-size {
+    font-size: 2.75rem; /* 44px on lg */
+  }
+}
+
 /* Better link underlines */
 a {
   text-decoration-skip-ink: auto;

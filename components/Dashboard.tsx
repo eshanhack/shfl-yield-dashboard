@@ -15,6 +15,7 @@ import {
   Wallet,
   Droplets,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import Header from "./Header";
 import SectionSelector, { DashboardSection } from "./SectionSelector";
@@ -504,7 +505,18 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2">
-                    <span className="text-xl sm:text-2xl lg:text-2xl font-bold text-terminal-accent tabular-nums">{formatPercent(currentAPY)}</span>
+                    <span 
+                      className={cn(
+                        "yield-headline yield-headline-size tabular-nums",
+                        currentAPY > 30 
+                          ? "yield-headline-fire" 
+                          : currentAPY < 15 
+                          ? "yield-headline-ice" 
+                          : "yield-headline-neutral"
+                      )}
+                    >
+                      {formatPercent(currentAPY)}
+                    </span>
                   </div>
                   <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week avg</div>
                   <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
