@@ -34,28 +34,54 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
 
   useEffect(() => {
     const fetchTanzanite = async () => {
-      try {
-        const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
-        
-        // Use AbortController for timeout
+      const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
+      
+      // Helper to fetch with timeout
+      const fetchWithTimeout = async (url: string, timeoutMs: number) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        
-        const response = await fetch(`${scraperUrl}/api/tanzanite`, {
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const json = await response.json();
-          if (json.success && json.data) {
-            setTanzaniteData(json.data);
-            setDataSource(json.data.week?.found ? "live" : "estimated");
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          return response;
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
+      };
+      
+      // Wake up the server first (Render free tier sleeps after inactivity)
+      // This is a lightweight ping that triggers cold start
+      try {
+        await fetchWithTimeout(`${scraperUrl}/api/health`, 60000); // 60s for cold start
+      } catch {
+        // Server might be waking up, continue anyway
+      }
+      
+      // Now fetch the actual data with retry logic
+      const maxRetries = 2;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const timeout = attempt === 0 ? 30000 : 45000; // Increase timeout on retries
+          const response = await fetchWithTimeout(`${scraperUrl}/api/tanzanite`, timeout);
+          
+          if (response.ok) {
+            const json = await response.json();
+            if (json.success && json.data) {
+              setTanzaniteData(json.data);
+              setDataSource(json.data.week?.found ? "live" : "estimated");
+              return; // Success, exit
+            }
+          }
+        } catch {
+          if (attempt === maxRetries) {
+            // Final attempt failed, keep fallback data
+            console.log("Tanzanite fetch failed after retries, using estimated data");
+          } else {
+            // Wait before retry
+            await new Promise(r => setTimeout(r, 2000));
           }
         }
-      } catch {
-        // Keep fallback data on error - already set
       }
     };
 
