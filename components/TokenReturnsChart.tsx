@@ -211,20 +211,20 @@ export default function TokenReturnsChart() {
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full">
-      {/* Header */}
+      {/* Header - Stacked on mobile */}
       <div className="p-4 border-b border-terminal-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+        <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-2">
+            <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
               <BarChart3 className="w-4 h-4 text-terminal-accent" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-medium text-terminal-text">
                   Token Returns Comparison
                 </h3>
                 <span className={cn(
-                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded",
+                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded flex-shrink-0",
                   dataSource === "live" 
                     ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
                     : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
@@ -238,14 +238,14 @@ export default function TokenReturnsChart() {
             </div>
           </div>
           
-          {/* Time Period Selector */}
-          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5">
+          {/* Time Period Selector - Full width on mobile, wrap buttons */}
+          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:w-full max-lg:justify-center">
             {(["1d", "7d", "30d", "365d"] as TimePeriod[]).map((period) => (
               <button
                 key={period}
                 onClick={() => setTimePeriod(period)}
                 className={cn(
-                  "px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
+                  "px-2.5 max-lg:px-3 max-lg:flex-1 py-1 text-[10px] font-medium rounded-md transition-all",
                   timePeriod === period
                     ? "bg-terminal-accent/20 text-terminal-accent"
                     : "text-terminal-textMuted hover:text-terminal-text"

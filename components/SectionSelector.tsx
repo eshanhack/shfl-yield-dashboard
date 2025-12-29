@@ -88,9 +88,8 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
           <motion.button
             key={section.id}
             onClick={() => {
-              if (activeSection !== section.id) {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
+              // Always scroll to top - if already active, this resets the view
+              window.scrollTo({ top: 0, behavior: "smooth" });
               onSectionChange(section.id);
             }}
             role="tab"

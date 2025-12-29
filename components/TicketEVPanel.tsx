@@ -92,30 +92,31 @@ export default function TicketEVPanel({
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header - Stacked on mobile for better fit */}
+      <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
             <TrendingUp className="w-4 h-4 text-terminal-accent" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-medium text-terminal-text">
+              <h3 className="text-sm font-medium text-terminal-text leading-relaxed">
                 Ticket Expected Value
               </h3>
               <InfoTooltip content={TOOLTIPS.ev} title="Expected Value (EV)" />
             </div>
-            <p className="text-[10px] text-terminal-textMuted">
+            <p className="text-[10px] text-terminal-textMuted leading-relaxed">
               Pool: {formatUSD(drawData.pool)} • {drawData.tickets.toLocaleString()} tickets
             </p>
           </div>
         </div>
         
-        {/* Draw Selector Dropdown */}
-        <div className="relative">
+        {/* Draw Selector Dropdown - Full width on mobile */}
+        <div className="relative max-lg:w-full">
           <select
             value={selectedDraw}
             onChange={(e) => setSelectedDraw(e.target.value === "upcoming" ? "upcoming" : parseInt(e.target.value))}
-            className="appearance-none bg-terminal-dark border border-terminal-border rounded-lg px-3 py-1.5 pr-8 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent cursor-pointer"
+            className="appearance-none w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 py-1.5 pr-8 text-[10px] max-lg:text-xs lg:text-xs text-terminal-text focus:outline-none focus:border-terminal-accent cursor-pointer"
           >
             <option value="upcoming">Draw #{currentDrawNumber} (Upcoming)</option>
             {historicalDraws.slice(0, 20).map((draw) => (

@@ -270,6 +270,7 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
                       <div className="flex items-baseline gap-1.5">
                         <CurrencyAmount 
                           amount={ngrValue} 
+                          compactOnMobile
                           className="text-base font-bold text-terminal-accent tabular-nums"
                         />
                         <span className={cn(

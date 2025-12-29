@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { convertFromUSD, formatCurrency, formatCurrencyCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ interface CurrencyAmountProps {
   amount: number; // Amount in USD
   className?: string;
   compact?: boolean;
+  compactOnMobile?: boolean; // Show compact format only on mobile (max-width: 1023px)
   showIcon?: boolean;
 }
 
@@ -16,20 +17,35 @@ export default function CurrencyAmount({
   amount, 
   className = "",
   compact = false,
+  compactOnMobile = false,
   showIcon = false,
 }: CurrencyAmountProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { selectedCurrency } = useCurrency();
+  
+  // Detect mobile for conditional compact display
+  useEffect(() => {
+    if (!compactOnMobile) return;
+    
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [compactOnMobile]);
   
   const isUSD = selectedCurrency.code === "USD";
   const convertedAmount = convertFromUSD(amount, selectedCurrency.code);
   
+  // Use compact format if prop is true OR if compactOnMobile is true and we're on mobile
+  const useCompact = compact || (compactOnMobile && isMobile);
+  
   // Format the amounts
-  const usdFormatted = compact 
-    ? `$${amount >= 1_000_000 ? (amount / 1_000_000).toFixed(2) + "M" : amount >= 1_000 ? (amount / 1_000).toFixed(1) + "K" : amount.toFixed(2)}`
+  const usdFormatted = useCompact 
+    ? `$${amount >= 1_000_000 ? (amount / 1_000_000).toFixed(0) + "M" : amount >= 1_000 ? (amount / 1_000).toFixed(0) + "K" : amount.toFixed(0)}`
     : `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   
-  const convertedFormatted = compact
+  const convertedFormatted = useCompact
     ? formatCurrencyCompact(convertedAmount, selectedCurrency.code)
     : formatCurrency(convertedAmount, selectedCurrency.code);
   

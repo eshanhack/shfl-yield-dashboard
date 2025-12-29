@@ -208,10 +208,14 @@ export default function YieldCalculatorPanel({
                   title={inputMode === "shfl" ? "Switch to ticket input" : "Switch to SHFL input"}
                 >
                   <ArrowLeftRight className="w-3 h-3 lg:w-4 lg:h-4" />
-                  <span className="hidden sm:inline">
+                  {/* Mobile: Dynamic text showing what we'll switch TO */}
+                  <span className="max-lg:inline lg:hidden">
+                    {inputMode === "shfl" ? "Switch to Tickets" : "Switch to SHFL"}
+                  </span>
+                  {/* Desktop: Shorter labels */}
+                  <span className="hidden lg:inline">
                     {inputMode === "shfl" ? "Enter Tickets" : "Enter SHFL"}
                   </span>
-                  <span className="sm:hidden">Flip</span>
                 </button>
               </div>
               <div className="relative">
@@ -331,13 +335,15 @@ export default function YieldCalculatorPanel({
           </div>
           <div className="bg-terminal-dark border border-terminal-border rounded-lg xl:rounded-xl overflow-hidden">
             <div className="overflow-x-auto touch-scroll xl:overflow-x-visible">
-              <table className="w-full min-w-[500px] xl:min-w-0">
+              {/* Mobile: min-w-0 since columns are hidden, Desktop: full table */}
+              <table className="w-full min-w-0 lg:min-w-[500px] xl:min-w-0">
                 <thead>
                   <tr className="border-b border-terminal-border bg-terminal-card/50">
                     <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-left text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                       Draw
                     </th>
-                    <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-left text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
+                    {/* Date column - hidden on mobile */}
+                    <th className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-left text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                       Date
                     </th>
                     <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
@@ -346,7 +352,8 @@ export default function YieldCalculatorPanel({
                     <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                       Expected
                     </th>
-                    <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
+                    {/* Yield % column - hidden on mobile */}
+                    <th className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                       Yield %
                     </th>
                   </tr>
@@ -363,7 +370,8 @@ export default function YieldCalculatorPanel({
                           ⏳ Next
                         </span>
                       </td>
-                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm  text-cyan-200">
+                      {/* Date - hidden on mobile */}
+                      <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm  text-cyan-200">
                         {new Date(upcomingYield.draw.date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -378,7 +386,8 @@ export default function YieldCalculatorPanel({
                           <CurrencyAmount amount={upcomingYield.weeklyUSD} className="text-xs sm:text-sm  font-medium text-cyan-100" />
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
+                      {/* Yield % - hidden on mobile */}
+                      <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <span className="text-xs sm:text-sm  font-bold tabular-nums text-cyan-300">
                           {upcomingYield.weeklyPercent.toFixed(2)}%
                         </span>
@@ -414,7 +423,8 @@ export default function YieldCalculatorPanel({
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm  text-terminal-textSecondary">
+                      {/* Date - hidden on mobile */}
+                      <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-xs sm:text-sm  text-terminal-textSecondary">
                         {new Date(draw.date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -438,7 +448,8 @@ export default function YieldCalculatorPanel({
                           <CurrencyAmount amount={weeklyUSD} className="text-xs sm:text-sm  font-medium text-terminal-text" />
                         </div>
                       </td>
-                      <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
+                      {/* Yield % - hidden on mobile */}
+                      <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <span className={`text-xs sm:text-sm  font-bold tabular-nums ${
                           weeklyPercent > (avgWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100
                             ? "text-terminal-positive"

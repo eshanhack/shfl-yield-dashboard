@@ -579,6 +579,23 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ==================== MOBILE-ONLY STYLES (max-width: 1023px) ==================== */
+@media (max-width: 1023px) {
+  /* Jump-To scroll offset for mobile - ensures titles aren't hidden under nav */
+  [id^="yield-"],
+  [id^="ngr-"],
+  [id^="ticket-"],
+  [id^="sensitivity"],
+  [id^="jackpot-"],
+  [id^="lottery-"],
+  [id^="shuffle-"],
+  [id^="revenue-"],
+  [id^="price-"],
+  [id^="token-"] {
+    scroll-margin-top: 60px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

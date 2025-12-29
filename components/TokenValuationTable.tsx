@@ -189,15 +189,15 @@ export default function TokenValuationTable() {
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
-      {/* Header */}
+      {/* Header - Stacked on mobile */}
       <div className="p-4 border-b border-terminal-border">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+        <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">
               <Scale className="w-4 h-4 text-emerald-400" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-medium text-terminal-text">
                   Token Valuation
                 </h3>
@@ -206,7 +206,7 @@ export default function TokenValuationTable() {
                   title="Valuation Metrics"
                 />
                 <span className={cn(
-                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded",
+                  "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded flex-shrink-0",
                   dataSource === "live" 
                     ? "bg-terminal-positive/20 text-terminal-positive border border-terminal-positive/30"
                     : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
@@ -220,12 +220,12 @@ export default function TokenValuationTable() {
             </div>
           </div>
           
-          {/* View Mode Tabs */}
-          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5">
+          {/* View Mode Tabs - Full width on mobile */}
+          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:w-full">
             <button
               onClick={() => setViewMode("revenue")}
               className={cn(
-                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all",
+                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
                 viewMode === "revenue"
                   ? "bg-emerald-500/20 text-emerald-400"
                   : "text-terminal-textMuted hover:text-terminal-text"
@@ -236,7 +236,7 @@ export default function TokenValuationTable() {
             <button
               onClick={() => setViewMode("earnings")}
               className={cn(
-                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all",
+                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
                 viewMode === "earnings"
                   ? "bg-emerald-500/20 text-emerald-400"
                   : "text-terminal-textMuted hover:text-terminal-text"
@@ -275,10 +275,12 @@ export default function TokenValuationTable() {
                     <th className="px-4 py-3 text-left text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       Token
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    {/* Market Cap - hidden on mobile */}
+                    <th className="hidden lg:table-cell px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       Market Cap
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    {/* Annual Rev/Earnings - hidden on mobile */}
+                    <th className="hidden lg:table-cell px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
                         Annual {viewMode === "revenue" ? "Rev" : "Earnings"}
                         <InfoTooltip 
@@ -290,7 +292,8 @@ export default function TokenValuationTable() {
                         />
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                    {/* Accrual % - hidden on mobile */}
+                    <th className="hidden lg:table-cell px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
                         Accrual %
                         <InfoTooltip 
@@ -299,6 +302,7 @@ export default function TokenValuationTable() {
                         />
                       </div>
                     </th>
+                    {/* P/S or P/E Ratio - always visible */}
                     <th className="px-4 py-3 text-right text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                       <div className="flex items-center gap-1 justify-end">
                         {viewMode === "revenue" ? "P/S" : "P/E"} Ratio
@@ -342,7 +346,8 @@ export default function TokenValuationTable() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        {/* Market Cap - hidden on mobile */}
+                        <td className="hidden lg:table-cell px-4 py-4 text-right">
                           <span className="text-sm text-terminal-text tabular-nums font-medium">
                             ${token.marketCap >= 1000000000 
                               ? (token.marketCap / 1000000000).toFixed(1) + "B"
@@ -350,12 +355,14 @@ export default function TokenValuationTable() {
                             }
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        {/* Annual Rev/Earnings - hidden on mobile */}
+                        <td className="hidden lg:table-cell px-4 py-4 text-right">
                           <span className="text-sm text-terminal-textSecondary tabular-nums">
                             ${formatNumber(Math.round(annualValue / 1000000))}M
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        {/* Accrual % - hidden on mobile */}
+                        <td className="hidden lg:table-cell px-4 py-4 text-right">
                           <span className={cn(
                             "text-xs font-medium tabular-nums",
                             token.revenueAccrualPct >= 0.5 ? "text-green-400" : 
@@ -364,6 +371,7 @@ export default function TokenValuationTable() {
                             {(token.revenueAccrualPct * 100).toFixed(0)}%
                           </span>
                         </td>
+                        {/* P/S or P/E Ratio - always visible */}
                         <td className="px-4 py-4 text-right">
                           <span className={cn(
                             "text-sm font-bold tabular-nums px-2.5 py-1 rounded-md",

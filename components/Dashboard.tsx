@@ -639,17 +639,18 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <CurrencyAmount amount={revenueStats.annualGGR} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-accent" />
+                    {/* Use compact format on mobile for large numbers */}
+                    <CurrencyAmount amount={revenueStats.annualGGR} compactOnMobile className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-accent" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Gross Gaming Revenue</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Annual NGR</span>
-                      <CurrencyAmount amount={revenueStats.annualNGR} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
+                      <CurrencyAmount amount={revenueStats.annualNGR} compactOnMobile className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Lottery NGR</span>
-                      <CurrencyAmount amount={revenueStats.annualLotteryNGR} className="font-medium text-terminal-positive text-[10px] sm:text-xs lg:text-sm" />
+                      <CurrencyAmount amount={revenueStats.annualLotteryNGR} compactOnMobile className="font-medium text-terminal-positive text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                   </div>
                 </>
@@ -930,7 +931,8 @@ export default function Dashboard() {
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3 flex items-center gap-1.5 sm:gap-2 lg:gap-3">
                     <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" className="w-5 h-5 sm:w-7 sm:h-7 lg:w-9 lg:h-9" />
-                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-positive" />
+                    {/* Use compact format on mobile for large numbers */}
+                    <CurrencyAmount amount={revenueStats.totalLotteryNGRAdded} compactOnMobile className="text-xl sm:text-3xl lg:text-2xl font-bold text-terminal-positive" />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">Lifetime</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
@@ -940,7 +942,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Avg/Draw</span>
-                      <CurrencyAmount amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
+                      <CurrencyAmount amount={completedDraws.length > 0 ? revenueStats.totalLotteryNGRAdded / completedDraws.length : 0} compactOnMobile className="font-medium text-terminal-text text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                   </div>
                 </>

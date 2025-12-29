@@ -100,27 +100,29 @@ export default function ShuffleRevenueChart({
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow">
-      {/* Header */}
+      {/* Header - Mobile optimized */}
       <div className="p-4 border-b border-terminal-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+        <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-2">
+            <div className="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0">
               <BarChart3 className="w-4 h-4 text-emerald-400" />
             </div>
-            <div>
+            <div className="min-w-0">
+              {/* Shortened title on mobile */}
               <h3 className="text-sm font-medium text-terminal-text">
-                Shuffle.com Revenue History
+                <span className="max-lg:hidden">Shuffle.com Revenue History</span>
+                <span className="lg:hidden">Revenue History</span>
               </h3>
               <p className="text-[10px] text-terminal-textMuted">
-                Weekly NGR since lottery launch ({chartData.length} weeks)
+                Weekly NGR since launch ({chartData.length} weeks)
               </p>
             </div>
           </div>
           
-          {/* Change Metrics */}
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-[10px] text-terminal-textMuted mb-0.5">WoW</div>
+          {/* Change Metrics - Stacked vertically on mobile */}
+          <div className="flex max-lg:flex-col max-lg:gap-1 lg:flex-row lg:items-center lg:gap-4">
+            <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
+              <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">WoW</div>
               <div className={cn(
                 "flex items-center gap-1 text-xs font-bold",
                 changeMetrics.wow >= 0 ? "text-terminal-positive" : "text-terminal-negative"
@@ -133,8 +135,8 @@ export default function ShuffleRevenueChart({
                 {changeMetrics.wow >= 0 ? "+" : ""}{changeMetrics.wow.toFixed(1)}%
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-[10px] text-terminal-textMuted mb-0.5">MoM</div>
+            <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
+              <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">MoM</div>
               <div className={cn(
                 "flex items-center gap-1 text-xs font-bold",
                 changeMetrics.mom >= 0 ? "text-terminal-positive" : "text-terminal-negative"

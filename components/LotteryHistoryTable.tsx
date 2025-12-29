@@ -149,7 +149,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
 
         {/* Table with horizontal scroll on mobile - removed max-height to prevent scroll trap */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] sticky-header">
+          {/* Mobile: No min-width since we only show Draw + Pool */}
+          <table className="w-full min-w-0 lg:min-w-[600px] sticky-header">
             <thead className="bg-terminal-card">
               <tr className="border-b border-terminal-border">
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
@@ -158,7 +159,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                     <span className="hidden sm:inline">Draw</span> #
                   </div>
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                {/* Date - hidden on mobile */}
+                <th className="hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     Date
@@ -167,22 +169,25 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                   <div className="flex items-center gap-1 justify-end">
                     <DollarSign className="w-3 h-3" />
-                    Pool
+                    <span className="max-lg:hidden">$</span> Pool
                   </div>
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden sm:table-cell">
+                {/* Jackpot - hidden on mobile */}
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden lg:table-cell">
                   <div className="flex items-center gap-1 justify-end">
                     <Trophy className="w-3 h-3" />
                     Jackpot
                   </div>
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden md:table-cell">
+                {/* Tickets - hidden on mobile */}
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium hidden lg:table-cell">
                   <div className="flex items-center gap-1 justify-end">
                     <Users className="w-3 h-3" />
                     Tickets
                   </div>
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
+                {/* Yield - hidden on mobile */}
+                <th className="hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-right text-[9px] sm:text-[10px] text-terminal-textSecondary uppercase tracking-wider font-medium">
                   <div className="flex items-center gap-1 justify-end">
                     <TrendingUp className="w-3 h-3" />
                     Yield
@@ -223,7 +228,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                       </span>
                     </div>
                   </td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums text-cyan-200">
+                  {/* Date - hidden on mobile */}
+                  <td className="hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums text-cyan-200">
                     {new Date(upcomingDraw.date).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -234,19 +240,22 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                       <CurrencyAmount amount={upcomingDraw.totalPoolUSD} />
                     </span>
                   </td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden sm:table-cell">
+                  {/* Jackpot - hidden on mobile */}
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden lg:table-cell">
                     <span className="text-xs sm:text-sm font-medium tabular-nums text-yellow-300">
                       <CurrencyAmount amount={upcomingDraw.jackpotAmount} />
                     </span>
                   </td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums text-cyan-200 hidden md:table-cell">
+                  {/* Tickets - hidden on mobile */}
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums text-cyan-200 hidden lg:table-cell">
                     {upcomingDraw.totalTickets >= 1000000 
                       ? `${(upcomingDraw.totalTickets / 1000000).toFixed(1)}M`
                       : upcomingDraw.totalTickets >= 1000
                       ? `${(upcomingDraw.totalTickets / 1000).toFixed(0)}K`
                       : upcomingDraw.totalTickets}
                   </td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                  {/* Yield - hidden on mobile */}
+                  <td className="hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-right">
                     <span className="text-xs sm:text-sm font-medium tabular-nums px-1.5 sm:px-2 py-0.5 rounded text-cyan-300 bg-cyan-500/20">
                       <CurrencyAmount amount={upcomingYield} />
                     </span>
@@ -316,8 +325,9 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         ) : null}
                       </div>
                     </td>
+                    {/* Date - hidden on mobile */}
                     <td className={cn(
-                      "px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums",
+                      "hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm tabular-nums",
                       isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
                     )}>
                       {new Date(draw.date).toLocaleDateString("en-US", {
@@ -333,7 +343,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         <CurrencyAmount amount={draw.totalPoolUSD} />
                       </span>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden sm:table-cell">
+                    {/* Jackpot - hidden on mobile */}
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right hidden lg:table-cell">
                       <span className={cn(
                         "text-xs sm:text-sm font-medium tabular-nums",
                         isJackpotWon ? "text-yellow-300 font-bold" : "text-yellow-400"
@@ -341,8 +352,9 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         <CurrencyAmount amount={estimatedJackpot} />
                       </span>
                     </td>
+                    {/* Tickets - hidden on mobile */}
                     <td className={cn(
-                      "px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums hidden md:table-cell",
+                      "px-2 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm tabular-nums hidden lg:table-cell",
                       isJackpotWon ? "text-yellow-200" : "text-terminal-textSecondary"
                     )}>
                       {draw.totalTickets >= 1000000 
@@ -351,7 +363,8 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                         ? `${(draw.totalTickets / 1000).toFixed(0)}K`
                         : draw.totalTickets}
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                    {/* Yield - hidden on mobile */}
+                    <td className="hidden lg:table-cell px-2 sm:px-4 py-2 sm:py-3 text-right">
                       <span
                         className={cn(
                           "text-xs sm:text-sm font-medium tabular-nums px-1.5 sm:px-2 py-0.5 rounded",
