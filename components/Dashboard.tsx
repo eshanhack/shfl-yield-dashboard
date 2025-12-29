@@ -539,7 +539,7 @@ export default function Dashboard() {
 
         {/* Desktop: Tabs + Jump To below header */}
         <div className="hidden lg:block border-b border-terminal-border/30">
-          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4">
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-5 pb-4">
             <div className="mb-3">
               <SectionSelector 
                 activeSection={activeSection} 
@@ -571,9 +571,9 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer: Desktop accounts for header + nav, Mobile just header */}
-      <div className="h-[60px] lg:h-[210px]" />
+      <div className="h-[60px] lg:h-[205px]" />
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6">
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
