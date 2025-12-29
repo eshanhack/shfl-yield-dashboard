@@ -472,15 +472,15 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      {/* Sticky Navigation Container - Sticks below the header */}
+      {/* Fixed Navigation Container - Always visible below header */}
       <div 
-        className="sticky top-[52px] sm:top-[60px] z-40 bg-terminal-black sticky-nav-fix"
+        className="fixed left-0 right-0 top-[52px] sm:top-[60px] z-40 bg-terminal-black border-b border-terminal-border/30"
         style={{
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-2 pb-1">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-2 pb-2">
           {/* Section Selector */}
           <SectionSelector 
             activeSection={activeSection} 
@@ -491,6 +491,9 @@ export default function Dashboard() {
           <SubNavigation activeSection={activeSection} />
         </div>
       </div>
+
+      {/* Spacer to account for fixed nav height */}
+      <div className="h-[140px] sm:h-[150px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6">
 
