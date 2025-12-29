@@ -86,7 +86,8 @@ export default function SensitivityTable({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow overflow-x-auto">
+    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 xl:p-5 card-glow h-full flex flex-col">
+      {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium text-terminal-text">
@@ -99,8 +100,9 @@ export default function SensitivityTable({
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px]">
+      {/* Table Container - constrained for desktop */}
+      <div className="overflow-x-auto flex-1">
+        <table className="w-full min-w-[580px] max-w-[900px]">
           <thead>
             <tr>
               <th className="p-3 text-left text-[10px] text-terminal-textMuted font-normal uppercase tracking-wider border-b border-terminal-border">

@@ -914,9 +914,9 @@ export default function Dashboard() {
               </section>
             </div>
 
-            {/* Sensitivity Table & Jackpot Frequency - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
-              <section id="sensitivity">
+            {/* Sensitivity Table & Jackpot Frequency - 12-column grid on desktop */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-5 mb-4 sm:mb-5">
+              <section id="sensitivity" className="xl:col-span-7">
                 <SensitivityTable
                   baseNGR={ngrStats.current4WeekAvg}
                   basePrice={price.usd}
@@ -924,7 +924,7 @@ export default function Dashboard() {
                   prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
                 />
               </section>
-              <section id="jackpot-frequency">
+              <section id="jackpot-frequency" className="xl:col-span-5">
                 <JackpotFrequencyPanel
                   historicalDraws={completedDraws}
                   currentTickets={lotteryStats.totalTickets}
