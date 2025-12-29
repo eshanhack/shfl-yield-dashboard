@@ -603,7 +603,7 @@ export default function Dashboard() {
                       <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
                         <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[8px] sm:text-[10px] lg:text-xs text-terminal-textSecondary uppercase tracking-wide font-medium whitespace-nowrap">
                         Annual Yield
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
@@ -618,12 +618,12 @@ export default function Dashboard() {
                   <div className="mb-1 sm:mb-2 lg:mb-3">
                     <span 
                       className={cn(
-                        "text-xl sm:text-3xl lg:text-2xl font-bold tabular-nums",
+                        "yield-headline yield-headline-size tabular-nums",
                         currentAPY > 30 
-                          ? "text-terminal-positive" 
+                          ? "yield-headline-fire" 
                           : currentAPY < 15 
-                          ? "text-blue-400" 
-                          : "text-terminal-accent"
+                          ? "yield-headline-ice" 
+                          : "yield-headline-neutral"
                       )}
                     >
                       {formatPercent(currentAPY)}
