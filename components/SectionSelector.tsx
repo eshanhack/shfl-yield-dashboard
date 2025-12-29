@@ -45,7 +45,12 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
         {sections.map((section) => (
           <button
             key={section.id}
-            onClick={() => onSectionChange(section.id)}
+            onClick={() => {
+              if (activeSection !== section.id) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+              onSectionChange(section.id);
+            }}
             role="tab"
             aria-selected={activeSection === section.id}
             aria-controls={`${section.id}-panel`}
