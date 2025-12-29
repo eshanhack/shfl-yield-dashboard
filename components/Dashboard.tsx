@@ -47,7 +47,6 @@ import {
   fetchNGRHistory,
   fetchNGRStats,
   combineChartData,
-  getMockLotteryStats,
   SHFLPrice,
   ChartDataPoint,
   LotteryStats,
@@ -60,21 +59,6 @@ import {
   formatNumber,
   HistoricalDraw,
 } from "@/lib/calculations";
-
-// Helper function to format relative time in words
-function formatTimeAgo(weeksAgo: number): string {
-  if (weeksAgo === 0) return "this week";
-  if (weeksAgo === 1) return "1 week ago";
-  if (weeksAgo < 4) return `${weeksAgo} weeks ago`;
-  
-  const months = Math.floor(weeksAgo / 4);
-  if (months === 1) return "1 month ago";
-  if (months < 12) return `${months} months ago`;
-  
-  const years = Math.floor(months / 12);
-  if (years === 1) return "1 year ago";
-  return `${years} years ago`;
-}
 
 export default function Dashboard() {
   // Toast hook

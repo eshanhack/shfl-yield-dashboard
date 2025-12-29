@@ -534,13 +534,6 @@ export async function combineChartData(
   return chartData.sort((a, b) => a.timestamp - b.timestamp);
 }
 
-function getWeekKey(timestamp: number): string {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const week = Math.floor((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
-  return `${year}-W${week}`;
-}
-
 /**
  * Fetch detailed draw data including prizes for a specific draw
  */

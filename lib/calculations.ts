@@ -86,49 +86,6 @@ export function getNonJackpotPercentage(splitString: string): number {
 }
 
 /**
- * Calculate adjusted NGR for yield after accounting for jackpot replenishment
- * 
- * When a jackpot is hit, the following week's NGR includes money to replenish
- * the jackpot (insurance). This amount should NOT count toward staker yield.
- * 
- * @param currentDrawNGR - The NGR added to the current draw
- * @param currentJackpotAmount - The jackpot amount in the current draw
- * @param prevJackpotWon - Whether the previous draw had its jackpot won
- * @param prevJackpotRemaining - The remaining jackpot from previous draw (usually near 0 if won)
- * @returns Object with adjusted NGR and jackpot replenishment amount
- */
-export function adjustNGRForJackpotReplenishment(
-  currentDrawNGR: number,
-  currentJackpotAmount: number,
-  prevJackpotWon: boolean,
-  prevJackpotRemaining: number = 0
-): { adjustedNGR: number; jackpotReplenishment: number; wasAdjusted: boolean } {
-  // If previous draw didn't have jackpot won, no adjustment needed
-  if (!prevJackpotWon) {
-    return {
-      adjustedNGR: currentDrawNGR,
-      jackpotReplenishment: 0,
-      wasAdjusted: false,
-    };
-  }
-
-  // Jackpot was won in previous draw
-  // The jackpot replenishment = current jackpot - remaining from previous (usually ~0)
-  const jackpotReplenishment = Math.max(0, currentJackpotAmount - prevJackpotRemaining);
-  
-  // Adjusted NGR = total NGR - what went to jackpot replenishment
-  // But we need to be careful: the jackpot replenishment comes from the NGR
-  // The adjusted NGR is what's available for non-jackpot divisions
-  const adjustedNGR = Math.max(0, currentDrawNGR - jackpotReplenishment);
-
-  return {
-    adjustedNGR,
-    jackpotReplenishment,
-    wasAdjusted: true,
-  };
-}
-
-/**
  * Check if a draw had its jackpot won based on the jackpotted amount
  * A very low jackpotted amount relative to prize pool indicates jackpot was won
  */
@@ -330,13 +287,6 @@ export function formatUSD(value: number, short: boolean = false): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Math.round(value))}`;
-}
-
-/**
- * Format USD with short notation (K, M, B)
- */
-export function formatUSDShort(value: number): string {
-  return formatUSD(value, true);
 }
 
 export function formatPercent(value: number): string {
