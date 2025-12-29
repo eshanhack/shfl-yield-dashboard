@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, LayoutGroup } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DashboardSection } from "./SectionSelector";
 
@@ -129,47 +129,47 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
   };
 
   return (
-    <div
-      ref={navRef}
-    >
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-        <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
-          Jump to:
-        </span>
-        <div className="flex items-center gap-1">
-          {sections.map((section) => (
-            <motion.button
-              key={section.id}
-              onClick={() => scrollToSection(section.id)}
-              // Press feedback - subtle scale on tap
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.1 }}
-              className={cn(
-                "relative px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap",
-                "hover:bg-terminal-accent/10 hover:text-terminal-accent transition-colors duration-150",
-                activeId === section.id
-                  ? "text-terminal-accent"
-                  : "text-terminal-textSecondary"
-              )}
-            >
-              {/* Animated indicator */}
-              {activeId === section.id && (
-                <motion.div
-                  layoutId="subnav-indicator"
-                  className="absolute inset-0 bg-terminal-accent/20 border border-terminal-accent/30 rounded-md"
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 35,
-                  }}
-                />
-              )}
-              <span className="relative z-10 sm:hidden">{section.shortLabel || section.label}</span>
-              <span className="relative z-10 hidden sm:inline">{section.label}</span>
-            </motion.button>
-          ))}
+    <LayoutGroup id={`subnav-${activeSection}`}>
+      <div ref={navRef}>
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+          <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider mr-2 flex-shrink-0 hidden sm:block">
+            Jump to:
+          </span>
+          <div className="flex items-center gap-1">
+            {sections.map((section) => (
+              <motion.button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1 }}
+                className={cn(
+                  "relative px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap",
+                  "hover:bg-terminal-accent/10 hover:text-terminal-accent transition-colors duration-150",
+                  activeId === section.id
+                    ? "text-terminal-accent"
+                    : "text-terminal-textSecondary"
+                )}
+              >
+                {/* Animated sliding indicator */}
+                {activeId === section.id && (
+                  <motion.div
+                    layoutId="subnav-active-indicator"
+                    className="absolute inset-0 bg-terminal-accent/20 border border-terminal-accent/30 rounded-md"
+                    initial={false}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 30,
+                    }}
+                  />
+                )}
+                <span className="relative z-10 sm:hidden">{section.shortLabel || section.label}</span>
+                <span className="relative z-10 hidden sm:inline">{section.label}</span>
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </LayoutGroup>
   );
 }
