@@ -697,33 +697,58 @@ html {
 
 /* ==================== YIELD HEADLINE EFFECTS ==================== */
 
-/* Base Shine Animation - Subtle diagonal shimmer across text */
-@keyframes yield-shine {
-  0% {
-    background-position: -200% center;
+/* Stroke shine animation - subtle shimmer on the outline */
+@keyframes stroke-shine-neutral {
+  0%, 100% {
+    text-shadow: 
+      -1px -1px 0 rgba(138, 43, 226, 0.4),
+      1px -1px 0 rgba(138, 43, 226, 0.4),
+      -1px 1px 0 rgba(138, 43, 226, 0.4),
+      1px 1px 0 rgba(138, 43, 226, 0.4);
   }
-  100% {
-    background-position: 200% center;
+  50% {
+    text-shadow: 
+      -1px -1px 0 rgba(192, 132, 252, 0.7),
+      1px -1px 0 rgba(192, 132, 252, 0.7),
+      -1px 1px 0 rgba(192, 132, 252, 0.7),
+      1px 1px 0 rgba(192, 132, 252, 0.7),
+      0 0 8px rgba(138, 43, 226, 0.3);
   }
 }
 
-/* Fire glow pulse for hot yields - subtle */
-@keyframes fire-glow {
+@keyframes stroke-shine-fire {
   0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 6px rgba(255, 100, 0, 0.3));
+    text-shadow: 
+      -1px -1px 0 rgba(255, 100, 0, 0.5),
+      1px -1px 0 rgba(255, 100, 0, 0.5),
+      -1px 1px 0 rgba(255, 100, 0, 0.5),
+      1px 1px 0 rgba(255, 100, 0, 0.5);
   }
   50% {
-    filter: brightness(1.05) drop-shadow(0 0 10px rgba(255, 80, 0, 0.4));
+    text-shadow: 
+      -1px -1px 0 rgba(255, 200, 50, 0.8),
+      1px -1px 0 rgba(255, 200, 50, 0.8),
+      -1px 1px 0 rgba(255, 200, 50, 0.8),
+      1px 1px 0 rgba(255, 200, 50, 0.8),
+      0 0 12px rgba(255, 100, 0, 0.4);
   }
 }
 
-/* Ice crystalline shimmer - subtle */
-@keyframes ice-shimmer {
+@keyframes stroke-shine-ice {
   0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 6px rgba(100, 200, 255, 0.3));
+    text-shadow: 
+      -1px -1px 0 rgba(96, 165, 250, 0.5),
+      1px -1px 0 rgba(96, 165, 250, 0.5),
+      -1px 1px 0 rgba(96, 165, 250, 0.5),
+      1px 1px 0 rgba(96, 165, 250, 0.5);
   }
   50% {
-    filter: brightness(1.05) drop-shadow(0 0 10px rgba(150, 220, 255, 0.4));
+    text-shadow: 
+      -1px -1px 0 rgba(224, 242, 254, 0.8),
+      1px -1px 0 rgba(224, 242, 254, 0.8),
+      -1px 1px 0 rgba(224, 242, 254, 0.8),
+      1px 1px 0 rgba(224, 242, 254, 0.8),
+      0 0 10px rgba(56, 189, 248, 0.4);
   }
 }
 
@@ -732,61 +757,26 @@ html {
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
-  background-size: 300% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  will-change: background-position;
   transform: translateZ(0);
-  /* Thin stroke for definition */
-  -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.15);
-  paint-order: stroke fill;
+  will-change: text-shadow;
 }
 
-/* Neutral theme (15-30%) - Purple shine, subtle */
+/* Neutral theme (15-30%) - Purple with animated stroke */
 .yield-headline-neutral {
-  background-image: linear-gradient(
-    110deg,
-    var(--terminal-accent) 0%,
-    var(--terminal-accent) 42%,
-    #c084fc 50%,
-    var(--terminal-accent) 58%,
-    var(--terminal-accent) 100%
-  );
-  animation: yield-shine 6s ease-in-out infinite;
-  -webkit-text-stroke: 0.5px rgba(138, 43, 226, 0.3);
+  color: var(--terminal-accent);
+  animation: stroke-shine-neutral 4s ease-in-out infinite;
 }
 
-/* Fire theme (>30%) - Hot gradient with subtle glow */
+/* Fire theme (>30%) - Orange/gold with animated stroke */
 .yield-headline-fire {
-  background-image: linear-gradient(
-    110deg,
-    #ff6b00 0%,
-    #ff4500 42%,
-    #ffdd44 50%,
-    #ff4500 58%,
-    #ff6b00 100%
-  );
-  animation: 
-    yield-shine 5s ease-in-out infinite,
-    fire-glow 4s ease-in-out infinite;
-  -webkit-text-stroke: 0.5px rgba(255, 100, 0, 0.4);
+  color: #ff6b00;
+  animation: stroke-shine-fire 3s ease-in-out infinite;
 }
 
-/* Ice theme (<15%) - Cold gradient with subtle crystalline effect */
+/* Ice theme (<15%) - Blue with animated stroke */
 .yield-headline-ice {
-  background-image: linear-gradient(
-    110deg,
-    #60a5fa 0%,
-    #38bdf8 42%,
-    #e0f2fe 50%,
-    #38bdf8 58%,
-    #60a5fa 100%
-  );
-  animation: 
-    yield-shine 7s ease-in-out infinite,
-    ice-shimmer 5s ease-in-out infinite;
-  -webkit-text-stroke: 0.5px rgba(96, 165, 250, 0.4);
+  color: #60a5fa;
+  animation: stroke-shine-ice 5s ease-in-out infinite;
 }
 
 /* Responsive sizing for yield headline */
