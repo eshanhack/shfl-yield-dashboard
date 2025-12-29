@@ -598,44 +598,44 @@ export default function Dashboard() {
             <div key={`card1-${activeSection}`} className="kpi-content-enter h-full flex flex-col">
               {activeSection === "lottery" && (
                 <>
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded bg-terminal-accent/20 border border-terminal-accent/30">
-                        <Percent className="w-4 h-4 text-terminal-accent" />
+                  <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <div className="p-1 sm:p-1.5 lg:p-2 rounded bg-terminal-accent/20 border border-terminal-accent/30">
+                        <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-terminal-accent" />
                       </div>
-                      <span className="text-xs text-terminal-textSecondary uppercase tracking-wide font-medium">
+                      <span className="text-[10px] sm:text-xs lg:text-sm text-terminal-textSecondary uppercase tracking-wide font-medium">
                         Annual Yield
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
                     {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${apyChange < 0 ? "rotate-180" : ""}`} />
+                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm font-medium px-1.5 sm:px-2 lg:px-2.5 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
+                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 ${apyChange < 0 ? "rotate-180" : ""}`} />
                         <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
-                  <div className="mb-1 sm:mb-2">
+                  <div className="mb-1 sm:mb-2 lg:mb-3">
                     <span 
                       className={cn(
-                        "yield-headline yield-headline-size tabular-nums",
+                        "text-xl sm:text-3xl lg:text-2xl font-bold tabular-nums",
                         currentAPY > 30 
-                          ? "yield-headline-fire" 
+                          ? "text-terminal-positive" 
                           : currentAPY < 15 
-                          ? "yield-headline-ice" 
-                          : "yield-headline-neutral"
+                          ? "text-blue-400" 
+                          : "text-terminal-accent"
                       )}
                     >
                       {formatPercent(currentAPY)}
                     </span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-1">4-week avg</div>
-                  <div className="space-y-0.5 sm:space-y-1 mt-auto pt-1.5 sm:pt-2 border-t border-terminal-border/50">
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
+                  <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
                       <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Highest</span>
                       <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
                     </div>
