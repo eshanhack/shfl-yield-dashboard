@@ -481,7 +481,7 @@ export default function Dashboard() {
       {/* Loading Progress Bar */}
       <LoadingBar isLoading={isRefreshing} />
       
-      {/* Fixed Header + Navigation Container - All stuck together */}
+      {/* Fixed Header - Always at top */}
       <div 
         className="fixed left-0 right-0 top-0 z-50 bg-terminal-black"
         style={{
@@ -489,34 +489,49 @@ export default function Dashboard() {
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        {/* Header */}
         <Header
           price={price.usd}
           priceChange24h={price.usd_24h_change}
           nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
         />
 
-        {/* Tabs + Jump To Navigation */}
-        <div className="border-b border-terminal-border/30">
-          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 sm:pt-5 pb-3">
-            {/* Section Selector */}
+        {/* Desktop: Tabs + Jump To below header */}
+        <div className="hidden lg:block border-b border-terminal-border/30">
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 pb-3">
             <div className="mb-2">
               <SectionSelector 
                 activeSection={activeSection} 
                 onSectionChange={setActiveSection} 
               />
             </div>
-
-            {/* Sub Navigation - Quick jump to sections */}
             <SubNavigation activeSection={activeSection} />
           </div>
         </div>
       </div>
 
-      {/* Spacer to account for fixed header + nav height */}
-      <div className="h-[200px] sm:h-[220px]" />
+      {/* Mobile: Tabs + Jump To at bottom of screen */}
+      <div 
+        className="lg:hidden fixed left-0 right-0 bottom-0 z-50 bg-terminal-black border-t border-terminal-border/30"
+        style={{
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
+        }}
+      >
+        <div className="px-3 sm:px-4 pt-2 pb-3 safe-area-bottom">
+          <div className="mb-2">
+            <SectionSelector 
+              activeSection={activeSection} 
+              onSectionChange={setActiveSection} 
+            />
+          </div>
+          <SubNavigation activeSection={activeSection} />
+        </div>
+      </div>
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-4 sm:pb-6">
+      {/* Spacer: Desktop accounts for header + nav, Mobile just header */}
+      <div className="h-[60px] lg:h-[180px]" />
+
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">

@@ -52,6 +52,11 @@ body {
   background: var(--terminal-accent);
 }
 
+/* Safe area for devices with home indicators (iPhone X+) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Terminal grid lines effect */
 .terminal-grid {
   background-image: 
