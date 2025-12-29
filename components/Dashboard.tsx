@@ -472,9 +472,9 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      {/* Sticky Navigation Container - Outside main for proper sticky behavior */}
+      {/* Sticky Navigation Container - Sticks below the header */}
       <div 
-        className="sticky top-0 z-40 bg-terminal-black sticky-nav-fix"
+        className="sticky top-[52px] sm:top-[60px] z-40 bg-terminal-black sticky-nav-fix"
         style={{
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
