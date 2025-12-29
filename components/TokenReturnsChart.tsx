@@ -119,15 +119,34 @@ export default function TokenReturnsChart() {
   useEffect(() => {
     const fetchPriceData = async () => {
       setIsLoading(true);
+      
+      // Retry helper with timeout
+      const fetchWithRetry = async (url: string, retries = 2, timeout = 30000) => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.ok) return response;
+          } catch {
+            if (attempt === retries) throw new Error(`Failed after ${retries + 1} attempts`);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+        throw new Error("All retries failed");
+      };
+
       try {
         const days = periodDays[timePeriod];
-        const response = await fetch(`/api/token-prices?days=${days}`);
-        if (!response.ok) throw new Error("Failed to fetch");
+        const response = await fetchWithRetry(`/api/token-prices?days=${days}`, 2, 30000);
         
         const json = await response.json();
         if (!json.success) throw new Error("API returned error");
         
-        setDataSource(json.source === "live" ? "live" : "demo");
+        // Consider live if any token has data
+        const hasAnyData = json.data?.some((item: any) => item.prices?.length > 0);
+        setDataSource(hasAnyData ? "live" : "demo");
         
         const results = json.data
           .map((item: { symbol: string; prices: [number, number][] }) => {

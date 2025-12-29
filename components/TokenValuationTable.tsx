@@ -73,17 +73,40 @@ export default function TokenValuationTable() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        // Fetch both in parallel with timeout
+      // Helper for fetch with timeout
+      const fetchWithTimeout = async (url: string, timeoutMs: number) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          return response;
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
+      };
+
+      // Retry helper
+      const fetchWithRetry = async (url: string, retries = 2, timeout = 30000) => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            const response = await fetchWithTimeout(url, timeout);
+            if (response.ok) return response;
+          } catch {
+            if (attempt === retries) throw new Error(`Failed after ${retries + 1} attempts`);
+            await new Promise(r => setTimeout(r, 1000)); // Wait 1s between retries
+          }
+        }
+        throw new Error("All retries failed");
+      };
+
+      try {
+        // Fetch both in parallel with longer timeout and retries
         const [mcResponse, revResponse] = await Promise.all([
-          fetch("/api/market-caps", { signal: controller.signal }),
-          fetch("/api/token-revenue", { signal: controller.signal }),
+          fetchWithRetry("/api/market-caps", 2, 30000),
+          fetchWithRetry("/api/token-revenue", 2, 45000), // Longer timeout for revenue (depends on scraper)
         ]);
-        
-        clearTimeout(timeoutId);
         
         const mcJson = await mcResponse.json();
         const revJson = await revResponse.json();
@@ -91,8 +114,9 @@ export default function TokenValuationTable() {
         const marketCaps = mcJson.data || {};
         const revenues = revJson.data || [];
         
-        const hasLiveMarketCap = mcJson.source === "live";
-        const hasLiveRevenue = revJson.source === "live";
+        // Consider live if market caps are live (revenue often has some "estimated" tokens)
+        const hasLiveMarketCap = mcJson.source === "live" || mcJson.source === "partial";
+        const hasLiveRevenue = revJson.source === "live" || revenues.some((r: any) => r.source === "live");
         setDataSource(hasLiveMarketCap || hasLiveRevenue ? "live" : "demo");
         
         const tokensWithCalcs: TokenWithCalculations[] = TOKEN_INFO.map(token => {
