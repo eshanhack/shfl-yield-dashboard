@@ -69,7 +69,8 @@ export default function TokenValuationTable() {
   // Start with fallback data for immediate render
   const [tokens, setTokens] = useState<TokenWithCalculations[]>(() => getFallbackTokens("revenue"));
   const [isLoading, setIsLoading] = useState(false); // Don't block initial render
-  const [dataSource, setDataSource] = useState<"live" | "demo">("demo");
+  // Default to "live" - only show "demo" on actual failure
+  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -167,7 +168,8 @@ export default function TokenValuationTable() {
         
         setTokens(tokensWithCalcs);
       } catch {
-        // Keep fallback data on error
+        // Only show "demo" on actual failure
+        setDataSource("demo");
         setTokens(getFallbackTokens(viewMode));
       }
     };

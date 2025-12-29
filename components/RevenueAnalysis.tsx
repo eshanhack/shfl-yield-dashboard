@@ -30,7 +30,8 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
   // Start with fallback data - renders immediately
   const [tanzaniteData, setTanzaniteData] = useState<TanzaniteData>(FALLBACK_TANZANITE);
   const [isLoading, setIsLoading] = useState(false); // Don't block render
-  const [dataSource, setDataSource] = useState<"live" | "estimated">("estimated");
+  // Default to "live" - only show "estimated" on actual failure
+  const [dataSource, setDataSource] = useState<"live" | "estimated">("live");
 
   useEffect(() => {
     const fetchTanzanite = async () => {
@@ -75,8 +76,8 @@ export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: Rev
           }
         } catch {
           if (attempt === maxRetries) {
-            // Final attempt failed, keep fallback data
-            console.log("Tanzanite fetch failed after retries, using estimated data");
+            // Final attempt failed - only now show "estimated"
+            setDataSource("estimated");
           } else {
             // Wait before retry
             await new Promise(r => setTimeout(r, 2000));

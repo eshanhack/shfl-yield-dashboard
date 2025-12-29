@@ -42,7 +42,8 @@ export default function TokenReturnsChart() {
   // Start with placeholder returns for immediate render
   const [returns, setReturns] = useState<Record<string, number>>(generatePlaceholderReturns());
   const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState<"live" | "demo">("demo");
+  // Default to "live" - only show "demo" on actual failure
+  const [dataSource, setDataSource] = useState<"live" | "demo">("live");
   const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
     new Set(TOKENS.map(t => t.symbol))
   );
@@ -159,7 +160,8 @@ export default function TokenReturnsChart() {
         setChartData(newChartData);
         if (Object.keys(newReturns).length > 0) setReturns(newReturns);
       } catch {
-        // Keep placeholder data on error
+        // Only show "demo" on actual failure
+        setDataSource("demo");
       }
       setIsLoading(false);
     };
