@@ -480,7 +480,7 @@ export default function Dashboard() {
           WebkitBackfaceVisibility: "hidden",
         }}
       >
-        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-3">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-4 sm:pt-5 pb-3">
           {/* Section Selector */}
           <div className="mb-2">
             <SectionSelector 
@@ -495,7 +495,7 @@ export default function Dashboard() {
       </div>
 
       {/* Spacer to account for fixed nav height */}
-      <div className="h-[130px] sm:h-[140px]" />
+      <div className="h-[145px] sm:h-[160px]" />
 
       <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6">
 
