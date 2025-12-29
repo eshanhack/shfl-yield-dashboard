@@ -414,6 +414,24 @@ button:disabled,
   background: var(--terminal-border);
 }
 
+/* Sticky Nav Anti-Flicker Fix */
+.sticky-nav-fix {
+  position: relative;
+  isolation: isolate;
+}
+
+.sticky-nav-fix::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 8px;
+  background: var(--terminal-black);
+  z-index: -1;
+  pointer-events: none;
+}
+
 /* Responsive Text - Prevent overflow */
 .text-truncate {
   overflow: hidden;
