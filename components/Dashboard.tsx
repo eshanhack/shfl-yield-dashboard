@@ -472,15 +472,15 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6 overflow-safe">
-        {/* Sticky Navigation Container - Section tabs + Sub-navigation */}
-        <div 
-          className="sticky top-0 z-40 -mx-3 sm:-mx-4 lg:-mx-8 xl:-mx-12 px-3 sm:px-4 lg:px-8 xl:px-12 pt-2 pb-1 bg-terminal-black sticky-nav-fix"
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-          }}
-        >
+      {/* Sticky Navigation Container - Outside main for proper sticky behavior */}
+      <div 
+        className="sticky top-0 z-40 bg-terminal-black sticky-nav-fix"
+        style={{
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
+        }}
+      >
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-2 pb-1">
           {/* Section Selector */}
           <SectionSelector 
             activeSection={activeSection} 
@@ -490,6 +490,9 @@ export default function Dashboard() {
           {/* Sub Navigation - Quick jump to sections */}
           <SubNavigation activeSection={activeSection} />
         </div>
+      </div>
+
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-4 sm:py-6">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
