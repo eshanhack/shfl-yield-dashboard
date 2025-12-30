@@ -42,6 +42,16 @@ interface LearnPageProps {
 // SHFL Contract Address
 const SHFL_CONTRACT = "0x8881562783028F5c1BCB985d2283D5E170D88888";
 
+// USDC Icon Component
+function USDCIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="16" fill="#2775CA"/>
+      <path d="M20.5 18.5C20.5 20.71 18.71 22.5 16.5 22.5H15.5V24.5H14.5V22.5H13.5C11.29 22.5 9.5 20.71 9.5 18.5H11.5C11.5 19.6 12.4 20.5 13.5 20.5H16.5C17.6 20.5 18.5 19.6 18.5 18.5C18.5 17.4 17.6 16.5 16.5 16.5H13.5C11.29 16.5 9.5 14.71 9.5 12.5C9.5 10.29 11.29 8.5 13.5 8.5H14.5V6.5H15.5V8.5H16.5C18.71 8.5 20.5 10.29 20.5 12.5H18.5C18.5 11.4 17.6 10.5 16.5 10.5H13.5C12.4 10.5 11.5 11.4 11.5 12.5C11.5 13.6 12.4 14.5 13.5 14.5H16.5C18.71 14.5 20.5 16.29 20.5 18.5Z" fill="white"/>
+    </svg>
+  );
+}
+
 // Create context for SHFL price to share across components
 const SHFLPriceContext = createContext<number>(0.05);
 
@@ -179,7 +189,7 @@ function LotteryTicketConcept() {
             </div>
             <ArrowRight className="w-4 h-4 text-terminal-textMuted" />
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
-              <DollarSign className="w-4 h-4 text-green-400" />
+              <USDCIcon className="w-4 h-4" />
               <span className="text-green-400 font-medium">Claim USDC Weekly</span>
             </div>
           </div>
@@ -230,12 +240,13 @@ function LotteryTicketConcept() {
                 <div className="text-[10px] text-terminal-textMuted">with the same tickets</div>
               </div>
               
-              <div className="p-3 rounded-xl bg-terminal-accent/10 border border-terminal-accent/30">
+              <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
                 <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Est. Total Winnings</div>
-                <div className="text-2xl font-bold text-terminal-accent">
+                <div className="text-2xl font-bold text-green-400 flex items-center justify-center gap-1.5">
+                  <USDCIcon className="w-5 h-5" />
                   ${totalWins.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </div>
-                <div className="text-[10px] text-terminal-textMuted">over {weeks} weeks</div>
+                <div className="text-[10px] text-terminal-textMuted">USDC over {weeks} weeks</div>
               </div>
             </div>
           </div>
@@ -532,10 +543,11 @@ function RevenueFlowDiagram() {
         transition={{ delay: 0.5 }}
       >
         <div className="text-xs text-green-400 uppercase tracking-wider mb-1 font-medium flex items-center justify-center gap-1.5">
-          <DollarSign className="w-3.5 h-3.5" />
+          <USDCIcon className="w-4 h-4" />
           Your Estimated WEEKLY USDC
         </div>
-        <div className="text-3xl lg:text-4xl font-bold text-green-400">
+        <div className="text-3xl lg:text-4xl font-bold text-green-400 flex items-center justify-center gap-2">
+          <USDCIcon className="w-7 h-7 lg:w-8 lg:h-8" />
           {formatMoney(weeklyYield)}
         </div>
         <div className="text-xs text-terminal-textMuted mt-2">
@@ -650,20 +662,22 @@ function StakeSharePie() {
           <div className="grid grid-cols-2 gap-3">
             <motion.div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30" whileHover={{ scale: 1.02 }}>
               <div className="text-[10px] text-terminal-textMuted uppercase mb-1 flex items-center gap-1">
-                <DollarSign className="w-3 h-3" />
+                <USDCIcon className="w-3 h-3" />
                 Est. Weekly USDC
               </div>
-              <div className="text-lg lg:text-xl font-bold text-green-400 flex items-center gap-1">
+              <div className="text-lg lg:text-xl font-bold text-green-400 flex items-center gap-1.5">
+                <USDCIcon className="w-5 h-5" />
                 ${animatedYield.toLocaleString()}
               </div>
             </motion.div>
             
             <motion.div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30" whileHover={{ scale: 1.02 }}>
               <div className="text-[10px] text-terminal-textMuted uppercase mb-1 flex items-center gap-1">
-                <DollarSign className="w-3 h-3" />
+                <USDCIcon className="w-3 h-3" />
                 Est. Annual USDC
               </div>
-              <div className="text-lg lg:text-xl font-bold text-green-400">
+              <div className="text-lg lg:text-xl font-bold text-green-400 flex items-center gap-1.5">
+                <USDCIcon className="w-5 h-5" />
                 ${Math.round(annualYield).toLocaleString()}
               </div>
             </motion.div>
@@ -1033,27 +1047,31 @@ function DrawSimulator() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-center">
               <div className="text-[9px] text-terminal-textMuted uppercase flex items-center justify-center gap-1">
-                <DollarSign className="w-3 h-3" /> Total USDC
+                <USDCIcon className="w-3 h-3" /> Total USDC
               </div>
-              <div className="text-base lg:text-lg font-bold text-green-400">
+              <div className="text-base lg:text-lg font-bold text-green-400 flex items-center justify-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${Math.round(totalEarned).toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-xl bg-terminal-card border border-terminal-border text-center">
               <div className="text-[9px] text-terminal-textMuted uppercase">Avg/Week</div>
-              <div className="text-base lg:text-lg font-bold text-terminal-text">
+              <div className="text-base lg:text-lg font-bold text-terminal-text flex items-center justify-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${Math.round(avgWeekly).toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-center">
               <div className="text-[9px] text-terminal-textMuted uppercase">Best Week</div>
-              <div className="text-base lg:text-lg font-bold text-green-400">
+              <div className="text-base lg:text-lg font-bold text-green-400 flex items-center justify-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${Math.round(maxWeek).toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-center">
               <div className="text-[9px] text-terminal-textMuted uppercase">Worst Week</div>
-              <div className="text-base lg:text-lg font-bold text-red-400">
+              <div className="text-base lg:text-lg font-bold text-red-400 flex items-center justify-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${Math.round(minWeek).toLocaleString()}
               </div>
             </div>
@@ -1420,16 +1438,18 @@ function CompoundingCalculator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-terminal-card border border-terminal-border">
               <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Hold + Collect Yield</div>
-              <div className="text-lg font-bold text-terminal-textSecondary">
+              <div className="text-lg font-bold text-terminal-textSecondary flex items-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${results.finalHoldPlusYield.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
-              <div className="text-[9px] text-terminal-textMuted">
-                {initialStake.toLocaleString()} SHFL + ${results.totalYieldEarned.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDC
+              <div className="text-[9px] text-terminal-textMuted flex items-center gap-1">
+                {initialStake.toLocaleString()} SHFL + <USDCIcon className="w-3 h-3" /> ${results.totalYieldEarned.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
             </div>
             <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
               <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Reinvest Yield</div>
-              <div className="text-lg font-bold text-green-400">
+              <div className="text-lg font-bold text-green-400 flex items-center gap-1">
+                <USDCIcon className="w-4 h-4" />
                 ${results.finalReinvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-[9px] text-green-400/70">
