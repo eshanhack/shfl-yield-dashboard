@@ -93,26 +93,26 @@ export default function TicketEVPanel({
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       {/* Header - Stacked on mobile for better fit */}
-      <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
+      <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4 mb-4">
+        <div className="flex items-start gap-2 lg:gap-3">
+          <div className="p-1.5 lg:p-2 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
             <TrendingUp className="w-4 h-4 text-terminal-accent" />
           </div>
-          <div className="min-w-0">
+          <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-medium text-terminal-text leading-relaxed">
+              <h3 className="text-sm font-medium text-terminal-text">
                 Ticket Expected Value
               </h3>
               <InfoTooltip content={TOOLTIPS.ev} title="Expected Value (EV)" />
             </div>
-            <p className="text-[10px] text-terminal-textMuted leading-relaxed">
+            <p className="text-[10px] lg:text-xs text-terminal-textMuted mt-0.5">
               Pool: {formatUSD(drawData.pool)} • {drawData.tickets.toLocaleString()} tickets
             </p>
           </div>
         </div>
         
         {/* Draw Selector Dropdown - Full width on mobile */}
-        <div className="relative max-lg:w-full">
+        <div className="relative max-lg:w-full flex-shrink-0">
           <select
             value={selectedDraw}
             onChange={(e) => setSelectedDraw(e.target.value === "upcoming" ? "upcoming" : parseInt(e.target.value))}
