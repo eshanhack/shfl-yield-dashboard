@@ -79,6 +79,12 @@ body {
   background-size: 20px 20px;
 }
 
+/* Ensure card backgrounds are solid (block grid background) */
+.card-solid {
+  background-color: #0d0d0d;
+  isolation: isolate;
+}
+
 /* Scanline effect */
 .scanlines::after {
   content: "";

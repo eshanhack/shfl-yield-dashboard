@@ -11,7 +11,7 @@ export default function Loader() {
   }, []);
 
   return (
-    <>
+    <div className="min-h-screen bg-black relative overflow-hidden">
       <style>
         {`
           @keyframes coinFlip3D {
@@ -83,9 +83,11 @@ export default function Loader() {
       </style>
       
       {/* Animated Grid Background - stronger on loader */}
-      <GridBackground intensity="medium" interactive={false} />
+      <div className="absolute inset-0 z-0">
+        <GridBackground intensity="medium" interactive={false} />
+      </div>
       
-      <div className="min-h-screen bg-black/80 flex items-center justify-center relative z-10">
+      <div className="min-h-screen flex items-center justify-center relative z-10">
         <div className="text-center">
           {/* 3D Flipping Coin */}
           <div className="coin-container">
@@ -129,6 +131,6 @@ export default function Loader() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

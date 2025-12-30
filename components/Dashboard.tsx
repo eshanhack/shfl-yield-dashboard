@@ -510,8 +510,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-terminal-black terminal-grid relative">
-      {/* Animated Grid Background */}
-      <GridBackground intensity="subtle" interactive={true} />
+      {/* Animated Grid Background - only visible in empty areas */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <GridBackground intensity="subtle" interactive={true} />
+      </div>
       
       {/* Loading Progress Bar */}
       <LoadingBar isLoading={isRefreshing} />
@@ -566,7 +568,7 @@ export default function Dashboard() {
       {/* Spacer: Desktop accounts for header + nav, Mobile accounts for header only but with enough padding */}
       <div className="h-[75px] lg:h-[205px]" />
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1">
+      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1 relative z-10">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
