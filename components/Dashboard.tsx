@@ -630,7 +630,10 @@ export default function Dashboard() {
 
       {/* Show Learn Page OR Dashboard Content */}
       {showLearnPage ? (
-        <LearnPage onBack={() => setShowLearnPage(false)} />
+        <LearnPage 
+          onBack={() => setShowLearnPage(false)} 
+          nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
+        />
       ) : (
         <>
           {/* Mobile: Tabs + Jump To at bottom of screen */}
