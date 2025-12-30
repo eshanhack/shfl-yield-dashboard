@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import GridBackground from "./GridBackground";
 
 export default function Loader() {
   const [mounted, setMounted] = useState(false);
@@ -81,7 +82,10 @@ export default function Loader() {
         `}
       </style>
       
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      {/* Animated Grid Background - stronger on loader */}
+      <GridBackground intensity="medium" interactive={false} />
+      
+      <div className="min-h-screen bg-black/80 flex items-center justify-center relative z-10">
         <div className="text-center">
           {/* 3D Flipping Coin */}
           <div className="coin-container">

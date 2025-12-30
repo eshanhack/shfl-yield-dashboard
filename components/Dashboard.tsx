@@ -41,6 +41,7 @@ import PersonalROITracker from "./PersonalROITracker";
 import BreakEvenTimer from "./BreakEvenTimer";
 import NGRMomentumIndicator from "./NGRMomentumIndicator";
 import JackpotHunterPanel from "./JackpotHunterPanel";
+import GridBackground from "./GridBackground";
 import { useToast } from "@/contexts/ToastContext";
 
 import {
@@ -508,7 +509,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-black terminal-grid">
+    <div className="min-h-screen bg-terminal-black terminal-grid relative">
+      {/* Animated Grid Background */}
+      <GridBackground intensity="subtle" interactive={true} />
+      
       {/* Loading Progress Bar */}
       <LoadingBar isLoading={isRefreshing} />
       
