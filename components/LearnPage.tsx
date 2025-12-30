@@ -168,8 +168,21 @@ function LotteryTicketConcept() {
           <p className="text-sm lg:text-base text-terminal-textSecondary max-w-xl mx-auto">
             Imagine buying lottery tickets <span className="text-terminal-accent font-semibold">once</span>, 
             but they enter <span className="text-terminal-accent font-semibold">every single draw forever</span>. 
-            You&apos;d win some amount of money every week, without ever buying another ticket.
+            If you had enough tickets, some of them would win an amount of money every week, without ever buying another ticket.
           </p>
+          
+          {/* SHFL → USDC Flow Visual */}
+          <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30">
+              <Coins className="w-4 h-4 text-terminal-accent" />
+              <span className="text-terminal-accent font-medium">Stake SHFL</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-terminal-textMuted" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
+              <DollarSign className="w-4 h-4 text-green-400" />
+              <span className="text-green-400 font-medium">Claim USDC Weekly</span>
+            </div>
+          </div>
         </div>
         
         {/* Interactive Visualization */}
@@ -364,9 +377,9 @@ function RevenueFlowDiagram() {
         <div className="flex items-center gap-2">
           <input
             type="number"
-            min={1}
+            min={0}
             value={userInput}
-            onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) => setUserInput(Math.max(0, Number(e.target.value) || 0))}
             className="flex-1 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
           />
           {/* Dropdown */}
@@ -513,22 +526,23 @@ function RevenueFlowDiagram() {
       
       {/* Weekly Yield Result - EMPHASIZED */}
       <motion.div 
-        className="mt-6 p-4 rounded-xl bg-gradient-to-br from-terminal-accent/20 to-purple-500/10 border-2 border-terminal-accent max-w-md mx-auto text-center"
+        className="mt-6 p-4 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/10 border-2 border-green-500 max-w-md mx-auto text-center"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ delay: 0.5 }}
       >
-        <div className="text-xs text-terminal-accent uppercase tracking-wider mb-1 font-medium">
-          🎯 Your Estimated WEEKLY Yield
+        <div className="text-xs text-green-400 uppercase tracking-wider mb-1 font-medium flex items-center justify-center gap-1.5">
+          <DollarSign className="w-3.5 h-3.5" />
+          Your Estimated WEEKLY USDC
         </div>
-        <div className="text-3xl lg:text-4xl font-bold text-terminal-accent">
+        <div className="text-3xl lg:text-4xl font-bold text-green-400">
           {formatMoney(weeklyYield)}
         </div>
         <div className="text-xs text-terminal-textMuted mt-2">
-          Every week • {userTickets.toLocaleString()} tickets • {(userShare * 100).toFixed(4)}% share
+          Claimable every Friday • {userTickets.toLocaleString()} tickets • {(userShare * 100).toFixed(4)}% share
         </div>
-        <div className="text-[10px] text-terminal-textMuted mt-1 opacity-70">
-          ≈ {formatMoney(weeklyYield * 52)} annually
+        <div className="text-[10px] text-green-400/70 mt-1">
+          ≈ {formatMoney(weeklyYield * 52)} USDC annually
         </div>
       </motion.div>
       
@@ -619,7 +633,11 @@ function StakeSharePie() {
                   <span className="text-xs text-terminal-textMuted ml-1">SHFL</span>
                 </div>
                 <div className="text-xs text-terminal-textMuted">
-                  ≈ ${usdValue >= 1000 ? (usdValue / 1000).toFixed(1) + "K" : usdValue.toFixed(0)} USD
+                  ≈ ${usdValue >= 1000000 
+                    ? (usdValue / 1000000).toFixed(1) + "M" 
+                    : usdValue >= 1000 
+                    ? (usdValue / 1000).toFixed(1) + "K" 
+                    : usdValue.toFixed(0)} USD
                 </div>
               </div>
             </div>
@@ -628,17 +646,23 @@ function StakeSharePie() {
             </div>
           </div>
           
-          {/* Results Grid */}
+          {/* Results Grid - USDC Rewards */}
           <div className="grid grid-cols-2 gap-3">
-            <motion.div className="p-3 rounded-xl bg-terminal-accent/10 border border-terminal-accent/30" whileHover={{ scale: 1.02 }}>
-              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Est. Weekly</div>
-              <div className="text-lg lg:text-xl font-bold text-terminal-accent">
+            <motion.div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30" whileHover={{ scale: 1.02 }}>
+              <div className="text-[10px] text-terminal-textMuted uppercase mb-1 flex items-center gap-1">
+                <DollarSign className="w-3 h-3" />
+                Est. Weekly USDC
+              </div>
+              <div className="text-lg lg:text-xl font-bold text-green-400 flex items-center gap-1">
                 ${animatedYield.toLocaleString()}
               </div>
             </motion.div>
             
             <motion.div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30" whileHover={{ scale: 1.02 }}>
-              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Est. Annual</div>
+              <div className="text-[10px] text-terminal-textMuted uppercase mb-1 flex items-center gap-1">
+                <DollarSign className="w-3 h-3" />
+                Est. Annual USDC
+              </div>
               <div className="text-lg lg:text-xl font-bold text-green-400">
                 ${Math.round(annualYield).toLocaleString()}
               </div>
@@ -918,9 +942,9 @@ function DrawSimulator() {
           <div className="flex items-center gap-2 justify-center">
             <input
               type="number"
-              min={1}
+              min={0}
               value={userInput}
-              onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => setUserInput(Math.max(0, Number(e.target.value) || 0))}
               className="w-32 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
             />
             {/* Dropdown */}
@@ -1005,16 +1029,18 @@ function DrawSimulator() {
             })}
           </div>
           
-          {/* Stats */}
+          {/* Stats - USDC */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="p-3 rounded-xl bg-terminal-accent/10 border border-terminal-accent/30 text-center">
-              <div className="text-[9px] text-terminal-textMuted uppercase">Est. Total</div>
-              <div className="text-base lg:text-lg font-bold text-terminal-accent">
+            <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-center">
+              <div className="text-[9px] text-terminal-textMuted uppercase flex items-center justify-center gap-1">
+                <DollarSign className="w-3 h-3" /> Total USDC
+              </div>
+              <div className="text-base lg:text-lg font-bold text-green-400">
                 ${Math.round(totalEarned).toLocaleString()}
               </div>
             </div>
             <div className="p-3 rounded-xl bg-terminal-card border border-terminal-border text-center">
-              <div className="text-[9px] text-terminal-textMuted uppercase">Est. Avg/Week</div>
+              <div className="text-[9px] text-terminal-textMuted uppercase">Avg/Week</div>
               <div className="text-base lg:text-lg font-bold text-terminal-text">
                 ${Math.round(avgWeekly).toLocaleString()}
               </div>
@@ -1590,18 +1616,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPr
           </div>
         </AnimatedSection>
         
-        {/* Section 3: Ticket System */}
-        <AnimatedSection>
-          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
-            <div className="text-center mb-4">
-              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">The Ticket System</h2>
-              <p className="text-xs text-terminal-textSecondary mt-1">Stake tokens or buy single tickets</p>
-            </div>
-            <TicketSystem />
-          </div>
-        </AnimatedSection>
-        
-        {/* Section 4: Draw Simulator */}
+        {/* Section 3: Draw Simulator */}
         <AnimatedSection>
           <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
             <div className="text-center mb-4">
