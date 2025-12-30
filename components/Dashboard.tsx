@@ -927,8 +927,8 @@ export default function Dashboard() {
                       <span className="font-bold text-terminal-accent tabular-nums">{lotteryStats.circulatingSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.circulatingSupply) * 100).toFixed(1) : "0"}%</span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
-                      <span className="text-terminal-textMuted">Total</span>
-                      <span className="font-bold text-purple-400 tabular-nums">{lotteryStats.totalSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(1) : "0"}%</span>
+                      <span className="text-terminal-textMuted">TVL</span>
+                      <span className="font-bold text-purple-400 tabular-nums">${formatNumber(Math.round((lotteryStats.totalSHFLStaked * price.usd) / 1_000_000))}M</span>
                     </div>
                   </div>
                 </>
