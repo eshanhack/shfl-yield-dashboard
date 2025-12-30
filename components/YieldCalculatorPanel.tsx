@@ -307,7 +307,7 @@ export default function YieldCalculatorPanel({
             </div>
 
             {/* Annual */}
-            <div className="bg-gradient-to-br from-terminal-accent/10 to-purple-900/20 border border-terminal-accent/30 rounded-lg p-2.5 sm:p-4 ">
+            <div className="bg-gradient-to-br from-terminal-accent/10 to-orange-900/20 border border-terminal-accent/30 rounded-lg p-2.5 sm:p-4 ">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 lg:mb-3">
                 <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4   text-terminal-accent" />
                 <span className="text-[9px] sm:text-xs  text-terminal-textSecondary uppercase tracking-wider">Annual</span>

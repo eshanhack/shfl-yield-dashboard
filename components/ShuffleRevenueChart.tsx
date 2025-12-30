@@ -181,7 +181,7 @@ export default function ShuffleRevenueChart({
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine 
                 y={avgNGR} 
-                stroke="#8A2BE2" 
+                stroke="#FF5500" 
                 strokeDasharray="3 3" 
                 strokeOpacity={0.5}
               />

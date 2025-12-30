@@ -70,7 +70,7 @@ export default function SectionSelector({ activeSection, onSectionChange }: Sect
         <motion.div
           className="absolute top-0 bottom-0 bg-terminal-accent/20 border border-terminal-accent/50 rounded-md pointer-events-none"
           style={{
-            boxShadow: "0 0 12px rgba(138, 43, 226, 0.3)",
+            boxShadow: "0 0 12px rgba(255, 85, 0, 0.3)",
           }}
           initial={false}
           animate={{

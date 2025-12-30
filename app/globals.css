@@ -8,14 +8,16 @@
   --terminal-black: #000000;
   --terminal-dark: #0a0a0a;
   --terminal-card: #0d0d0d;
-  --terminal-border: #1a1a1a;
-  --terminal-accent: #8A2BE2;
-  --terminal-accent-dim: #6B21A8;
+  --terminal-border: #1f1f1f;
+  --terminal-accent: #FF5500;
+  --terminal-accent-hover: #FF6B1A;
+  --terminal-accent-dim: #CC4400;
   --terminal-text: #FFFFFF;
-  --terminal-text-secondary: #A0A0A0;
-  --terminal-text-muted: #666666;
-  --terminal-positive: #00FF88;
-  --terminal-negative: #FF4444;
+  --terminal-text-secondary: #B0B0B0;
+  --terminal-text-muted: #707070;
+  --terminal-positive: #00E676;
+  --terminal-negative: #FF5252;
+  --terminal-warning: #FFC400;
 }
 
 * {
@@ -74,8 +76,8 @@ body {
 /* Terminal grid lines effect */
 .terminal-grid {
   background-image: 
-    linear-gradient(rgba(138, 43, 226, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(138, 43, 226, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 85, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 85, 0, 0.03) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
@@ -100,11 +102,11 @@ body {
 
 /* Glow text effect */
 .text-glow {
-  text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+  text-shadow: 0 0 10px rgba(255, 85, 0, 0.5);
 }
 
 .text-glow-strong {
-  text-shadow: 0 0 20px rgba(138, 43, 226, 0.8), 0 0 40px rgba(138, 43, 226, 0.4);
+  text-shadow: 0 0 20px rgba(255, 85, 0, 0.8), 0 0 40px rgba(255, 85, 0, 0.4);
 }
 
 /* Card glow effect on hover */
@@ -113,7 +115,7 @@ body {
 }
 
 .card-glow:hover {
-  box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
+  box-shadow: 0 0 30px rgba(255, 85, 0, 0.2);
   border-color: var(--terminal-accent);
 }
 
@@ -129,8 +131,8 @@ body {
 }
 
 .btn-terminal:hover {
-  background: rgba(138, 43, 226, 0.1);
-  box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+  background: rgba(255, 85, 0, 0.1);
+  box-shadow: 0 0 15px rgba(255, 85, 0, 0.3);
 }
 
 .btn-terminal-solid {
@@ -144,8 +146,8 @@ body {
 }
 
 .btn-terminal-solid:hover {
-  background: #9B30FF;
-  box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+  background: #FF6B1A;
+  box-shadow: 0 0 20px rgba(255, 85, 0, 0.5);
 }
 
 /* Input styles */
@@ -162,7 +164,7 @@ body {
 .input-terminal:focus {
   outline: none;
   border-color: var(--terminal-accent);
-  box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+  box-shadow: 0 0 10px rgba(255, 85, 0, 0.2);
 }
 
 /* Pulse animation for price updates */
@@ -202,7 +204,7 @@ body {
 }
 
 .table-terminal tr:hover {
-  background: rgba(138, 43, 226, 0.05);
+  background: rgba(255, 85, 0, 0.05);
 }
 
 /* Loading shimmer */
@@ -248,10 +250,10 @@ body {
 
 @keyframes coinGlow {
   0%, 100% {
-    filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.6));
+    filter: drop-shadow(0 0 20px rgba(255, 85, 0, 0.6));
   }
   50% {
-    filter: drop-shadow(0 0 40px rgba(138, 43, 226, 0.9)) drop-shadow(0 0 60px rgba(138, 43, 226, 0.4));
+    filter: drop-shadow(0 0 40px rgba(255, 85, 0, 0.9)) drop-shadow(0 0 60px rgba(255, 85, 0, 0.4));
   }
 }
 
@@ -533,7 +535,7 @@ button:disabled,
 /* Better tap highlighting on mobile */
 @media (hover: none) {
   button, a, [role="button"] {
-    -webkit-tap-highlight-color: rgba(138, 43, 226, 0.2);
+    -webkit-tap-highlight-color: rgba(255, 85, 0, 0.2);
   }
 }
 
@@ -644,15 +646,15 @@ html {
   -webkit-backface-visibility: hidden;
 }
 
-/* Neutral theme (15-30%) - Subtle purple shine */
+/* Neutral theme (15-30%) - Subtle orange shine */
 .yield-headline-neutral {
   background-image: linear-gradient(
     90deg,
     var(--terminal-accent) 0%,
     var(--terminal-accent) 40%,
-    #a855f7 48%,
-    #c084fc 50%,
-    #a855f7 52%,
+    #FF7A33 48%,
+    #FF9559 50%,
+    #FF7A33 52%,
     var(--terminal-accent) 60%,
     var(--terminal-accent) 100%
   );

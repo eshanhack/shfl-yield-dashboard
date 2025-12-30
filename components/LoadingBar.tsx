@@ -61,7 +61,7 @@ export default function LoadingBar({ isLoading }: LoadingBarProps) {
       }}
     >
       <div
-        className="h-full bg-gradient-to-r from-terminal-accent via-purple-400 to-terminal-accent"
+        className="h-full bg-gradient-to-r from-terminal-accent via-orange-400 to-terminal-accent"
         style={{
           width: `${progress}%`,
           boxShadow: "0 0 8px var(--terminal-accent)",

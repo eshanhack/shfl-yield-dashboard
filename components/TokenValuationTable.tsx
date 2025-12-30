@@ -16,7 +16,7 @@ interface TokenBase {
 
 // Base token info (static)
 const TOKEN_INFO: TokenBase[] = [
-  { symbol: "SHFL", name: "Shuffle", color: "#8A2BE2" },
+  { symbol: "SHFL", name: "Shuffle", color: "#FF5500" },
   { symbol: "HYPE", name: "Hyperliquid", color: "#00D4AA" },
   { symbol: "PUMP", name: "Pump.fun", color: "#FF6B6B" },
   { symbol: "RLB", name: "Rollbit", color: "#FFD700" },

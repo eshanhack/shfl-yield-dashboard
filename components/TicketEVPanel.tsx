@@ -196,7 +196,7 @@ export default function TicketEVPanel({
         </div>
 
         {/* Staked Ticket */}
-        <div className="bg-gradient-to-r from-terminal-accent/10 to-purple-900/10 border border-terminal-accent/30 rounded-lg p-3">
+        <div className="bg-gradient-to-r from-terminal-accent/10 to-orange-900/10 border border-terminal-accent/30 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Coins className="w-4 h-4 text-terminal-accent" />
