@@ -614,26 +614,32 @@ export default function Dashboard() {
           onLearnClick={() => setShowLearnPage(true)}
         />
 
-        {/* Desktop: Tabs + Jump To below header */}
-        <div className="hidden lg:block border-b border-terminal-border/30">
-          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-5 pb-4">
-            <div className="mb-3">
-              <SectionSelector 
-                activeSection={activeSection} 
-                onSectionChange={setActiveSection} 
-              />
+        {/* Desktop: Tabs + Jump To below header - HIDDEN when Learn page is showing */}
+        {!showLearnPage && (
+          <div className="hidden lg:block border-b border-terminal-border/30">
+            <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-5 pb-4">
+              <div className="mb-3">
+                <SectionSelector 
+                  activeSection={activeSection} 
+                  onSectionChange={setActiveSection} 
+                />
+              </div>
+              <SubNavigation activeSection={activeSection} />
             </div>
-            <SubNavigation activeSection={activeSection} />
           </div>
-        </div>
+        )}
       </div>
 
       {/* Show Learn Page OR Dashboard Content */}
       {showLearnPage ? (
-        <LearnPage 
-          onBack={() => setShowLearnPage(false)} 
-          nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
-        />
+        <>
+          {/* Spacer for fixed header */}
+          <div className="h-[60px] lg:h-[60px]" />
+          <LearnPage 
+            onBack={() => setShowLearnPage(false)} 
+            nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
+          />
+        </>
       ) : (
         <>
           {/* Mobile: Tabs + Jump To at bottom of screen */}

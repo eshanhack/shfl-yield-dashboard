@@ -70,34 +70,6 @@ function useAnimatedCounter(target: number, duration: number = 1000, enabled: bo
   return count;
 }
 
-// Floating particles background
-function FloatingParticles() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-terminal-accent/30 rounded-full"
-          initial={{
-            x: Math.random() * 100 + "%",
-            y: "100%",
-            opacity: 0,
-          }}
-          animate={{
-            y: "-100%",
-            opacity: [0, 0.5, 0],
-          }}
-          transition={{
-            duration: 8 + Math.random() * 4,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-            ease: "linear",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 // Section wrapper with scroll animation
 function AnimatedSection({ 
@@ -1262,146 +1234,135 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
   
   return (
-    <div className="min-h-screen bg-terminal-black text-terminal-text relative">
-      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-terminal-accent z-50 origin-left" style={{ scaleX }} />
-      <FloatingParticles />
+    <div className="min-h-screen bg-transparent text-terminal-text relative z-10">
+      {/* Progress bar at very top */}
+      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-terminal-accent z-[60] origin-left" style={{ scaleX }} />
       
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-terminal-dark/90 backdrop-blur-sm border-b border-terminal-border">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <motion.button onClick={onBack} className="flex items-center gap-2 text-terminal-textSecondary hover:text-terminal-text text-sm" whileHover={{ x: -5 }}>
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-            <span className="sm:hidden">Back</span>
-          </motion.button>
-          <div className="flex items-center gap-2">
-            <img src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png" alt="SHFL" className="w-5 h-5" />
-            <span className="font-semibold text-sm">Learn</span>
-          </div>
-        </div>
-      </header>
+      {/* Back Button - Floating */}
+      <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">
+        <motion.button 
+          onClick={onBack} 
+          className="flex items-center gap-2 text-terminal-textSecondary hover:text-terminal-text text-sm px-3 py-2 rounded-lg bg-terminal-card/50 border border-terminal-border hover:border-terminal-accent transition-all" 
+          whileHover={{ x: -3 }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Back to Dashboard</span>
+          <span className="sm:hidden">Back</span>
+        </motion.button>
+      </div>
       
       {/* Hero */}
-      <section className="relative overflow-hidden py-10 lg:py-20">
-        <div className="max-w-5xl mx-auto px-4 text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-terminal-accent/10 border border-terminal-accent/30 mb-4">
+      <section className="relative overflow-hidden py-6 lg:py-12">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-terminal-accent/10 border border-terminal-accent/30 mb-3">
               <Sparkles className="w-3 h-3 text-terminal-accent" />
               <span className="text-xs text-terminal-accent">Interactive Guide</span>
             </div>
-            <h1 className="text-3xl lg:text-5xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
               How <span className="text-terminal-accent">SHFL Yield</span> Works
             </h1>
-            <p className="text-sm lg:text-lg text-terminal-textSecondary max-w-2xl mx-auto mb-6">
+            <p className="text-sm lg:text-base text-terminal-textSecondary max-w-xl mx-auto">
               Stake SHFL tokens once, earn tickets that enter every weekly lottery forever.
             </p>
-            <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-terminal-textMuted">
-              <ChevronDown className="w-6 h-6 mx-auto" />
-            </motion.div>
           </motion.div>
         </div>
       </section>
       
       {/* Content Sections */}
-      <div className="max-w-5xl mx-auto px-4 pb-20 space-y-16 lg:space-y-20">
+      <div className="max-w-4xl mx-auto px-4 pb-32 lg:pb-20 space-y-12 lg:space-y-16">
         {/* The Concept */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-terminal-accent/10 border border-terminal-accent/30 mb-3">
-              <span className="text-[10px] text-terminal-accent font-medium">The Concept</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">Perpetual Lottery Tickets</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">The core concept behind SHFL yield</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">Perpetual Lottery Tickets</h2>
+            <LotteryTicketConcept />
           </div>
-          <LotteryTicketConcept />
         </AnimatedSection>
         
         {/* Section 1: Revenue Flow */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 mb-3">
-              <span className="text-[10px] text-blue-400 font-medium">Section 1</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">Where Does the Money Come From?</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">Follow the casino revenue to your wallet</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">Where Does the Money Come From?</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">Follow the casino revenue to your wallet</p>
+            <RevenueFlowDiagram />
           </div>
-          <RevenueFlowDiagram />
         </AnimatedSection>
         
         {/* Section 2: Your Share */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-terminal-accent/10 border border-terminal-accent/30 mb-3">
-              <span className="text-[10px] text-terminal-accent font-medium">Section 2</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">Your Share of the Pool</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">Calculate estimated returns based on stake</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">Your Share of the Pool</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">Calculate estimated returns based on stake</p>
+            <StakeSharePie />
           </div>
-          <StakeSharePie />
         </AnimatedSection>
         
         {/* Section 3: Ticket System */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 mb-3">
-              <span className="text-[10px] text-purple-400 font-medium">Section 3</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">The Ticket System</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">Stake tokens or buy single tickets</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">The Ticket System</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">Stake tokens or buy single tickets</p>
+            <TicketSystem />
           </div>
-          <TicketSystem />
         </AnimatedSection>
         
         {/* Section 4: Draw Simulator */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 mb-3">
-              <span className="text-[10px] text-green-400 font-medium">Section 4</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">52-Week Simulator</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">See estimated variance over a year</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">52-Week Simulator</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">See estimated variance over a year</p>
+            <DrawSimulator />
           </div>
-          <DrawSimulator />
         </AnimatedSection>
         
         {/* Section 5: Step by Step */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 mb-3">
-              <span className="text-[10px] text-yellow-400 font-medium">Section 5</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">How to Participate</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">From signup to weekly yield</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">How to Participate</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">From signup to weekly yield</p>
+            <StepByStepGuide nextDrawTimestamp={nextDrawTimestamp} />
           </div>
-          <StepByStepGuide nextDrawTimestamp={nextDrawTimestamp} />
         </AnimatedSection>
         
         {/* Section 6: Compounding */}
         <AnimatedSection>
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-3">
-              <span className="text-[10px] text-emerald-400 font-medium">Section 6</span>
+          <div className="p-4 lg:p-6 rounded-2xl bg-terminal-card border border-terminal-border">
+            <div className="text-center mb-4">
+              <h2 className="text-lg lg:text-xl font-bold text-terminal-text">The Power of Compounding</h2>
+              <p className="text-xs text-terminal-textSecondary mt-1">Reinvest USDC rewards to grow faster</p>
             </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text">The Power of Compounding</h2>
-            <p className="text-xs lg:text-sm text-terminal-textSecondary mt-1">Reinvest USDC rewards to grow faster</p>
+            <CompoundingCalculator />
           </div>
-          <CompoundingCalculator />
         </AnimatedSection>
         
         {/* CTA */}
         <AnimatedSection>
-          <div className="text-center py-8 px-6 rounded-2xl bg-gradient-to-br from-terminal-accent/20 to-purple-500/10 border border-terminal-accent/30">
-            <Award className="w-12 h-12 text-terminal-accent mx-auto mb-4" />
-            <h2 className="text-xl lg:text-2xl font-bold text-terminal-text mb-3">Ready to Start?</h2>
-            <p className="text-sm text-terminal-textSecondary mb-6 max-w-md mx-auto">
+          <div className="text-center py-6 px-4 lg:px-6 rounded-2xl bg-gradient-to-br from-terminal-accent/10 to-purple-500/5 border border-terminal-accent/20">
+            <Award className="w-10 h-10 text-terminal-accent mx-auto mb-3" />
+            <h2 className="text-lg lg:text-xl font-bold text-terminal-text mb-2">Ready to Start?</h2>
+            <p className="text-xs text-terminal-textSecondary mb-4 max-w-sm mx-auto">
               Head back to the dashboard or go stake on Shuffle.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <motion.button onClick={onBack} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 rounded-xl bg-terminal-accent text-white font-semibold flex items-center gap-2 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <motion.button onClick={onBack} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                className="px-5 py-2.5 rounded-lg bg-terminal-accent text-white font-medium text-sm flex items-center gap-2 justify-center">
                 <ArrowLeft className="w-4 h-4" /> Dashboard
               </motion.button>
               <a href="https://shuffle.com/token" target="_blank" rel="noopener noreferrer"
-                className="px-6 py-3 rounded-xl bg-terminal-card border border-terminal-border text-terminal-text font-semibold flex items-center gap-2 justify-center hover:border-terminal-accent">
+                className="px-5 py-2.5 rounded-lg bg-terminal-card border border-terminal-border text-terminal-text font-medium text-sm flex items-center gap-2 justify-center hover:border-terminal-accent transition-colors">
                 Stake Now <ExternalLink className="w-4 h-4" />
               </a>
             </div>
@@ -1409,10 +1370,10 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
         </AnimatedSection>
         
         {/* Disclaimer */}
-        <div className="text-center text-[10px] text-terminal-textMuted max-w-2xl mx-auto">
+        <div className="text-center text-[9px] text-terminal-textMuted max-w-xl mx-auto px-4">
           <p>
-            <strong>Disclaimer:</strong> This is for educational purposes only. All calculations and projections are estimates 
-            and may be inaccurate. Past performance does not guarantee future results. DYOR. Not financial advice.
+            <strong>Disclaimer:</strong> Educational purposes only. All calculations are estimates and may be inaccurate. 
+            Past performance does not guarantee future results. DYOR. Not financial advice.
           </p>
         </div>
       </div>
