@@ -68,7 +68,8 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
             <img
               src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
               alt="SHFL Pro"
-              className="w-7 h-7 sm:w-8 sm:h-8"
+              className="w-7 h-7 sm:w-8 sm:h-8 animate-spin"
+              style={{ animationDuration: "3s" }}
             />
             <div>
               <h1 className="text-base sm:text-lg font-semibold tracking-tight">
@@ -171,7 +172,8 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
               <img
                 src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
                 alt="SHFL Pro"
-                className="w-8 h-8"
+                className="w-8 h-8 animate-spin"
+                style={{ animationDuration: "3s" }}
               />
               <div>
                 <div className="flex items-center gap-2">
