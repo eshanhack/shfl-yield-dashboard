@@ -19,9 +19,10 @@ export default function BreakEvenTimer({
   currentWeeklyYieldPer1K,
 }: BreakEvenTimerProps) {
   const [stakedAmount, setStakedAmount] = useState<number>(1000);
-  const [entryPrice, setEntryPrice] = useState<number>(currentPrice);
+  const [entryPrice, setEntryPrice] = useState<number | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
-  // Load saved staked amount from localStorage
+  // Load saved staked amount and entry price from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("shfl-staked-amount");
     if (saved) {
@@ -29,20 +30,36 @@ export default function BreakEvenTimer({
       if (amount > 0) setStakedAmount(amount);
     }
 
+    // Load saved entry price
+    const savedEntry = localStorage.getItem("shfl-entry-price");
+    if (savedEntry) {
+      const price = parseFloat(savedEntry);
+      if (!isNaN(price)) setEntryPrice(price);
+    }
+    setInitialized(true);
+
     const handleStakedChange = (e: CustomEvent<number>) => {
       if (e.detail > 0) setStakedAmount(e.detail);
     };
 
+    const handleEntryPriceChange = (e: CustomEvent<number>) => {
+      setEntryPrice(e.detail);
+    };
+
     window.addEventListener("shfl-staked-changed" as any, handleStakedChange);
-    return () => window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+    window.addEventListener("shfl-entry-price-changed" as any, handleEntryPriceChange);
+    return () => {
+      window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+      window.removeEventListener("shfl-entry-price-changed" as any, handleEntryPriceChange);
+    };
   }, []);
 
-  // Update entry price when current price changes (first load)
+  // Set default entry price to current price only on first load if no saved value
   useEffect(() => {
-    if (entryPrice === 0) {
+    if (initialized && entryPrice === null && currentPrice > 0) {
       setEntryPrice(currentPrice);
     }
-  }, [currentPrice, entryPrice]);
+  }, [currentPrice, initialized, entryPrice]);
 
   // Format staked amount for display
   const stakedLabel = stakedAmount >= 1000000 
@@ -53,12 +70,15 @@ export default function BreakEvenTimer({
 
   // Calculate break-even metrics
   const breakEvenData = useMemo(() => {
-    if (!entryPrice || entryPrice <= 0 || currentWeeklyYieldPer1K <= 0) {
+    if (entryPrice === null || currentWeeklyYieldPer1K <= 0) {
       return null;
     }
+    
+    // Handle zero entry price case (free tokens)
+    const effectiveEntryPrice = entryPrice === 0 ? 0.0001 : entryPrice;
 
     // Initial investment value
-    const initialInvestment = stakedAmount * entryPrice;
+    const initialInvestment = stakedAmount * effectiveEntryPrice;
     
     // Weekly yield based on user's stake
     const weeklyYield = (stakedAmount / 1000) * currentWeeklyYieldPer1K;
@@ -165,8 +185,19 @@ export default function BreakEvenTimer({
             <input
               type="number"
               step="0.0001"
-              value={entryPrice || ""}
-              onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
+              min="0"
+              value={entryPrice !== null ? entryPrice : ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                const price = val === "" ? null : parseFloat(val);
+                const finalPrice = price !== null && !isNaN(price) ? price : null;
+                setEntryPrice(finalPrice);
+                // Sync to localStorage and other components
+                if (finalPrice !== null) {
+                  localStorage.setItem("shfl-entry-price", finalPrice.toString());
+                  window.dispatchEvent(new CustomEvent("shfl-entry-price-changed", { detail: finalPrice }));
+                }
+              }}
               placeholder={currentPrice.toFixed(4)}
               className="w-20 lg:w-24 bg-terminal-dark border border-terminal-border rounded-lg px-2 py-1.5 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
             />

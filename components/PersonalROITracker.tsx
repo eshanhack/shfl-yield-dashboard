@@ -18,9 +18,9 @@ export default function PersonalROITracker({
 }: PersonalROITrackerProps) {
   const [stakedAmount, setStakedAmount] = useState<number>(1000);
   const [startDrawNumber, setStartDrawNumber] = useState<number | null>(null);
-  const [entryPrice, setEntryPrice] = useState<number>(0);
+  const [entryPrice, setEntryPrice] = useState<number | null>(null);
 
-  // Load saved staked amount from localStorage
+  // Load saved staked amount and entry price from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("shfl-staked-amount");
     if (saved) {
@@ -28,20 +28,34 @@ export default function PersonalROITracker({
       if (amount > 0) setStakedAmount(amount);
     }
 
+    // Load saved entry price
+    const savedEntry = localStorage.getItem("shfl-entry-price");
+    if (savedEntry) {
+      const price = parseFloat(savedEntry);
+      if (!isNaN(price)) setEntryPrice(price);
+    }
+
     const handleStakedChange = (e: CustomEvent<number>) => {
       if (e.detail > 0) setStakedAmount(e.detail);
     };
 
+    const handleEntryPriceChange = (e: CustomEvent<number>) => {
+      setEntryPrice(e.detail);
+    };
+
     window.addEventListener("shfl-staked-changed" as any, handleStakedChange);
-    return () => window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+    window.addEventListener("shfl-entry-price-changed" as any, handleEntryPriceChange);
+    return () => {
+      window.removeEventListener("shfl-staked-changed" as any, handleStakedChange);
+      window.removeEventListener("shfl-entry-price-changed" as any, handleEntryPriceChange);
+    };
   }, []);
 
-  // Set default start draw to earliest available
+  // Set default start draw to latest (most recent)
   useEffect(() => {
     if (historicalDraws.length > 0 && startDrawNumber === null) {
-      // Default to 12 weeks ago or earliest available
-      const defaultDraw = historicalDraws[Math.min(11, historicalDraws.length - 1)];
-      setStartDrawNumber(defaultDraw?.drawNumber || historicalDraws[0].drawNumber);
+      // Default to latest draw (index 0)
+      setStartDrawNumber(historicalDraws[0].drawNumber);
     }
   }, [historicalDraws, startDrawNumber]);
 
@@ -80,7 +94,7 @@ export default function PersonalROITracker({
 
     // Price appreciation/depreciation
     // Use entry price if set, otherwise use current price (user should set entry price for accurate tracking)
-    const startPrice = entryPrice > 0 ? entryPrice : currentPrice;
+    const startPrice = entryPrice !== null && entryPrice >= 0 ? entryPrice : currentPrice;
     const priceChange = currentPrice - startPrice;
     const priceChangePercent = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
     const priceImpact = priceChange * stakedAmount;
@@ -273,9 +287,19 @@ export default function PersonalROITracker({
               <input
                 type="number"
                 step="0.0001"
+                min="0"
                 placeholder={currentPrice.toFixed(4)}
-                value={entryPrice || ""}
-                onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
+                value={entryPrice !== null ? entryPrice : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const price = val === "" ? null : parseFloat(val);
+                  setEntryPrice(price !== null && !isNaN(price) ? price : null);
+                  // Sync to localStorage and other components
+                  if (price !== null && !isNaN(price)) {
+                    localStorage.setItem("shfl-entry-price", price.toString());
+                    window.dispatchEvent(new CustomEvent("shfl-entry-price-changed", { detail: price }));
+                  }
+                }}
                 className="w-20 lg:w-24 bg-terminal-dark border border-terminal-border rounded px-2 py-1 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
               />
               <span className="text-terminal-textMuted/70 hidden lg:inline">(for accurate price impact)</span>

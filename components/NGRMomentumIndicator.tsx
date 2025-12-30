@@ -78,8 +78,24 @@ export default function NGRMomentumIndicator({
     const allTimeLow = Math.min(...allDraws.map(d => d.ngrUSD));
     const range = allTimeHigh - allTimeLow;
     
-    // Where current sits in the range (0-100%)
-    const rangePosition = range > 0 ? ((thisWeek - allTimeLow) / range) * 100 : 50;
+    // Best and worst weeks in recent history
+    const bestWeekChange = weeklyChanges.length > 0 ? Math.max(...weeklyChanges) : 0;
+    const worstWeekChange = weeklyChanges.length > 0 ? Math.min(...weeklyChanges) : 0;
+    
+    // Consecutive direction streak
+    let streakCount = 0;
+    let streakDirection: "up" | "down" | null = null;
+    for (const change of weeklyChanges) {
+      const dir = change >= 0 ? "up" : "down";
+      if (streakDirection === null) {
+        streakDirection = dir;
+        streakCount = 1;
+      } else if (dir === streakDirection) {
+        streakCount++;
+      } else {
+        break;
+      }
+    }
 
     // Predictability insight
     const isPredictable = volatilityPercent < 20 && avgWeeklySwing < 15;
@@ -100,7 +116,10 @@ export default function NGRMomentumIndicator({
       trendStrength,
       allTimeHigh,
       allTimeLow,
-      rangePosition,
+      bestWeekChange,
+      worstWeekChange,
+      streakCount,
+      streakDirection,
       isPredictable,
       weeklyChanges,
     };
@@ -303,23 +322,32 @@ export default function NGRMomentumIndicator({
           <div className="hidden lg:grid grid-cols-2 gap-3">
             <div className="bg-terminal-dark/50 border border-terminal-border/50 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider">Current Position</span>
+                <span className="text-[10px] text-terminal-textMuted uppercase tracking-wider">Best / Worst Week</span>
+                {volatilityData.streakCount > 1 && (
+                  <div className={cn(
+                    "text-[10px] font-medium",
+                    volatilityData.streakDirection === "up" ? "text-terminal-positive" : "text-terminal-negative"
+                  )}>
+                    {volatilityData.streakCount}w {volatilityData.streakDirection === "up" ? "↑" : "↓"} streak
+                  </div>
+                )}
               </div>
-              {/* Range bar */}
-              <div className="relative h-2 bg-terminal-border/50 rounded-full mb-2">
-                <div 
-                  className="absolute h-full bg-terminal-accent rounded-full"
-                  style={{ width: `${Math.min(100, Math.max(0, volatilityData.rangePosition))}%` }}
-                />
-                <div 
-                  className="absolute w-2 h-2 bg-terminal-text rounded-full -translate-y-0 top-0"
-                  style={{ left: `${Math.min(100, Math.max(0, volatilityData.rangePosition))}%`, transform: 'translateX(-50%)' }}
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-[9px] text-terminal-textMuted">Best Week</div>
+                  <div className="text-sm font-bold text-terminal-positive tabular-nums">
+                    +{volatilityData.bestWeekChange.toFixed(1)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-terminal-textMuted">Worst Week</div>
+                  <div className="text-sm font-bold text-terminal-negative tabular-nums">
+                    {volatilityData.worstWeekChange.toFixed(1)}%
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-[9px] text-terminal-textMuted">
-                <span><CurrencyAmount amount={volatilityData.allTimeLow} /></span>
-                <span className="text-terminal-text font-medium">Current: {volatilityData.rangePosition.toFixed(0)}%</span>
-                <span><CurrencyAmount amount={volatilityData.allTimeHigh} /></span>
+              <div className="text-[9px] text-terminal-textMuted mt-2">
+                Your yield can swing this much week-to-week
               </div>
             </div>
             <div className="bg-terminal-dark/50 border border-terminal-border/50 rounded-lg p-3">
