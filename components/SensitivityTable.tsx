@@ -90,16 +90,22 @@ export default function SensitivityTable({
     <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 xl:p-5 card-glow h-full flex flex-col">
       {/* Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <Grid3X3 className="w-4 h-4 text-terminal-accent" />
-          <h3 className="text-sm font-medium text-terminal-text">
-            Yield Sensitivity Matrix
-          </h3>
-          <InfoTooltip content={TOOLTIPS.sensitivity} title="What-If Analysis" />
+        <div className="flex items-start gap-2">
+          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
+            <Grid3X3 className="w-4 h-4 text-terminal-accent" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-terminal-text">
+                Yield Sensitivity Matrix
+              </h3>
+              <InfoTooltip content={TOOLTIPS.sensitivity} title="What-If Analysis" />
+            </div>
+            <p className="text-xs text-terminal-textMuted">
+              How your APY changes with casino revenue and token price (per {stakedLabel} SHFL)
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-terminal-textMuted">
-          How your APY changes with casino revenue and token price (per {stakedLabel} SHFL)
-        </p>
       </div>
 
       {/* Table Container - constrained for desktop */}

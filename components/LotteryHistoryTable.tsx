@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { HistoricalDraw, formatUSD, formatNumber, calculateYieldPer1KSHFL } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
-import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock, Inbox } from "lucide-react";
+import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock, Inbox, History } from "lucide-react";
 import DrawDetailsModal from "./DrawDetailsModal";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
@@ -112,16 +112,21 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-terminal-border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
-                  Lottery History
-                </h3>
-                <InfoTooltip content={TOOLTIPS.lottery} title="How the Lottery Works" />
+            <div className="flex items-start gap-2">
+              <div className="p-1.5 rounded bg-blue-500/10 border border-blue-500/20 flex-shrink-0">
+                <History className="w-4 h-4 text-blue-400" />
               </div>
-              <p className="text-[10px] sm:text-xs text-terminal-textMuted">
-                {draws.length} draws • Tap to view details
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
+                    Lottery History
+                  </h3>
+                  <InfoTooltip content={TOOLTIPS.lottery} title="How the Lottery Works" />
+                </div>
+                <p className="text-[10px] sm:text-xs text-terminal-textMuted">
+                  {draws.length} draws • Tap to view details
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
               {jackpotWonCount > 0 && (

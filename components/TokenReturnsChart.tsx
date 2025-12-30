@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
 
@@ -215,8 +215,8 @@ export default function TokenReturnsChart() {
       <div className="p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-2">
-            <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
-              <BarChart3 className="w-4 h-4 text-terminal-accent" />
+            <div className="p-1.5 rounded bg-cyan-500/10 border border-cyan-500/20 flex-shrink-0">
+              <LineChart className="w-4 h-4 text-cyan-400" />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
