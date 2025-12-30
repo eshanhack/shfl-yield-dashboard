@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CircleDollarSign, TrendingUp, TrendingDown, Calendar, Coins, ChevronDown, ArrowRight } from "lucide-react";
+import { CircleDollarSign, TrendingUp, TrendingDown, Calendar, Coins, ChevronDown, ArrowRight, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
@@ -279,6 +279,23 @@ export default function PersonalROITracker({
                 className="w-20 lg:w-24 bg-terminal-dark border border-terminal-border rounded px-2 py-1 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
               />
               <span className="text-terminal-textMuted/70 hidden lg:inline">(for accurate price impact)</span>
+            </div>
+
+            {/* Staked Amount Reminder */}
+            <div className="flex items-center justify-between text-[10px] text-terminal-textMuted p-2 bg-terminal-accent/5 border border-terminal-accent/20 rounded-lg">
+              <span>Using <span className="text-terminal-accent font-medium">{stakedLabel} SHFL</span> staked</span>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("yield-calculator");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-terminal-accent hover:text-terminal-text hover:bg-terminal-accent/20 rounded transition-colors"
+              >
+                <Settings2 className="w-3 h-3" />
+                <span>Change</span>
+              </button>
             </div>
           </div>
         ) : (

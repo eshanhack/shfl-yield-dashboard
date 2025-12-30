@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Crosshair, Trophy, Target, Sparkles, Dice1, TrendingUp, Zap } from "lucide-react";
+import { Crosshair, Trophy, Target, Sparkles, Dice1, TrendingUp, Zap, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatNumber, TOTAL_LOTTERY_COMBINATIONS } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
@@ -39,6 +39,13 @@ export default function JackpotHunterPanel({
   }, []);
 
   const userTickets = stakedAmount / 50;
+
+  // Format staked amount for display
+  const stakedLabel = stakedAmount >= 1000000 
+    ? `${(stakedAmount / 1000000).toFixed(1)}M` 
+    : stakedAmount >= 1000 
+    ? `${formatNumber(stakedAmount / 1000)}K` 
+    : formatNumber(stakedAmount);
 
   // Calculate jackpot hunting stats
   const jackpotStats = useMemo(() => {
@@ -273,6 +280,23 @@ export default function JackpotHunterPanel({
             <span className="text-terminal-textMuted">
               Streak: {jackpotStats.currentStreak} draws
             </span>
+          </div>
+
+          {/* Staked Amount Reminder */}
+          <div className="flex items-center justify-between text-[10px] text-terminal-textMuted p-2 bg-terminal-accent/5 border border-terminal-accent/20 rounded-lg">
+            <span>Using <span className="text-terminal-accent font-medium">{stakedLabel} SHFL</span> ({formatNumber(userTickets)} tickets)</span>
+            <button
+              onClick={() => {
+                const el = document.getElementById("yield-calculator");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="flex items-center gap-1 px-2 py-1 text-terminal-accent hover:text-terminal-text hover:bg-terminal-accent/20 rounded transition-colors"
+            >
+              <Settings2 className="w-3 h-3" />
+              <span>Change</span>
+            </button>
           </div>
 
           {/* Disclaimer */}

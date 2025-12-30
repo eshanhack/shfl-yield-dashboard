@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Hourglass, TrendingUp, Calendar, Target, ChevronDown } from "lucide-react";
+import { Hourglass, TrendingUp, Calendar, Target, ChevronDown, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
@@ -43,6 +43,13 @@ export default function BreakEvenTimer({
       setEntryPrice(currentPrice);
     }
   }, [currentPrice, entryPrice]);
+
+  // Format staked amount for display
+  const stakedLabel = stakedAmount >= 1000000 
+    ? `${(stakedAmount / 1000000).toFixed(1)}M` 
+    : stakedAmount >= 1000 
+    ? `${formatNumber(stakedAmount / 1000)}K` 
+    : formatNumber(stakedAmount);
 
   // Calculate break-even metrics
   const breakEvenData = useMemo(() => {
@@ -253,6 +260,23 @@ export default function BreakEvenTimer({
                   {breakEvenData.unrealizedPnL >= 0 ? "+" : ""}<CurrencyAmount amount={breakEvenData.unrealizedPnL} /> unrealized
                 </div>
               </div>
+            </div>
+
+            {/* Staked Amount Reminder */}
+            <div className="flex items-center justify-between text-[10px] text-terminal-textMuted p-2 bg-terminal-accent/5 border border-terminal-accent/20 rounded-lg">
+              <span>Using <span className="text-terminal-accent font-medium">{stakedLabel} SHFL</span> staked</span>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("yield-calculator");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-terminal-accent hover:text-terminal-text hover:bg-terminal-accent/20 rounded transition-colors"
+              >
+                <Settings2 className="w-3 h-3" />
+                <span>Change</span>
+              </button>
             </div>
           </div>
         ) : (
