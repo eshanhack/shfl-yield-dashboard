@@ -288,7 +288,10 @@ export default function PersonalROITracker({
                 onClick={() => {
                   const el = document.getElementById("yield-calculator");
                   if (el) {
-                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    const isMobile = window.innerWidth < 1024;
+                    const yOffset = isMobile ? -70 : -120;
+                    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: "smooth" });
                   }
                 }}
                 className="flex items-center gap-1 px-2 py-1 text-terminal-accent hover:text-terminal-text hover:bg-terminal-accent/20 rounded transition-colors"

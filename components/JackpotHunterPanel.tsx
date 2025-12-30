@@ -221,13 +221,18 @@ export default function JackpotHunterPanel({
             <div className="bg-terminal-dark border border-terminal-border rounded-lg p-2.5 lg:p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Target className="w-3 h-3 text-terminal-positive" />
-                <span className="text-[9px] lg:text-[10px] text-terminal-textMuted uppercase tracking-wider">If You Win</span>
+                <span className="text-[9px] lg:text-[10px] text-terminal-textMuted uppercase tracking-wider">Your Ticket %</span>
+                <InfoTooltip 
+                  content="Your percentage of total tickets this draw. If multiple people match the jackpot, it splits among all winners based on their ticket count."
+                  title="Ticket Share"
+                  size="sm"
+                />
               </div>
               <div className="text-sm lg:text-base font-bold text-terminal-positive tabular-nums">
-                <CurrencyAmount amount={jackpotStats.expectedShareValue} />
+                {(jackpotStats.userShareIfWon * 100).toFixed(4)}%
               </div>
               <div className="text-[9px] text-terminal-textMuted">
-                your share ({(jackpotStats.userShareIfWon * 100).toFixed(2)}%)
+                of {formatNumber(totalTickets)} total
               </div>
             </div>
           </div>
@@ -289,7 +294,10 @@ export default function JackpotHunterPanel({
               onClick={() => {
                 const el = document.getElementById("yield-calculator");
                 if (el) {
-                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  const isMobile = window.innerWidth < 1024;
+                  const yOffset = isMobile ? -70 : -120;
+                  const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: "smooth" });
                 }
               }}
               className="flex items-center gap-1 px-2 py-1 text-terminal-accent hover:text-terminal-text hover:bg-terminal-accent/20 rounded transition-colors"
