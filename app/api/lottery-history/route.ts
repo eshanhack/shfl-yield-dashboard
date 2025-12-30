@@ -821,21 +821,29 @@ export async function GET(request: Request) {
     };
   });
 
-  // Calculate 4-week average NGR (from the latest 4 draws: weeks 1-4)
+  // Filter to only COMPLETED draws (exclude the current open draw)
+  // A draw is completed if it has static data in LOTTERY_HISTORY_DATA
+  const completedDraws = drawsWithData.filter(draw => {
+    // Check if this draw exists in our static data (meaning it's completed)
+    const hasStaticData = LOTTERY_HISTORY_DATA.some(d => d.drawNumber === draw.drawNumber);
+    return hasStaticData;
+  });
+
+  // Calculate 4-week average NGR (from the latest 4 COMPLETED draws)
   // IMPORTANT: Use adjustedNGR to exclude jackpot replenishment from yield calculations
-  const last4Draws = drawsWithData.slice(0, 4);
+  const last4Draws = completedDraws.slice(0, 4);
   const avgWeeklyNGR = last4Draws.length > 0 
     ? last4Draws.reduce((sum, draw) => sum + (draw.adjustedNGR ?? draw.totalNGRContribution), 0) / last4Draws.length
     : 0;
 
-  // Calculate prior 4-week average NGR (weeks 5-8)
-  const prior4Draws = drawsWithData.slice(4, 8);
+  // Calculate prior 4-week average NGR (weeks 5-8 of completed draws)
+  const prior4Draws = completedDraws.slice(4, 8);
   const priorAvgWeeklyNGR = prior4Draws.length > 0 
     ? prior4Draws.reduce((sum, draw) => sum + (draw.adjustedNGR ?? draw.totalNGRContribution), 0) / prior4Draws.length
     : avgWeeklyNGR;
 
   // Calculate 12-week average for longer-term view
-  const last12Draws = drawsWithData.slice(0, 12);
+  const last12Draws = completedDraws.slice(0, 12);
   const avg12WeekNGR = last12Draws.length > 0
     ? last12Draws.reduce((sum, draw) => sum + (draw.adjustedNGR ?? draw.totalNGRContribution), 0) / last12Draws.length
     : 0;
@@ -847,6 +855,7 @@ export async function GET(request: Request) {
       avgWeeklyNGR_4week: avgWeeklyNGR,
       avgWeeklyNGR_prior4week: priorAvgWeeklyNGR,
       avgWeeklyNGR_12week: avg12WeekNGR,
+      // Only include completed draws in the stats
       last4DrawsNGR: last4Draws.map(d => ({
         drawNumber: d.drawNumber,
         ngrAdded: d.ngrAdded,
@@ -855,6 +864,9 @@ export async function GET(request: Request) {
         adjustedNGR: d.adjustedNGR ?? d.totalNGRContribution,
         jackpotReplenishment: d.jackpotReplenishment ?? 0,
       })),
+      // Track which draws are included (for debugging)
+      completedDrawCount: completedDraws.length,
+      latestCompletedDraw: completedDraws[0]?.drawNumber || 0,
     },
     lastUpdated: new Date().toISOString(),
     source: "https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history",
