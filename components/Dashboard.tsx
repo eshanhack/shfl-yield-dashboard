@@ -42,6 +42,7 @@ import BreakEvenTimer from "./BreakEvenTimer";
 import NGRMomentumIndicator from "./NGRMomentumIndicator";
 import JackpotHunterPanel from "./JackpotHunterPanel";
 import GridBackground from "./GridBackground";
+import LearnPage from "./LearnPage";
 import { useToast } from "@/contexts/ToastContext";
 
 import {
@@ -94,6 +95,9 @@ export default function Dashboard() {
   const [tokenRevenueData, setTokenRevenueData] = useState<any>(null);
   const [marketCapsData, setMarketCapsData] = useState<any>(null);
   const [tanzaniteData, setTanzaniteData] = useState<any>(null);
+  
+  // Learn page state
+  const [showLearnPage, setShowLearnPage] = useState(false);
 
   // Fetch initial data (with loading states)
   const loadData = async (showRefreshing = false) => {
@@ -605,7 +609,9 @@ export default function Dashboard() {
           onLogoClick={() => {
             window.scrollTo({ top: 0, behavior: "instant" });
             setActiveSection("lottery");
+            setShowLearnPage(false);
           }}
+          onLearnClick={() => setShowLearnPage(true)}
         />
 
         {/* Desktop: Tabs + Jump To below header */}
@@ -622,29 +628,34 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Mobile: Tabs + Jump To at bottom of screen */}
-      <div 
-        className="lg:hidden fixed left-0 right-0 bottom-0 z-50 bg-terminal-black border-t border-terminal-border/30"
-        style={{
-          backfaceVisibility: "hidden",
-          WebkitBackfaceVisibility: "hidden",
-        }}
-      >
-        <div className="px-3 sm:px-4 py-3 safe-area-bottom">
-          <div className="mb-2">
-            <SectionSelector 
-              activeSection={activeSection} 
-              onSectionChange={setActiveSection} 
-            />
+      {/* Show Learn Page OR Dashboard Content */}
+      {showLearnPage ? (
+        <LearnPage onBack={() => setShowLearnPage(false)} />
+      ) : (
+        <>
+          {/* Mobile: Tabs + Jump To at bottom of screen */}
+          <div 
+            className="lg:hidden fixed left-0 right-0 bottom-0 z-50 bg-terminal-black border-t border-terminal-border/30"
+            style={{
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          >
+            <div className="px-3 sm:px-4 py-3 safe-area-bottom">
+              <div className="mb-2">
+                <SectionSelector 
+                  activeSection={activeSection} 
+                  onSectionChange={setActiveSection} 
+                />
+              </div>
+              <SubNavigation activeSection={activeSection} />
+            </div>
           </div>
-          <SubNavigation activeSection={activeSection} />
-        </div>
-      </div>
 
-      {/* Spacer: Desktop accounts for header + nav, Mobile accounts for header only but with enough padding */}
-      <div className="h-[75px] lg:h-[205px]" />
+          {/* Spacer: Desktop accounts for header + nav, Mobile accounts for header only but with enough padding */}
+          <div className="h-[75px] lg:h-[205px]" />
 
-      <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1 relative z-10">
+          <main id="main-content" className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pb-[160px] lg:pb-6 lg:pt-1 relative z-10">
 
         {/* Action Button Row - Hidden on mobile, merged into header */}
         <div className="hidden sm:flex items-center justify-between mb-4 sm:mb-5">
@@ -1311,16 +1322,18 @@ export default function Dashboard() {
         </footer>
       </main>
 
-      {/* Calculator Modal */}
-      <PersonalCalculator
-        isOpen={isCalculatorOpen}
-        onClose={() => setIsCalculatorOpen(false)}
-        shflPrice={price.usd}
-        weeklyNGR={ngrStats.current4WeekAvg}
-        totalTickets={lotteryStats.totalTickets}
-        historicalDraws={completedDraws}
-        prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-      />
+          {/* Calculator Modal */}
+          <PersonalCalculator
+            isOpen={isCalculatorOpen}
+            onClose={() => setIsCalculatorOpen(false)}
+            shflPrice={price.usd}
+            weeklyNGR={ngrStats.current4WeekAvg}
+            totalTickets={lotteryStats.totalTickets}
+            historicalDraws={completedDraws}
+            prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+          />
+        </>
+      )}
     </div>
   );
 }

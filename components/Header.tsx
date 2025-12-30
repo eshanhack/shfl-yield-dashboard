@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, Clock, TrendingUp, TrendingDown, Menu, X } from "lucide-react";
+import { Activity, Clock, TrendingUp, TrendingDown, Menu, X, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CurrencySelector from "./CurrencySelector";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
@@ -11,9 +11,10 @@ interface HeaderProps {
   priceChange24h: number;
   nextDrawTimestamp: number;
   onLogoClick?: () => void;
+  onLearnClick?: () => void;
 }
 
-export default function Header({ price, priceChange24h, nextDrawTimestamp, onLogoClick }: HeaderProps) {
+export default function Header({ price, priceChange24h, nextDrawTimestamp, onLogoClick, onLearnClick }: HeaderProps) {
   const [timeToNextDraw, setTimeToNextDraw] = useState("");
   const [isPriceUpdating, setIsPriceUpdating] = useState(false);
   const [displayPrice, setDisplayPrice] = useState(price);
@@ -64,26 +65,37 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp, onLog
       <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 py-2 sm:py-3">
         {/* Mobile Layout */}
         <div className="flex items-center justify-between lg:hidden">
-          {/* Logo */}
-          <button 
-            onClick={onLogoClick}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <img
-              src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
-              alt="SHFL Token"
-              className="w-8 h-8 sm:w-9 sm:h-9 animate-spin"
-              style={{ animationDuration: "3s" }}
-            />
-            <div className="text-left">
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight">
-                SHFL<span className="text-terminal-accent">Pro</span>
-              </h1>
-              <p className="text-[9px] text-terminal-textSecondary tracking-wide hidden sm:block">
-                TERMINAL v1.0
-              </p>
-            </div>
-          </button>
+          {/* Logo + Learn */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={onLogoClick}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <img
+                src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
+                alt="SHFL Token"
+                className="w-8 h-8 sm:w-9 sm:h-9 animate-spin"
+                style={{ animationDuration: "3s" }}
+              />
+              <div className="text-left">
+                <h1 className="text-base sm:text-lg font-semibold tracking-tight">
+                  SHFL<span className="text-terminal-accent">Pro</span>
+                </h1>
+                <p className="text-[9px] text-terminal-textSecondary tracking-wide hidden sm:block">
+                  TERMINAL v1.0
+                </p>
+              </div>
+            </button>
+            
+            {/* Learn Button - Mobile */}
+            <button
+              onClick={onLearnClick}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 hover:bg-terminal-accent/20 transition-all group"
+            >
+              <GraduationCap className="w-4 h-4 text-terminal-accent group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-medium text-terminal-accent hidden sm:inline">Learn</span>
+            </button>
+          </div>
 
           {/* Mobile Stats Row */}
           <div className="flex items-center gap-2 sm:gap-4">
@@ -171,7 +183,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp, onLog
         {/* Desktop Layout */}
         <div className="hidden lg:flex items-center justify-between">
           {/* Logo & Title */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button 
               onClick={onLogoClick}
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
@@ -193,6 +205,15 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp, onLog
                   TERMINAL v1.0
                 </p>
               </div>
+            </button>
+            
+            {/* Learn Button - Desktop */}
+            <button
+              onClick={onLearnClick}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 hover:bg-terminal-accent/20 hover:border-terminal-accent/50 transition-all group"
+            >
+              <GraduationCap className="w-4 h-4 text-terminal-accent group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-medium text-terminal-accent">Learn</span>
             </button>
           </div>
 
