@@ -530,6 +530,10 @@ export default function Dashboard() {
           price={price.usd}
           priceChange24h={price.usd_24h_change}
           nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
+          onLogoClick={() => {
+            window.scrollTo({ top: 0, behavior: "instant" });
+            setActiveSection("lottery");
+          }}
         />
 
         {/* Desktop: Tabs + Jump To below header */}

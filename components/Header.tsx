@@ -10,9 +10,10 @@ interface HeaderProps {
   price: number;
   priceChange24h: number;
   nextDrawTimestamp: number;
+  onLogoClick?: () => void;
 }
 
-export default function Header({ price, priceChange24h, nextDrawTimestamp }: HeaderProps) {
+export default function Header({ price, priceChange24h, nextDrawTimestamp, onLogoClick }: HeaderProps) {
   const [timeToNextDraw, setTimeToNextDraw] = useState("");
   const [isPriceUpdating, setIsPriceUpdating] = useState(false);
   const [displayPrice, setDisplayPrice] = useState(price);
@@ -64,14 +65,17 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
         {/* Mobile Layout */}
         <div className="flex items-center justify-between lg:hidden">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <button 
+            onClick={onLogoClick}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <img
               src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
               alt="SHFL Token"
               className="w-8 h-8 sm:w-9 sm:h-9 animate-spin"
               style={{ animationDuration: "3s" }}
             />
-            <div>
+            <div className="text-left">
               <h1 className="text-base sm:text-lg font-semibold tracking-tight">
                 SHFL<span className="text-terminal-accent">Pro</span>
               </h1>
@@ -79,7 +83,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                 TERMINAL v1.0
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Mobile Stats Row */}
           <div className="flex items-center gap-2 sm:gap-4">
@@ -168,14 +172,17 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
         <div className="hidden lg:flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5">
+            <button 
+              onClick={onLogoClick}
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+            >
               <img
                 src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
                 alt="SHFL Token"
                 className="w-9 h-9 animate-spin"
                 style={{ animationDuration: "3s" }}
               />
-              <div>
+              <div className="text-left">
                 <div className="flex items-center gap-2">
                   <h1 className="text-base font-semibold tracking-tight">
                     SHFL<span className="text-terminal-accent">Pro</span>
@@ -186,7 +193,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
                   TERMINAL v1.0
                 </p>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Center: Live Stats */}
