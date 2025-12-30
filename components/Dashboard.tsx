@@ -384,15 +384,20 @@ export default function Dashboard() {
   }, [lotteryStats, completedDraws]);
 
   // Calculate last week's APY (from the most recent completed draw)
+  // Uses adjustedNGR and historical price for accuracy
   const lastWeekAPY = useMemo(() => {
     if (completedDraws.length === 0 || !lotteryStats || !price) return 0;
     const lastDraw = completedDraws[0];
-    const ngrContribution = lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85;
+    // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
+    const ngrForCalc = lastDraw.adjustedNgrUSD ?? (lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85);
     const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
-    return calculateGlobalAPY(ngrContribution, totalTickets, price.usd, lastDraw.prizepoolSplit);
+    // Use historical price at draw time for accuracy
+    const priceAtDraw = lastDraw.shflPriceAtDraw || price.usd;
+    return calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, lastDraw.prizepoolSplit);
   }, [completedDraws, lotteryStats, price]);
 
   // Calculate prior 4-week average APY (weeks 5-8)
+  // Uses adjustedNGR and historical price for accuracy
   const prior4WeekAPY = useMemo(() => {
     if (completedDraws.length < 5 || !lotteryStats || !price) return currentAPY;
     
@@ -400,9 +405,12 @@ export default function Dashboard() {
     if (priorDraws.length === 0) return currentAPY;
     
     const totalAPY = priorDraws.reduce((sum, draw) => {
-      const ngrContribution = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
+      // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
+      const ngrForCalc = draw.adjustedNgrUSD ?? (draw.ngrUSD + (draw.singlesAdded || 0) * 0.85);
       const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
-      return sum + calculateGlobalAPY(ngrContribution, totalTickets, price.usd, draw.prizepoolSplit);
+      // Use historical price at draw time for accuracy
+      const priceAtDraw = draw.shflPriceAtDraw || price.usd;
+      return sum + calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit);
     }, 0);
     
     return totalAPY / priorDraws.length;
@@ -414,19 +422,22 @@ export default function Dashboard() {
     return ((currentAPY - prior4WeekAPY) / prior4WeekAPY) * 100;
   }, [currentAPY, prior4WeekAPY]);
 
-  // Find highest APY draw
+  // Find highest APY draw (using ADJUSTED NGR and HISTORICAL price for accuracy)
   const highestAPYData = useMemo(() => {
-    if (completedDraws.length === 0 || !lotteryStats || !price) return { apy: 0, weeksAgo: 0 };
+    if (completedDraws.length === 0 || !lotteryStats || !price) return { apy: 0, weeksAgo: 0, drawNumber: 0 };
     
-    let highest = { apy: 0, weeksAgo: 0 };
+    let highest = { apy: 0, weeksAgo: 0, drawNumber: 0 };
     
     completedDraws.forEach((draw, index) => {
-      const ngrContribution = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
+      // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
+      const ngrForCalc = draw.adjustedNgrUSD ?? (draw.ngrUSD + (draw.singlesAdded || 0) * 0.85);
       const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
-      const drawAPY = calculateGlobalAPY(ngrContribution, totalTickets, price.usd, draw.prizepoolSplit);
+      // Use historical price at draw time, or current price as fallback
+      const priceAtDraw = draw.shflPriceAtDraw || price.usd;
+      const drawAPY = calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit);
       
       if (drawAPY > highest.apy) {
-        highest = { apy: drawAPY, weeksAgo: index };
+        highest = { apy: drawAPY, weeksAgo: index, drawNumber: draw.drawNumber };
       }
     });
     
