@@ -225,7 +225,6 @@ export default function JackpotHunterPanel({
                 <InfoTooltip 
                   content="Your percentage of total tickets this draw. If multiple people match the jackpot, it splits among all winners based on their ticket count."
                   title="Ticket Share"
-                  size="sm"
                 />
               </div>
               <div className="text-sm lg:text-base font-bold text-terminal-positive tabular-nums">
