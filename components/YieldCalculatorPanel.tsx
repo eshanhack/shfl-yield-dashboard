@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { 
   Calculator, 
   TrendingUp, 
   Calendar, 
   History,
   Coins,
-  ArrowLeftRight
+  ChevronDown,
+  Ticket,
+  DollarSign
 } from "lucide-react";
 import { 
   calculateYield, 
@@ -38,6 +40,14 @@ interface YieldCalculatorPanelProps {
   upcomingDraw?: UpcomingDrawData;
 }
 
+type InputMode = "shfl" | "tickets" | "usd";
+
+const INPUT_MODE_CONFIG: Record<InputMode, { label: string; icon: typeof Coins; placeholder: string; suffix: string }> = {
+  shfl: { label: "SHFL", icon: Coins, placeholder: "100000", suffix: "SHFL" },
+  tickets: { label: "Tickets", icon: Ticket, placeholder: "2000", suffix: "Tickets" },
+  usd: { label: "USD", icon: DollarSign, placeholder: "10000", suffix: "USD" },
+};
+
 export default function YieldCalculatorPanel({
   shflPrice,
   currentWeekNGR,
@@ -48,16 +58,37 @@ export default function YieldCalculatorPanel({
   upcomingDraw,
 }: YieldCalculatorPanelProps) {
   const [inputValue, setInputValue] = useState<string>("100000");
-  const [inputMode, setInputMode] = useState<"shfl" | "tickets">("shfl");
+  const [inputMode, setInputMode] = useState<InputMode>("shfl");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Parse the input value to number and calculate SHFL amount based on mode
   const rawInputValue = parseFloat(inputValue) || 0;
-  const shflAmount = inputMode === "shfl" 
-    ? rawInputValue 
-    : rawInputValue * SHFL_PER_TICKET;
-  const ticketCount = inputMode === "tickets" 
-    ? rawInputValue 
-    : Math.floor(rawInputValue / SHFL_PER_TICKET);
+  const shflAmount = useMemo(() => {
+    switch (inputMode) {
+      case "shfl":
+        return rawInputValue;
+      case "tickets":
+        return rawInputValue * SHFL_PER_TICKET;
+      case "usd":
+        return shflPrice > 0 ? rawInputValue / shflPrice : 0;
+      default:
+        return rawInputValue;
+    }
+  }, [inputMode, rawInputValue, shflPrice]);
+  
+  const ticketCount = Math.floor(shflAmount / SHFL_PER_TICKET);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Load saved amount from localStorage on mount
   useEffect(() => {
@@ -88,23 +119,31 @@ export default function YieldCalculatorPanel({
     }
   };
 
-  // Toggle between SHFL and Tickets input mode
-  const handleFlipMode = () => {
+  // Handle mode change from dropdown
+  const handleModeChange = (newMode: InputMode) => {
+    // Convert current value to new mode
     const currentShfl = shflAmount;
     const currentTickets = ticketCount;
+    const currentUsd = shflAmount * shflPrice;
     
-    if (inputMode === "shfl") {
-      // Switching to tickets mode - show current ticket count
-      setInputMode("tickets");
-      setInputValue(currentTickets.toString());
-    } else {
-      // Switching to SHFL mode - show current SHFL amount
-      setInputMode("shfl");
-      setInputValue(currentShfl.toString());
+    switch (newMode) {
+      case "shfl":
+        setInputValue(Math.round(currentShfl).toString());
+        break;
+      case "tickets":
+        setInputValue(currentTickets.toString());
+        break;
+      case "usd":
+        setInputValue(currentUsd.toFixed(2));
+        break;
     }
+    
+    setInputMode(newMode);
+    setIsDropdownOpen(false);
   };
 
   const stakingValueUSD = shflAmount * shflPrice;
+  const currentConfig = INPUT_MODE_CONFIG[inputMode];
 
   // This week's expected yield (using current week NGR estimate)
   const thisWeekYield = useMemo(() => {
@@ -213,57 +252,93 @@ export default function YieldCalculatorPanel({
           <div className="flex flex-col lg:flex-row lg:items-end gap-3 sm:gap-4 mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-terminal-border">
             <div className="w-full lg:flex-1">
               <div className="flex items-center justify-between mb-1.5 sm:mb-2 lg:mb-3">
-                <label className="text-[10px] sm:text-xs  text-terminal-textSecondary uppercase tracking-wider">
-                  {inputMode === "shfl" ? "SHFL Staked Amount" : "Number of Tickets"}
+                <label className="text-[10px] sm:text-xs text-terminal-textSecondary uppercase tracking-wider">
+                  Enter Amount
                 </label>
-                <button
-                  onClick={handleFlipMode}
-                  className="flex items-center gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 text-[10px] sm:text-xs  text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-md transition-all"
-                  title={inputMode === "shfl" ? "Switch to ticket input" : "Switch to SHFL input"}
-                >
-                  <ArrowLeftRight className="w-3 h-3 lg:w-4 lg:h-4" />
-                  {/* Mobile: Dynamic text showing what we'll switch TO */}
-                  <span className="max-lg:inline lg:hidden">
-                    {inputMode === "shfl" ? "Switch to Tickets" : "Switch to SHFL"}
-                  </span>
-                  {/* Desktop: Shorter labels */}
-                  <span className="hidden lg:inline">
-                    {inputMode === "shfl" ? "Enter Tickets" : "Enter SHFL"}
-                  </span>
-                </button>
+                {/* Dropdown for input mode */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 text-[10px] sm:text-xs text-terminal-accent hover:text-terminal-text bg-terminal-accent/10 hover:bg-terminal-accent/20 border border-terminal-accent/30 rounded-md transition-all"
+                  >
+                    <currentConfig.icon className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span>{currentConfig.label}</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  
+                  {/* Dropdown menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-terminal-card border border-terminal-border rounded-lg shadow-lg z-50 min-w-[120px] overflow-hidden">
+                      {(Object.keys(INPUT_MODE_CONFIG) as InputMode[]).map((mode) => {
+                        const config = INPUT_MODE_CONFIG[mode];
+                        const isActive = mode === inputMode;
+                        return (
+                          <button
+                            key={mode}
+                            onClick={() => handleModeChange(mode)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-terminal-accent/20 transition-colors ${
+                              isActive ? "bg-terminal-accent/10 text-terminal-accent" : "text-terminal-text"
+                            }`}
+                          >
+                            <config.icon className="w-3.5 h-3.5" />
+                            <span>{config.label}</span>
+                            {isActive && <span className="ml-auto text-terminal-accent">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="relative">
                 <input
                   type="text"
-                  inputMode="numeric"
+                  inputMode="decimal"
                   value={inputValue}
                   onChange={handleInputChange}
                   className="w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 lg:py-4 text-base sm:text-lg lg:text-xl font-mono text-terminal-text focus:outline-none focus:border-terminal-accent transition-colors"
-                  placeholder={inputMode === "shfl" ? "100000" : "2000"}
+                  placeholder={currentConfig.placeholder}
                 />
-                <span className="absolute right-3 sm:right-4 lg:right-5 top-1/2 -translate-y-1/2 text-terminal-textMuted text-xs sm:text-sm ">
-                  {inputMode === "shfl" ? "SHFL" : "Tickets"}
+                <span className="absolute right-3 sm:right-4 lg:right-5 top-1/2 -translate-y-1/2 text-terminal-textMuted text-xs sm:text-sm">
+                  {currentConfig.suffix}
                 </span>
               </div>
             </div>
             
-            {/* Stats row */}
+            {/* Stats row - show different stats based on input mode */}
             <div className="flex items-center justify-between sm:justify-start sm:gap-6 lg:gap-10">
-              <div className="text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start gap-1 text-[10px] sm:text-xs  text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">
-                  {inputMode === "shfl" ? "Tickets" : "SHFL"}
-                  <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
+              {/* Always show SHFL if not in SHFL mode */}
+              {inputMode !== "shfl" && (
+                <div className="text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start gap-1 text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">
+                    SHFL
+                  </div>
+                  <div className="text-base sm:text-lg lg:text-xl font-bold text-terminal-accent tabular-nums">
+                    {formatNumber(Math.round(shflAmount))}
+                  </div>
                 </div>
-                <div className="text-base sm:text-lg lg:text-xl font-bold text-terminal-accent tabular-nums">
-                  {inputMode === "shfl" ? formatNumber(ticketCount) : formatNumber(shflAmount)}
+              )}
+              {/* Always show Tickets if not in tickets mode */}
+              {inputMode !== "tickets" && (
+                <div className="text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start gap-1 text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">
+                    Tickets
+                    <InfoTooltip content={TOOLTIPS.ticket} title="Lottery Tickets" />
+                  </div>
+                  <div className="text-base sm:text-lg lg:text-xl font-bold text-terminal-accent tabular-nums">
+                    {formatNumber(ticketCount)}
+                  </div>
                 </div>
-              </div>
-              <div className="text-center lg:text-left">
-                <div className="text-[10px] sm:text-xs  text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">Value</div>
-                <div className="text-base sm:text-lg lg:text-xl font-bold text-terminal-text">
-                  <CurrencyAmount amount={stakingValueUSD} />
+              )}
+              {/* Always show USD Value if not in USD mode */}
+              {inputMode !== "usd" && (
+                <div className="text-center lg:text-left">
+                  <div className="text-[10px] sm:text-xs text-terminal-textMuted mb-0.5 sm:mb-1 lg:mb-2">Value</div>
+                  <div className="text-base sm:text-lg lg:text-xl font-bold text-terminal-text">
+                    <CurrencyAmount amount={stakingValueUSD} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
