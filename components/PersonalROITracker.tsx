@@ -289,7 +289,7 @@ export default function PersonalROITracker({
                   const el = document.getElementById("yield-calculator");
                   if (el) {
                     const isMobile = window.innerWidth < 1024;
-                    const yOffset = isMobile ? -70 : -120;
+                    const yOffset = isMobile ? -70 : -220;
                     const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: "smooth" });
                   }
