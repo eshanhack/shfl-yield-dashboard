@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Scale, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
@@ -64,118 +64,118 @@ const getFallbackTokens = (viewMode: ViewMode): TokenWithCalculations[] => {
   });
 };
 
-export default function TokenValuationTable() {
+interface TokenValuationTableProps {
+  prefetchedMarketCaps?: any;
+  prefetchedRevenue?: any;
+}
+
+export default function TokenValuationTable({ prefetchedMarketCaps, prefetchedRevenue }: TokenValuationTableProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("revenue");
-  // Start with fallback data for immediate render
   const [tokens, setTokens] = useState<TokenWithCalculations[]>(() => getFallbackTokens("revenue"));
-  const [isLoading, setIsLoading] = useState(false); // Don't block initial render
-  // Default to "live" - only show "demo" on actual failure
   const [dataSource, setDataSource] = useState<"live" | "demo">("live");
+  const [hasProcessedPrefetch, setHasProcessedPrefetch] = useState(false);
 
+  const processData = useCallback((mcJson: any, revJson: any, mode: ViewMode) => {
+    const marketCaps = mcJson?.data || {};
+    const revenues = revJson?.data || [];
+    
+    const hasLiveMarketCap = mcJson?.source === "live" || mcJson?.source === "partial";
+    const hasLiveRevenue = revJson?.source === "live" || revenues.some((r: any) => r.source === "live");
+    setDataSource(hasLiveMarketCap || hasLiveRevenue ? "live" : "demo");
+    
+    const tokensWithCalcs: TokenWithCalculations[] = TOKEN_INFO.map(token => {
+      const marketCap = marketCaps[token.symbol] || 100000000;
+      const revData = revenues.find((r: any) => r.symbol === token.symbol);
+      
+      let weeklyRevenue = revData?.weeklyRevenue || 1000000;
+      let annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
+      let revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
+      const revenueSource = revData?.source || "estimated";
+      
+      let annualEarnings = revData?.annualEarnings || annualRevenue * revenueAccrualPct;
+      let weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * revenueAccrualPct;
+      
+      if (token.symbol === "SHFL" && annualRevenue < 200000000) {
+        annualRevenue = 275206896;
+        weeklyRevenue = annualRevenue / 52;
+        annualEarnings = 20640517;
+        weeklyEarnings = annualEarnings / 52;
+        revenueAccrualPct = 0.15;
+      }
+      
+      if (token.symbol === "RLB" && (revenueAccrualPct < 0.10 || revenueAccrualPct > 0.20)) {
+        revenueAccrualPct = 0.1355;
+        annualEarnings = annualRevenue * revenueAccrualPct;
+        weeklyEarnings = annualEarnings / 52;
+      }
+      
+      return {
+        ...token,
+        marketCap,
+        weeklyRevenue,
+        weeklyEarnings,
+        annualRevenue,
+        annualEarnings,
+        revenueAccrualPct,
+        psRatio: marketCap / annualRevenue,
+        peRatio: marketCap / annualEarnings,
+        revenueSource,
+      };
+    });
+    
+    tokensWithCalcs.sort((a, b) => {
+      const ratioA = mode === "revenue" ? a.psRatio : a.peRatio;
+      const ratioB = mode === "revenue" ? b.psRatio : b.peRatio;
+      return ratioA - ratioB;
+    });
+    
+    setTokens(tokensWithCalcs);
+  }, []);
+
+  // Process prefetched data immediately on mount
   useEffect(() => {
+    if (prefetchedMarketCaps && prefetchedRevenue && !hasProcessedPrefetch) {
+      processData(prefetchedMarketCaps, prefetchedRevenue, viewMode);
+      setHasProcessedPrefetch(true);
+    }
+  }, [prefetchedMarketCaps, prefetchedRevenue, hasProcessedPrefetch, viewMode, processData]);
+
+  // Re-sort when viewMode changes
+  useEffect(() => {
+    setTokens(prev => {
+      const sorted = [...prev].sort((a, b) => {
+        const ratioA = viewMode === "revenue" ? a.psRatio : a.peRatio;
+        const ratioB = viewMode === "revenue" ? b.psRatio : b.peRatio;
+        return ratioA - ratioB;
+      });
+      return sorted;
+    });
+  }, [viewMode]);
+
+  // Only fetch if no prefetched data
+  useEffect(() => {
+    if (hasProcessedPrefetch) return;
+
     const fetchData = async () => {
-      // Helper for fetch with timeout
-      const fetchWithTimeout = async (url: string, timeoutMs: number) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          return response;
-        } catch (e) {
-          clearTimeout(timeoutId);
-          throw e;
-        }
-      };
-
-      // Retry helper
-      const fetchWithRetry = async (url: string, retries = 2, timeout = 30000) => {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-          try {
-            const response = await fetchWithTimeout(url, timeout);
-            if (response.ok) return response;
-          } catch {
-            if (attempt === retries) throw new Error(`Failed after ${retries + 1} attempts`);
-            await new Promise(r => setTimeout(r, 1000)); // Wait 1s between retries
-          }
-        }
-        throw new Error("All retries failed");
-      };
-
       try {
-        // Fetch both in parallel with longer timeout and retries
         const [mcResponse, revResponse] = await Promise.all([
-          fetchWithRetry("/api/market-caps", 2, 30000),
-          fetchWithRetry("/api/token-revenue", 2, 45000), // Longer timeout for revenue (depends on scraper)
+          fetch("/api/market-caps"),
+          fetch("/api/token-revenue"),
         ]);
         
-        const mcJson = await mcResponse.json();
-        const revJson = await revResponse.json();
-        
-        const marketCaps = mcJson.data || {};
-        const revenues = revJson.data || [];
-        
-        // Consider live if market caps are live (revenue often has some "estimated" tokens)
-        const hasLiveMarketCap = mcJson.source === "live" || mcJson.source === "partial";
-        const hasLiveRevenue = revJson.source === "live" || revenues.some((r: any) => r.source === "live");
-        setDataSource(hasLiveMarketCap || hasLiveRevenue ? "live" : "demo");
-        
-        const tokensWithCalcs: TokenWithCalculations[] = TOKEN_INFO.map(token => {
-          const marketCap = marketCaps[token.symbol] || 100000000;
-          const revData = revenues.find((r: any) => r.symbol === token.symbol);
-          
-          let weeklyRevenue = revData?.weeklyRevenue || 1000000;
-          let annualRevenue = revData?.annualRevenue || weeklyRevenue * 52;
-          let revenueAccrualPct = revData?.revenueAccrualPct || 0.15;
-          const revenueSource = revData?.source || "estimated";
-          
-          let annualEarnings = revData?.annualEarnings || annualRevenue * revenueAccrualPct;
-          let weeklyEarnings = revData?.weeklyEarnings || weeklyRevenue * revenueAccrualPct;
-          
-          if (token.symbol === "SHFL" && annualRevenue < 200000000) {
-            annualRevenue = 275206896;
-            weeklyRevenue = annualRevenue / 52;
-            annualEarnings = 20640517;
-            weeklyEarnings = annualEarnings / 52;
-            revenueAccrualPct = 0.15;
-          }
-          
-          if (token.symbol === "RLB" && (revenueAccrualPct < 0.10 || revenueAccrualPct > 0.20)) {
-            revenueAccrualPct = 0.1355;
-            annualEarnings = annualRevenue * revenueAccrualPct;
-            weeklyEarnings = annualEarnings / 52;
-          }
-          
-          return {
-            ...token,
-            marketCap,
-            weeklyRevenue,
-            weeklyEarnings,
-            annualRevenue,
-            annualEarnings,
-            revenueAccrualPct,
-            psRatio: marketCap / annualRevenue,
-            peRatio: marketCap / annualEarnings,
-            revenueSource,
-          };
-        });
-        
-        tokensWithCalcs.sort((a, b) => {
-          const ratioA = viewMode === "revenue" ? a.psRatio : a.peRatio;
-          const ratioB = viewMode === "revenue" ? b.psRatio : b.peRatio;
-          return ratioA - ratioB;
-        });
-        
-        setTokens(tokensWithCalcs);
+        if (mcResponse.ok && revResponse.ok) {
+          const mcJson = await mcResponse.json();
+          const revJson = await revResponse.json();
+          processData(mcJson, revJson, viewMode);
+        }
       } catch {
-        // Only show "demo" on actual failure
         setDataSource("demo");
         setTokens(getFallbackTokens(viewMode));
       }
     };
 
     fetchData();
-  }, [viewMode]);
+  }, [hasProcessedPrefetch, viewMode, processData]);
 
   // Get color based on ratio thresholds
   // < 1x = Cheap (green), 1-10x = Fair (yellow), > 10x = Expensive (red)
@@ -184,8 +184,6 @@ export default function TokenValuationTable() {
     if (ratio <= 10) return "text-yellow-400 bg-yellow-500/20";
     return "text-red-400 bg-red-500/20";
   };
-
-  // No longer needed - using absolute thresholds instead of relative ranking
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
@@ -318,7 +316,7 @@ export default function TokenValuationTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tokens.map((token, index) => {
+                  {tokens.map((token) => {
                     const ratio = viewMode === "revenue" ? token.psRatio : token.peRatio;
                     const annualValue = viewMode === "revenue" ? token.annualRevenue : token.annualEarnings;
                     return (

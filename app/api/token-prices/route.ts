@@ -62,13 +62,16 @@ export async function GET(request: Request) {
   // Check cache first - return immediately if valid
   const cached = cache[cacheKey];
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: cached.data,
       source: "live",
       cached: true,
       lastUpdated: new Date(cached.timestamp).toISOString(),
     });
+    // Vercel Edge Cache: serve stale while revalidating
+    response.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+    return response;
   }
 
   // Check for API keys
@@ -100,7 +103,7 @@ export async function GET(request: Request) {
     cache[cacheKey] = { data: results, timestamp: Date.now() };
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     success: true,
     data: results,
     source: hasData ? "live" : "error",
@@ -109,4 +112,7 @@ export async function GET(request: Request) {
     hasApiKey: !!(demoKey || proKey),
     lastUpdated: new Date().toISOString(),
   });
+  // Vercel Edge Cache: cache for 5 min, revalidate in background
+  response.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  return response;
 }

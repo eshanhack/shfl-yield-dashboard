@@ -88,6 +88,12 @@ export default function Dashboard() {
     volume24h: 0, 
     marketCapToVolume: 0 
   });
+  
+  // Pre-fetched data for Token tab components (instant render)
+  const [tokenPricesData, setTokenPricesData] = useState<any>(null);
+  const [tokenRevenueData, setTokenRevenueData] = useState<any>(null);
+  const [marketCapsData, setMarketCapsData] = useState<any>(null);
+  const [tanzaniteData, setTanzaniteData] = useState<any>(null);
 
   // Fetch initial data (with loading states)
   const loadData = async (showRefreshing = false) => {
@@ -95,14 +101,31 @@ export default function Dashboard() {
     else setIsLoading(true);
     
     try {
-      // Fetch all data in parallel
-      const [priceData, priceHistory, ngrHistory, draws, stats, ngrStatsData] = await Promise.all([
+      // Fetch ALL data in parallel - including Token tab data for instant render
+      const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
+      
+      const [
+        priceData, 
+        priceHistory, 
+        ngrHistory, 
+        draws, 
+        stats, 
+        ngrStatsData,
+        marketCapsRes,
+        tokenPricesRes,
+        tokenRevenueRes,
+        tanzaniteRes,
+      ] = await Promise.all([
         fetchSHFLPrice(),
         fetchPriceHistory(365),
         fetchNGRHistory(),
         fetchLotteryHistory(),
         fetchLotteryStats(),
         fetchNGRStats(),
+        fetch(`/api/market-caps?_t=${Date.now()}`).catch(() => null),
+        fetch(`/api/token-prices?days=30`).catch(() => null),
+        fetch(`/api/token-revenue`).catch(() => null),
+        fetch(`${scraperUrl}/api/tanzanite`).catch(() => null),
       ]);
 
       setPrice(priceData);
@@ -116,17 +139,28 @@ export default function Dashboard() {
       setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
       
-      // Fetch liquidity data with cache-busting
-      try {
-        const liquidityRes = await fetch(`/api/market-caps?_t=${Date.now()}`);
-        if (liquidityRes.ok) {
-          const liquidityJson = await liquidityRes.json();
-          if (liquidityJson.shflLiquidity) {
-            setLiquidityData(liquidityJson.shflLiquidity);
-          }
+      // Process pre-fetched Token tab data
+      if (marketCapsRes?.ok) {
+        const mcJson = await marketCapsRes.json();
+        setMarketCapsData(mcJson);
+        if (mcJson.shflLiquidity) {
+          setLiquidityData(mcJson.shflLiquidity);
         }
-      } catch {
-        // Liquidity fetch failed silently
+      }
+      
+      if (tokenPricesRes?.ok) {
+        const tpJson = await tokenPricesRes.json();
+        setTokenPricesData(tpJson);
+      }
+      
+      if (tokenRevenueRes?.ok) {
+        const trJson = await tokenRevenueRes.json();
+        setTokenRevenueData(trJson);
+      }
+      
+      if (tanzaniteRes?.ok) {
+        const tzJson = await tanzaniteRes.json();
+        setTanzaniteData(tzJson);
       }
       
       // Mark that we have initial data
@@ -147,14 +181,31 @@ export default function Dashboard() {
   // Silent background refresh - no loading states, no interruption
   const silentRefresh = async () => {
     try {
+      const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
+      
       // Fetch all data in parallel without showing any loading state
-      const [priceData, priceHistory, ngrHistory, draws, stats, ngrStatsData] = await Promise.all([
+      const [
+        priceData, 
+        priceHistory, 
+        ngrHistory, 
+        draws, 
+        stats, 
+        ngrStatsData,
+        marketCapsRes,
+        tokenPricesRes,
+        tokenRevenueRes,
+        tanzaniteRes,
+      ] = await Promise.all([
         fetchSHFLPrice(),
         fetchPriceHistory(365),
         fetchNGRHistory(),
         fetchLotteryHistory(),
         fetchLotteryStats(),
         fetchNGRStats(),
+        fetch(`/api/market-caps?_t=${Date.now()}`).catch(() => null),
+        fetch(`/api/token-prices?days=30`).catch(() => null),
+        fetch(`/api/token-revenue`).catch(() => null),
+        fetch(`${scraperUrl}/api/tanzanite`).catch(() => null),
       ]);
 
       // Update state quietly - React will batch these updates
@@ -166,18 +217,15 @@ export default function Dashboard() {
       setNgrStats(ngrStatsData);
       setLastRefresh(new Date());
       
-      // Silently update liquidity
-      try {
-        const liquidityRes = await fetch(`/api/market-caps?_t=${Date.now()}`);
-        if (liquidityRes.ok) {
-          const liquidityJson = await liquidityRes.json();
-          if (liquidityJson.shflLiquidity) {
-            setLiquidityData(liquidityJson.shflLiquidity);
-          }
-        }
-      } catch {
-        // Ignore errors in background refresh
+      // Update Token tab data silently
+      if (marketCapsRes?.ok) {
+        const mcJson = await marketCapsRes.json();
+        setMarketCapsData(mcJson);
+        if (mcJson.shflLiquidity) setLiquidityData(mcJson.shflLiquidity);
       }
+      if (tokenPricesRes?.ok) setTokenPricesData(await tokenPricesRes.json());
+      if (tokenRevenueRes?.ok) setTokenRevenueData(await tokenRevenueRes.json());
+      if (tanzaniteRes?.ok) setTanzaniteData(await tanzaniteRes.json());
     } catch {
       // Silently fail - don't interrupt user
     }
@@ -1150,6 +1198,7 @@ export default function Dashboard() {
                 <RevenueAnalysis
                   historicalDraws={completedDraws}
                   currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+                  prefetchedTanzanite={tanzaniteData}
                 />
               </section>
             </div>
@@ -1177,10 +1226,13 @@ export default function Dashboard() {
             {/* Token Comparison Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
               <section id="price-returns">
-                <TokenReturnsChart />
+                <TokenReturnsChart prefetchedData={tokenPricesData} />
               </section>
               <section id="token-valuation">
-                <TokenValuationTable />
+                <TokenValuationTable 
+                  prefetchedMarketCaps={marketCapsData} 
+                  prefetchedRevenue={tokenRevenueData}
+                />
               </section>
             </div>
             </div>

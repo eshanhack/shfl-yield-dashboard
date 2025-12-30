@@ -15,6 +15,7 @@ interface TanzaniteData {
 interface RevenueAnalysisProps {
   historicalDraws: HistoricalDraw[];
   currentWeekNGR: number;
+  prefetchedTanzanite?: any; // Pre-fetched from Dashboard
 }
 
 type Period = "week" | "month" | "year";
@@ -26,69 +27,49 @@ const FALLBACK_TANZANITE: TanzaniteData = {
   year: { depositVolume: 700000000, percentChange: 15, found: false },
 };
 
-export default function RevenueAnalysis({ historicalDraws, currentWeekNGR }: RevenueAnalysisProps) {
-  // Start with fallback data - renders immediately
-  const [tanzaniteData, setTanzaniteData] = useState<TanzaniteData>(FALLBACK_TANZANITE);
-  const [isLoading, setIsLoading] = useState(false); // Don't block render
-  // Default to "live" - only show "estimated" on actual failure
-  const [dataSource, setDataSource] = useState<"live" | "estimated">("live");
+export default function RevenueAnalysis({ historicalDraws, currentWeekNGR, prefetchedTanzanite }: RevenueAnalysisProps) {
+  // Use prefetched data if available, otherwise start with fallback
+  const [tanzaniteData, setTanzaniteData] = useState<TanzaniteData>(() => {
+    if (prefetchedTanzanite?.data) return prefetchedTanzanite.data;
+    return FALLBACK_TANZANITE;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [dataSource, setDataSource] = useState<"live" | "estimated">(() => {
+    if (prefetchedTanzanite?.data?.week?.found) return "live";
+    return "estimated";
+  });
 
+  // Update from prefetched data when it arrives
   useEffect(() => {
+    if (prefetchedTanzanite?.data) {
+      setTanzaniteData(prefetchedTanzanite.data);
+      setDataSource(prefetchedTanzanite.data.week?.found ? "live" : "estimated");
+    }
+  }, [prefetchedTanzanite]);
+
+  // Only fetch if no prefetched data
+  useEffect(() => {
+    if (prefetchedTanzanite?.data) return; // Already have data
+    
     const fetchTanzanite = async () => {
       const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
       
-      // Helper to fetch with timeout
-      const fetchWithTimeout = async (url: string, timeoutMs: number) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          return response;
-        } catch (e) {
-          clearTimeout(timeoutId);
-          throw e;
-        }
-      };
-      
-      // Wake up the server first (Render free tier sleeps after inactivity)
-      // This is a lightweight ping that triggers cold start
       try {
-        await fetchWithTimeout(`${scraperUrl}/api/health`, 60000); // 60s for cold start
-      } catch {
-        // Server might be waking up, continue anyway
-      }
-      
-      // Now fetch the actual data with retry logic
-      const maxRetries = 2;
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const timeout = attempt === 0 ? 30000 : 45000; // Increase timeout on retries
-          const response = await fetchWithTimeout(`${scraperUrl}/api/tanzanite`, timeout);
-          
-          if (response.ok) {
-            const json = await response.json();
-            if (json.success && json.data) {
-              setTanzaniteData(json.data);
-              setDataSource(json.data.week?.found ? "live" : "estimated");
-              return; // Success, exit
-            }
-          }
-        } catch {
-          if (attempt === maxRetries) {
-            // Final attempt failed - only now show "estimated"
-            setDataSource("estimated");
-          } else {
-            // Wait before retry
-            await new Promise(r => setTimeout(r, 2000));
+        const response = await fetch(`${scraperUrl}/api/tanzanite`);
+        if (response.ok) {
+          const json = await response.json();
+          if (json.success && json.data) {
+            setTanzaniteData(json.data);
+            setDataSource(json.data.week?.found ? "live" : "estimated");
           }
         }
+      } catch {
+        setDataSource("estimated");
       }
     };
 
-    // Fetch in background without blocking render
     fetchTanzanite();
-  }, []);
+  }, [prefetchedTanzanite]);
 
   // Calculate NGR stats for different periods
   const ngrStats = useMemo(() => {

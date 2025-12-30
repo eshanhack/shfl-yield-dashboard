@@ -36,17 +36,20 @@ const generatePlaceholderReturns = (): Record<string, number> => ({
   SHFL: 5.2, BTC: 2.1, ETH: 3.5, SOL: 8.3, RLB: -2.1, HYPE: 12.5, PUMP: 15.2
 });
 
-export default function TokenReturnsChart() {
+interface TokenReturnsChartProps {
+  prefetchedData?: any; // Pre-fetched from Dashboard
+}
+
+export default function TokenReturnsChart({ prefetchedData }: TokenReturnsChartProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("30d");
   const [chartData, setChartData] = useState<PricePoint[]>([]);
-  // Start with placeholder returns for immediate render
   const [returns, setReturns] = useState<Record<string, number>>(generatePlaceholderReturns());
-  const [isLoading, setIsLoading] = useState(true);
-  // Default to "live" - only show "demo" on actual failure
+  const [isLoading, setIsLoading] = useState(!prefetchedData); // Not loading if we have prefetched data
   const [dataSource, setDataSource] = useState<"live" | "demo">("live");
   const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
     new Set(TOKENS.map(t => t.symbol))
   );
+  const [hasPrefetchedLoaded, setHasPrefetchedLoaded] = useState(false);
 
   const periodDays: Record<TimePeriod, number> = {
     "1d": 1,
@@ -117,35 +120,43 @@ export default function TokenReturnsChart() {
     return { chartData: normalizedData, returns: finalReturns };
   };
 
+  // Process prefetched data immediately on mount
   useEffect(() => {
+    if (prefetchedData?.data && timePeriod === "30d" && !hasPrefetchedLoaded) {
+      const hasAnyData = prefetchedData.data.some((item: any) => item.prices?.length > 0);
+      setDataSource(hasAnyData ? "live" : "demo");
+      
+      const results = prefetchedData.data
+        .map((item: { symbol: string; prices: [number, number][] }) => {
+          const token = TOKENS.find(t => t.symbol === item.symbol) || TOKENS[0];
+          return { token, prices: item.prices };
+        })
+        .filter((r: { token: TokenData; prices: [number, number][] }) => r.prices.length > 0);
+      
+      const { chartData: newChartData, returns: newReturns } = processData(results, timePeriod);
+      setChartData(newChartData);
+      if (Object.keys(newReturns).length > 0) setReturns(newReturns);
+      setIsLoading(false);
+      setHasPrefetchedLoaded(true);
+    }
+  }, [prefetchedData, timePeriod, hasPrefetchedLoaded]);
+
+  useEffect(() => {
+    // Skip fetch if we just used prefetched data for 30d
+    if (timePeriod === "30d" && hasPrefetchedLoaded) return;
+    
     const fetchPriceData = async () => {
       setIsLoading(true);
       
-      // Retry helper with timeout
-      const fetchWithRetry = async (url: string, retries = 2, timeout = 30000) => {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.ok) return response;
-          } catch {
-            if (attempt === retries) throw new Error(`Failed after ${retries + 1} attempts`);
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
-        throw new Error("All retries failed");
-      };
-
       try {
         const days = periodDays[timePeriod];
-        const response = await fetchWithRetry(`/api/token-prices?days=${days}`, 2, 30000);
+        const response = await fetch(`/api/token-prices?days=${days}`);
+        
+        if (!response.ok) throw new Error("Fetch failed");
         
         const json = await response.json();
         if (!json.success) throw new Error("API returned error");
         
-        // Consider live if any token has data
         const hasAnyData = json.data?.some((item: any) => item.prices?.length > 0);
         setDataSource(hasAnyData ? "live" : "demo");
         
@@ -160,14 +171,13 @@ export default function TokenReturnsChart() {
         setChartData(newChartData);
         if (Object.keys(newReturns).length > 0) setReturns(newReturns);
       } catch {
-        // Only show "demo" on actual failure
         setDataSource("demo");
       }
       setIsLoading(false);
     };
 
     fetchPriceData();
-  }, [timePeriod]);
+  }, [timePeriod, hasPrefetchedLoaded]);
 
   const toggleToken = (symbol: string) => {
     setVisibleTokens(prev => {

@@ -164,7 +164,7 @@ export async function GET(request: Request) {
   // Check cache first - instant response
   if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
     const liveCount = cache.data.filter(t => t.source === "live").length;
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: cache.data,
       source: liveCount > 0 ? "live" : "estimated",
@@ -172,6 +172,8 @@ export async function GET(request: Request) {
       cached: true,
       cacheAge: Math.round((Date.now() - cache.timestamp) / 1000 / 60) + " minutes",
     });
+    response.headers.set("Cache-Control", "s-maxage=600, stale-while-revalidate=1200");
+    return response;
   }
 
   try {
@@ -229,7 +231,7 @@ export async function GET(request: Request) {
     // Mark as live if SHFL is live (the primary data we care about)
     const shflIsLive = shflData.source === "live";
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: revenues,
       source: shflIsLive ? "live" : "estimated", // SHFL determines overall status
@@ -237,6 +239,8 @@ export async function GET(request: Request) {
       cached: false,
       details: revenues.map(r => ({ symbol: r.symbol, source: r.source })),
     });
+    response.headers.set("Cache-Control", "s-maxage=600, stale-while-revalidate=1200");
+    return response;
   } catch (error) {
     // Return estimated data on error
     const fallbackData: TokenRevenue[] = [

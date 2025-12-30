@@ -30,11 +30,13 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: nu
 export async function GET() {
   // Return cached data if fresh - instant response
   if (mcCache && Date.now() - mcCache.timestamp < MC_CACHE_DURATION) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       ...mcCache.data,
       cached: true,
       cacheAge: Math.round((Date.now() - mcCache.timestamp) / 1000) + "s",
     });
+    response.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+    return response;
   }
   const marketCaps: Record<string, number> = {};
   const volumes: Record<string, number> = {};
@@ -185,5 +187,7 @@ export async function GET() {
   // Cache the response
   mcCache = { data: responseData, timestamp: Date.now() };
 
-  return NextResponse.json(responseData);
+  const response = NextResponse.json(responseData);
+  response.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  return response;
 }
