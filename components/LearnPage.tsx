@@ -247,8 +247,11 @@ function LotteryTicketConcept() {
 function RevenueFlowDiagram() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const [bettingVolume, setBettingVolume] = useState(1000000);
+  const [bettingVolume, setBettingVolume] = useState(1000000000); // Default $1B
   const [animationStep, setAnimationStep] = useState(0);
+  const [inputMode, setInputMode] = useState<"shfl" | "tickets" | "usd">("shfl");
+  const [userInput, setUserInput] = useState(50000); // 50K SHFL default
+  const shflPrice = 0.05; // Approximate price
   
   // CORRECTED MATH:
   // GGR = ~2% of betting volume (house edge)
@@ -262,6 +265,22 @@ function RevenueFlowDiagram() {
   const ngr = ggr * ngrRate;
   const lotteryPool = ngr * lotteryRate;
   
+  // Calculate user's share based on input mode
+  const totalStaked = 180000000; // 180M staked
+  const totalTickets = totalStaked / 50; // ~3.6M tickets
+  
+  const getUserTickets = () => {
+    switch (inputMode) {
+      case "shfl": return Math.floor(userInput / 50);
+      case "tickets": return userInput;
+      case "usd": return Math.floor((userInput / shflPrice) / 50);
+    }
+  };
+  
+  const userTickets = getUserTickets();
+  const userShare = userTickets / totalTickets;
+  const weeklyYield = lotteryPool * userShare;
+  
   useEffect(() => {
     if (!isInView) return;
     
@@ -273,9 +292,33 @@ function RevenueFlowDiagram() {
   }, [isInView]);
   
   const formatMoney = (n: number) => {
+    if (n >= 1000000000) return `$${(n / 1000000000).toFixed(2)}B`;
     if (n >= 1000000) return `$${(n / 1000000).toFixed(2)}M`;
     if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
     return `$${n.toFixed(0)}`;
+  };
+  
+  const cycleInputMode = () => {
+    setInputMode(prev => {
+      if (prev === "shfl") {
+        setUserInput(Math.floor(userInput / 50)); // Convert to tickets
+        return "tickets";
+      }
+      if (prev === "tickets") {
+        setUserInput(Math.round(userInput * 50 * shflPrice)); // Convert to USD
+        return "usd";
+      }
+      setUserInput(Math.round(userInput / shflPrice)); // Convert to SHFL
+      return "shfl";
+    });
+  };
+  
+  const getInputLabel = () => {
+    switch (inputMode) {
+      case "shfl": return "SHFL";
+      case "tickets": return "Tickets";
+      case "usd": return "USD";
+    }
   };
   
   return (
@@ -287,15 +330,45 @@ function RevenueFlowDiagram() {
         </label>
         <input
           type="range"
-          min={100000}
-          max={50000000}
-          step={100000}
+          min={500000000}
+          max={2000000000}
+          step={50000000}
           value={bettingVolume}
           onChange={(e) => setBettingVolume(Number(e.target.value))}
           className="w-full max-w-md h-2 bg-terminal-border rounded-lg appearance-none cursor-pointer accent-terminal-accent"
         />
         <div className="text-xl lg:text-2xl font-bold text-terminal-accent mt-2">
           {formatMoney(bettingVolume)}
+        </div>
+        <div className="text-xs text-terminal-textMuted mt-1">
+          Typical range: $500M - $2B per week
+        </div>
+      </div>
+      
+      {/* User Input Section */}
+      <div className="mb-6 p-4 rounded-xl bg-terminal-card border border-terminal-border max-w-md mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-sm text-terminal-textSecondary">Your Position</label>
+          <button
+            onClick={cycleInputMode}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-xs font-medium hover:bg-terminal-accent/20 transition-colors"
+          >
+            <ArrowRight className="w-3 h-3" />
+            {inputMode === "shfl" ? "→ Tickets" : inputMode === "tickets" ? "→ USD" : "→ SHFL"}
+          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            min={1}
+            value={userInput}
+            onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
+            className="flex-1 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
+          />
+          <span className="text-sm text-terminal-textMuted w-16">{getInputLabel()}</span>
+        </div>
+        <div className="text-xs text-terminal-textMuted mt-2 text-center">
+          = <span className="text-terminal-accent font-mono">{userTickets.toLocaleString()}</span> tickets
         </div>
       </div>
       
@@ -409,12 +482,32 @@ function RevenueFlowDiagram() {
         </div>
       </div>
       
+      {/* Weekly Yield Result - EMPHASIZED */}
+      <motion.div 
+        className="mt-6 p-4 rounded-xl bg-gradient-to-br from-terminal-accent/20 to-purple-500/10 border-2 border-terminal-accent max-w-md mx-auto text-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="text-xs text-terminal-accent uppercase tracking-wider mb-1 font-medium">
+          🎯 Your Estimated WEEKLY Yield
+        </div>
+        <div className="text-3xl lg:text-4xl font-bold text-terminal-accent">
+          {formatMoney(weeklyYield)}
+        </div>
+        <div className="text-xs text-terminal-textMuted mt-2">
+          Every week • {userTickets.toLocaleString()} tickets • {(userShare * 100).toFixed(4)}% share
+        </div>
+        <div className="text-[10px] text-terminal-textMuted mt-1 opacity-70">
+          ≈ {formatMoney(weeklyYield * 52)} annually
+        </div>
+      </motion.div>
+      
       {/* Explanation */}
       <motion.div className="mt-4 text-center">
         <p className="text-terminal-textSecondary text-xs lg:text-sm max-w-xl mx-auto">
-          If you have tickets, you win a share of that{" "}
-          <span className="text-terminal-accent font-semibold">{formatMoney(lotteryPool)}</span> weekly pool 
-          proportional to your ticket count.
+          The <span className="text-terminal-accent font-semibold">{formatMoney(lotteryPool)}</span> weekly pool 
+          is distributed every Friday based on your ticket share.
         </p>
       </motion.div>
     </div>
@@ -428,6 +521,7 @@ function StakeSharePie() {
   const [userStake, setUserStake] = useState(50000);
   const totalStaked = 180000000; // 180M tokens staked
   const weeklyPool = 400000; // ~$400K weekly pool
+  const shflPrice = 0.05; // Approximate price
   
   // 1 ticket per 50 SHFL
   const userTickets = Math.floor(userStake / 50);
@@ -436,6 +530,7 @@ function StakeSharePie() {
   const userShare = userTickets / totalTickets;
   const weeklyYield = weeklyPool * userShare;
   const annualYield = weeklyYield * 52;
+  const usdValue = userStake * shflPrice;
   
   const animatedYield = useAnimatedCounter(Math.round(weeklyYield), 800, isInView);
   
@@ -482,16 +577,21 @@ function StakeSharePie() {
                 onChange={(e) => setUserStake(Number(e.target.value))}
                 className="flex-1 h-2 bg-terminal-border rounded-lg appearance-none cursor-pointer accent-terminal-accent"
               />
-              <div className="w-28 lg:w-36 text-right">
-                <span className="text-base lg:text-lg font-bold text-terminal-text">
-                  {userStake >= 1000000 
-                    ? (userStake / 1000000).toFixed(1) + "M"
-                    : userStake >= 1000 
-                    ? (userStake / 1000).toFixed(0) + "K"
-                    : userStake.toLocaleString()
-                  }
-                </span>
-                <span className="text-xs text-terminal-textMuted ml-1">SHFL</span>
+              <div className="w-32 lg:w-40 text-right">
+                <div>
+                  <span className="text-base lg:text-lg font-bold text-terminal-text">
+                    {userStake >= 1000000 
+                      ? (userStake / 1000000).toFixed(1) + "M"
+                      : userStake >= 1000 
+                      ? (userStake / 1000).toFixed(0) + "K"
+                      : userStake.toLocaleString()
+                    }
+                  </span>
+                  <span className="text-xs text-terminal-textMuted ml-1">SHFL</span>
+                </div>
+                <div className="text-xs text-terminal-textMuted">
+                  ≈ ${usdValue >= 1000 ? (usdValue / 1000).toFixed(1) + "K" : usdValue.toFixed(0)} USD
+                </div>
               </div>
             </div>
             <div className="text-xs text-terminal-textMuted mt-1">
@@ -608,7 +708,7 @@ function TicketSystem() {
                 <div>
                   <div className="text-xs text-terminal-text flex items-center gap-1">
                     Powerplay Tickets
-                    <span className="px-1.5 py-0.5 text-[8px] bg-yellow-500/20 text-yellow-400 rounded">18x JACKPOT</span>
+                    <span className="px-1.5 py-0.5 text-[8px] bg-yellow-500/20 text-yellow-400 rounded">18x BETTER ODDS</span>
                   </div>
                   <div className="text-[10px] text-terminal-textMuted">$4.00 each • Guaranteed powerball</div>
                 </div>
@@ -694,16 +794,51 @@ function TicketSystem() {
   );
 }
 
-// Weekly Draw Simulator - NOW WITH TICKET INPUT
+// Weekly Draw Simulator - NOW WITH SHFL/TICKETS/USD INPUT
 function DrawSimulator() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [results, setResults] = useState<number[]>([]);
   const [currentWeek, setCurrentWeek] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
-  const [userTickets, setUserTickets] = useState(1000);
+  const [inputMode, setInputMode] = useState<"shfl" | "tickets" | "usd">("shfl");
+  const [userInput, setUserInput] = useState(50000); // 50K SHFL default
+  const shflPrice = 0.05;
   
   const totalTickets = 3600000; // ~3.6M total tickets
+  
+  const getUserTickets = () => {
+    switch (inputMode) {
+      case "shfl": return Math.floor(userInput / 50);
+      case "tickets": return userInput;
+      case "usd": return Math.floor((userInput / shflPrice) / 50);
+    }
+  };
+  
+  const userTickets = getUserTickets();
   const userShare = userTickets / totalTickets;
+  
+  const cycleInputMode = () => {
+    setInputMode(prev => {
+      if (prev === "shfl") {
+        setUserInput(Math.floor(userInput / 50)); // Convert to tickets
+        return "tickets";
+      }
+      if (prev === "tickets") {
+        setUserInput(Math.round(userInput * 50 * shflPrice)); // Convert to USD
+        return "usd";
+      }
+      setUserInput(Math.round(userInput / shflPrice)); // Convert to SHFL
+      return "shfl";
+    });
+  };
+  
+  const getInputLabel = () => {
+    switch (inputMode) {
+      case "shfl": return "SHFL";
+      case "tickets": return "Tickets";
+      case "usd": return "USD";
+    }
+  };
   
   const runSimulation = () => {
     setIsSimulating(true);
@@ -745,21 +880,30 @@ function DrawSimulator() {
   return (
     <div className="py-4 lg:py-8">
       <div className="text-center mb-6">
-        {/* Ticket Input */}
-        <div className="inline-block mb-4">
-          <label className="block text-sm text-terminal-textSecondary mb-2">
-            Your Ticket Count
-          </label>
-          <div className="flex items-center gap-2">
+        {/* SHFL/Tickets/USD Input with Flip */}
+        <div className="inline-block mb-4 p-4 rounded-xl bg-terminal-card border border-terminal-border">
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-sm text-terminal-textSecondary">Your Position</label>
+            <button
+              onClick={cycleInputMode}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-xs font-medium hover:bg-terminal-accent/20 transition-colors"
+            >
+              <ArrowRight className="w-3 h-3" />
+              {inputMode === "shfl" ? "→ Tickets" : inputMode === "tickets" ? "→ USD" : "→ SHFL"}
+            </button>
+          </div>
+          <div className="flex items-center gap-2 justify-center">
             <input
               type="number"
               min={1}
-              max={100000}
-              value={userTickets}
-              onChange={(e) => setUserTickets(Math.max(1, Math.min(100000, Number(e.target.value) || 1)))}
-              className="w-32 px-3 py-2 rounded-lg bg-terminal-card border border-terminal-border text-center font-mono text-terminal-text"
+              value={userInput}
+              onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
+              className="w-32 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
             />
-            <span className="text-sm text-terminal-textMuted">tickets</span>
+            <span className="text-sm text-terminal-textMuted w-16">{getInputLabel()}</span>
+          </div>
+          <div className="text-xs text-terminal-textMuted mt-2">
+            = <span className="text-terminal-accent font-mono">{userTickets.toLocaleString()}</span> tickets
           </div>
         </div>
         
@@ -1091,43 +1235,75 @@ function StepByStepGuide({ nextDrawTimestamp }: { nextDrawTimestamp?: number }) 
   );
 }
 
-// Compounding Calculator
+// Compounding Calculator - VALUE WITH AND WITHOUT REINVESTING YIELD
 function CompoundingCalculator() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const [initialStake, setInitialStake] = useState(50000);
   const [weeklyYieldPct, setWeeklyYieldPct] = useState(0.5);
   const [weeks, setWeeks] = useState(52);
-  const [shflPrice] = useState(0.05);
+  const shflPrice = 0.05; // Current price
   
   const results = useMemo(() => {
     const initialValue = initialStake * shflPrice;
     const weeklyYield = weeklyYieldPct / 100;
     
-    let compoundedTokens = initialStake;
-    let simpleYield = 0;
-    const compoundedData: { week: number; compounded: number; simple: number }[] = [];
+    // Track both scenarios
+    let reinvestedTokens = initialStake; // Start with initial tokens
+    let holdOnlyTokens = initialStake; // Never changes (just hold)
+    let collectedYield = 0; // USDC collected but not reinvested
+    
+    const chartData: { week: number; reinvested: number; holdOnly: number; holdPlusYield: number }[] = [];
     
     for (let w = 0; w <= weeks; w++) {
-      const compoundedValue = compoundedTokens * shflPrice;
-      const simpleValue = initialValue + simpleYield;
-      compoundedData.push({ week: w, compounded: compoundedValue, simple: simpleValue });
+      // Value of reinvested strategy (more tokens, same price)
+      const reinvestedValue = reinvestedTokens * shflPrice;
       
-      const weeklyUSDC = compoundedTokens * shflPrice * weeklyYield;
-      const newTokens = weeklyUSDC / shflPrice;
-      compoundedTokens += newTokens;
-      simpleYield += initialValue * weeklyYield;
+      // Value of just holding (same tokens, same price) - no change in value without price movement
+      const holdOnlyValue = holdOnlyTokens * shflPrice;
+      
+      // Value of hold + collecting yield (not reinvesting)
+      const holdPlusYieldValue = holdOnlyValue + collectedYield;
+      
+      chartData.push({ 
+        week: w, 
+        reinvested: reinvestedValue, 
+        holdOnly: holdOnlyValue,
+        holdPlusYield: holdPlusYieldValue
+      });
+      
+      // Calculate this week's yield
+      const weeklyUSDCReinvested = reinvestedTokens * shflPrice * weeklyYield;
+      const weeklyUSDCHold = holdOnlyTokens * shflPrice * weeklyYield;
+      
+      // Reinvest: convert USDC to more tokens
+      reinvestedTokens += weeklyUSDCReinvested / shflPrice;
+      
+      // Hold + Yield: just collect USDC
+      collectedYield += weeklyUSDCHold;
     }
     
-    const finalCompounded = compoundedData[weeks]?.compounded || 0;
-    const finalSimple = compoundedData[weeks]?.simple || 0;
-    const compoundingBonus = finalCompounded - finalSimple;
-    const compoundingBonusPct = (compoundingBonus / finalSimple) * 100;
+    const finalReinvested = chartData[weeks]?.reinvested || 0;
+    const finalHoldPlusYield = chartData[weeks]?.holdPlusYield || 0;
+    const finalHoldOnly = chartData[weeks]?.holdOnly || 0;
+    const compoundingBonus = finalReinvested - finalHoldPlusYield;
+    const compoundingBonusPct = finalHoldPlusYield > 0 ? (compoundingBonus / finalHoldPlusYield) * 100 : 0;
+    const totalYieldEarned = collectedYield;
+    const finalTokenCount = reinvestedTokens;
     
-    return { data: compoundedData, finalCompounded, finalSimple, compoundingBonus, compoundingBonusPct };
+    return { 
+      data: chartData, 
+      finalReinvested, 
+      finalHoldPlusYield, 
+      finalHoldOnly,
+      compoundingBonus, 
+      compoundingBonusPct,
+      totalYieldEarned,
+      finalTokenCount
+    };
   }, [initialStake, weeklyYieldPct, weeks, shflPrice]);
   
-  const maxValue = Math.max(...results.data.map(d => Math.max(d.compounded, d.simple)));
+  const maxValue = Math.max(...results.data.map(d => Math.max(d.reinvested, d.holdPlusYield)));
   
   return (
     <div ref={ref} className="py-4 lg:py-8">
@@ -1137,7 +1313,10 @@ function CompoundingCalculator() {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-terminal-textSecondary">Initial Stake</span>
-              <span className="font-mono text-terminal-text">{initialStake.toLocaleString()} SHFL</span>
+              <div className="text-right">
+                <span className="font-mono text-terminal-text">{initialStake.toLocaleString()} SHFL</span>
+                <span className="text-xs text-terminal-textMuted ml-1">(${(initialStake * shflPrice).toLocaleString()})</span>
+              </div>
             </div>
             <input type="range" min={10000} max={500000} step={5000} value={initialStake}
               onChange={(e) => setInitialStake(Number(e.target.value))}
@@ -1157,7 +1336,7 @@ function CompoundingCalculator() {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-terminal-textSecondary">Time Period</span>
-              <span className="font-mono text-terminal-text">{weeks} weeks</span>
+              <span className="font-mono text-terminal-text">{weeks} weeks ({(weeks / 52).toFixed(1)} yrs)</span>
             </div>
             <input type="range" min={12} max={156} step={4} value={weeks}
               onChange={(e) => setWeeks(Number(e.target.value))}
@@ -1166,22 +1345,28 @@ function CompoundingCalculator() {
           
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-terminal-card border border-terminal-border">
-              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Without Compound</div>
+              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Hold + Collect Yield</div>
               <div className="text-lg font-bold text-terminal-textSecondary">
-                ${results.finalSimple.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                ${results.finalHoldPlusYield.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[9px] text-terminal-textMuted">
+                {initialStake.toLocaleString()} SHFL + ${results.totalYieldEarned.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDC
               </div>
             </div>
             <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
-              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">With Compounding</div>
+              <div className="text-[10px] text-terminal-textMuted uppercase mb-1">Reinvest Yield</div>
               <div className="text-lg font-bold text-green-400">
-                ${results.finalCompounded.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                ${results.finalReinvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </div>
+              <div className="text-[9px] text-green-400/70">
+                {Math.round(results.finalTokenCount).toLocaleString()} SHFL total
               </div>
             </div>
           </div>
           
           <div className="p-3 rounded-xl bg-terminal-accent/10 border border-terminal-accent/30">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-terminal-textSecondary">Compounding Bonus</span>
+              <span className="text-xs text-terminal-textSecondary">Reinvesting Bonus</span>
               <div className="text-right">
                 <span className="text-base font-bold text-terminal-accent">
                   +${results.compoundingBonus.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -1190,36 +1375,52 @@ function CompoundingCalculator() {
               </div>
             </div>
           </div>
+          
+          <div className="text-[10px] text-terminal-textMuted p-2 rounded bg-terminal-dark">
+            <span className="text-yellow-400">⚠️</span> Assumes constant SHFL price @ ${shflPrice}. 
+            Actual results depend on price changes and yield variance.
+          </div>
         </div>
         
         {/* Chart */}
-        <div className="h-[220px] lg:h-[260px] p-4 rounded-xl bg-terminal-card border border-terminal-border">
+        <div className="h-[220px] lg:h-[280px] p-4 rounded-xl bg-terminal-card border border-terminal-border">
+          <div className="text-xs text-terminal-textMuted mb-2">Investment Value Over Time</div>
           <div className="flex items-center gap-4 mb-3 text-xs">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-green-500" /><span className="text-terminal-textSecondary">Compounded</span></div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-terminal-textMuted" /><span className="text-terminal-textSecondary">Simple</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-green-500" /><span className="text-terminal-textSecondary">Reinvest Yield</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-terminal-textMuted" /><span className="text-terminal-textSecondary">Hold + Collect</span></div>
           </div>
           
-          <div className="relative h-[calc(100%-30px)]">
+          <div className="relative h-[calc(100%-50px)]">
             <svg className="w-full h-full" preserveAspectRatio="none">
+              {/* Hold + Yield line */}
               <motion.path
                 d={results.data.map((d, i) => {
                   const x = (i / weeks) * 100;
-                  const y = 100 - (d.simple / maxValue) * 100;
+                  const y = 100 - (d.holdPlusYield / maxValue) * 100;
                   return `${i === 0 ? "M" : "L"} ${x}% ${y}%`;
                 }).join(" ")}
                 fill="none" stroke="currentColor" strokeWidth="2" className="text-terminal-textMuted"
                 initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}} transition={{ duration: 2 }}
               />
+              {/* Reinvested line */}
               <motion.path
                 d={results.data.map((d, i) => {
                   const x = (i / weeks) * 100;
-                  const y = 100 - (d.compounded / maxValue) * 100;
+                  const y = 100 - (d.reinvested / maxValue) * 100;
                   return `${i === 0 ? "M" : "L"} ${x}% ${y}%`;
                 }).join(" ")}
                 fill="none" stroke="currentColor" strokeWidth="3" className="text-green-500"
                 initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}} transition={{ duration: 2, delay: 0.5 }}
               />
             </svg>
+            
+            {/* Y-axis labels */}
+            <div className="absolute left-0 top-0 text-[8px] text-terminal-textMuted">
+              ${Math.round(maxValue).toLocaleString()}
+            </div>
+            <div className="absolute left-0 bottom-0 text-[8px] text-terminal-textMuted">
+              ${Math.round(initialStake * shflPrice).toLocaleString()}
+            </div>
           </div>
         </div>
       </div>
