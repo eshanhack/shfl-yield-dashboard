@@ -95,10 +95,31 @@ export default function Dashboard() {
   const [marketCapsData, setMarketCapsData] = useState<any>(null);
   const [tanzaniteData, setTanzaniteData] = useState<any>(null);
 
+  // Helper function to fetch with timeout
+  const fetchWithTimeout = async (url: string, timeoutMs: number = 8000): Promise<Response | null> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return response;
+    } catch {
+      clearTimeout(timeoutId);
+      return null;
+    }
+  };
+
   // Fetch initial data (with loading states)
   const loadData = async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setIsLoading(true);
+    
+    // Set a maximum loading time to prevent infinite loading
+    const maxLoadTimeout = setTimeout(() => {
+      setIsLoading(false);
+      setIsRefreshing(false);
+      setHasInitialData(true); // Show whatever data we have
+    }, 12000); // 12 second max
     
     try {
       // Fetch ALL data in parallel - including Token tab data for instant render
@@ -122,11 +143,13 @@ export default function Dashboard() {
         fetchLotteryHistory(),
         fetchLotteryStats(),
         fetchNGRStats(),
-        fetch(`/api/market-caps?_t=${Date.now()}`).catch(() => null),
-        fetch(`/api/token-prices?days=30`).catch(() => null),
-        fetch(`/api/token-revenue`).catch(() => null),
-        fetch(`${scraperUrl}/api/tanzanite`).catch(() => null),
+        fetchWithTimeout(`/api/market-caps?_t=${Date.now()}`, 8000),
+        fetchWithTimeout(`/api/token-prices?days=30`, 8000),
+        fetchWithTimeout(`/api/token-revenue`, 8000),
+        fetchWithTimeout(`${scraperUrl}/api/tanzanite`, 5000), // Shorter timeout for external service
       ]);
+      
+      clearTimeout(maxLoadTimeout);
 
       setPrice(priceData);
       
@@ -171,8 +194,11 @@ export default function Dashboard() {
         addToast("Data refreshed successfully", "success", 2500);
       }
     } catch {
+      clearTimeout(maxLoadTimeout);
       addToast("Failed to load some data. Using cached values.", "warning", 4000);
+      setHasInitialData(true); // Show whatever we have
     } finally {
+      clearTimeout(maxLoadTimeout);
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -202,10 +228,10 @@ export default function Dashboard() {
         fetchLotteryHistory(),
         fetchLotteryStats(),
         fetchNGRStats(),
-        fetch(`/api/market-caps?_t=${Date.now()}`).catch(() => null),
-        fetch(`/api/token-prices?days=30`).catch(() => null),
-        fetch(`/api/token-revenue`).catch(() => null),
-        fetch(`${scraperUrl}/api/tanzanite`).catch(() => null),
+        fetchWithTimeout(`/api/market-caps?_t=${Date.now()}`, 8000),
+        fetchWithTimeout(`/api/token-prices?days=30`, 8000),
+        fetchWithTimeout(`/api/token-revenue`, 8000),
+        fetchWithTimeout(`${scraperUrl}/api/tanzanite`, 5000),
       ]);
 
       // Update state quietly - React will batch these updates

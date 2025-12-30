@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge"; // Use edge runtime for faster cold starts
+
+// In-memory cache with edge-compatible approach
+let cachedResponse: { data: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const LOTTERY_GRAPHQL_ENDPOINT = "https://shuffle.com/main-api/graphql/lottery/graphql-lottery";
 
@@ -33,9 +38,23 @@ interface DrawApiData {
   drawAt: string;
 }
 
+// Fetch with timeout to prevent hanging
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
 async function fetchDrawFromApi(drawId: number): Promise<DrawApiData | null> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,7 +69,7 @@ async function fetchDrawFromApi(drawId: number): Promise<DrawApiData | null> {
         variables: { id: drawId },
       }),
       cache: "no-store",
-    });
+    }, 5000);
 
     if (!response.ok) {
       return null;
@@ -195,7 +214,7 @@ const LOTTERY_HISTORY_DATA: Omit<LotteryDrawData, 'totalNGRContribution' | 'priz
 
 async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -210,7 +229,7 @@ async function fetchPrizesForDraw(drawId: number): Promise<PrizeData[] | null> {
         variables: { drawId },
       }),
       cache: "no-store",
-    });
+    }, 5000);
 
     if (!response.ok) {
       return null;
@@ -319,7 +338,7 @@ async function getNGRForDraw(drawNumber: number, previousDrawStaticData: typeof 
 // Get latest draw number
 async function getLatestDrawNumber(): Promise<number> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -331,7 +350,7 @@ async function getLatestDrawNumber(): Promise<number> {
         variables: {},
       }),
       cache: "no-store",
-    });
+    }, 3000); // 3 second timeout for simple query
     const data = await response.json();
     return data.data?.getLatestLotteryDraw?.id || 64;
   } catch {
@@ -493,6 +512,19 @@ export async function GET(request: Request) {
   const fetchAll = searchParams.get("fetchAll") === "true";
   const sanityCheck = searchParams.get("sanityCheck") === "true";
   const sanityCheckDraws = searchParams.get("draws"); // e.g., "60,61,62,63" or "all"
+  const skipCache = searchParams.get("t") !== null; // Skip cache if timestamp is provided
+
+  // Return cached response for main lottery history endpoint (no special params)
+  if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll && !skipCache) {
+    if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_DURATION) {
+      return NextResponse.json(cachedResponse.data, {
+        headers: {
+          "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
+          "X-Cache": "HIT",
+        },
+      });
+    }
+  }
 
   // NGR Sanity Check endpoint
   if (sanityCheck) {
@@ -807,7 +839,7 @@ export async function GET(request: Request) {
     ? last12Draws.reduce((sum, draw) => sum + draw.totalNGRContribution, 0) / last12Draws.length
     : 0;
 
-  return NextResponse.json({
+  const responseData = {
     success: true,
     draws: drawsWithData,
     stats: {
@@ -823,5 +855,17 @@ export async function GET(request: Request) {
     },
     lastUpdated: new Date().toISOString(),
     source: "https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history",
+  };
+
+  // Cache the response for future requests
+  if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll) {
+    cachedResponse = { data: responseData, timestamp: Date.now() };
+  }
+
+  return NextResponse.json(responseData, {
+    headers: {
+      "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
+      "X-Cache": "MISS",
+    },
   });
 }

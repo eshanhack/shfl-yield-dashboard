@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge"; // Use edge runtime for faster cold starts
+
+// Fetch with timeout to prevent hanging
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
 
 export interface CurrentLotteryStats {
   totalTickets: number;
@@ -60,7 +75,7 @@ interface TokenInfoResponse {
 
 async function fetchTokenInfo(): Promise<TokenInfoResponse["data"]["tokenInfo"] | null> {
   try {
-    const response = await fetch(API_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(API_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,7 +90,7 @@ async function fetchTokenInfo(): Promise<TokenInfoResponse["data"]["tokenInfo"] 
         variables: {},
       }),
       cache: "no-store",
-    });
+    }, 4000);
 
     if (!response.ok) {
       return null;
@@ -182,7 +197,7 @@ interface LotteryDrawResponse {
 
 async function fetchPrizesAndResults(drawId: number): Promise<PrizePool[] | null> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -197,7 +212,7 @@ async function fetchPrizesAndResults(drawId: number): Promise<PrizePool[] | null
         variables: { drawId },
       }),
       cache: "no-store",
-    });
+    }, 4000);
 
     if (!response.ok) {
       return null;
@@ -212,7 +227,7 @@ async function fetchPrizesAndResults(drawId: number): Promise<PrizePool[] | null
 
 async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data"]["getLatestLotteryDraw"] | null> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -227,7 +242,7 @@ async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data
         variables: {},
       }),
       cache: "no-store",
-    });
+    }, 4000);
 
     if (!response.ok) {
       return null;
@@ -242,7 +257,7 @@ async function fetchLatestLotteryDraw(): Promise<LatestLotteryDrawResponse["data
 
 async function fetchLotteryDrawWithStaked(drawId?: number): Promise<LotteryDrawResponse["data"]["lotteryDraw"] | null> {
   try {
-    const response = await fetch(LOTTERY_GRAPHQL_ENDPOINT, {
+    const response = await fetchWithTimeout(LOTTERY_GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -257,7 +272,7 @@ async function fetchLotteryDrawWithStaked(drawId?: number): Promise<LotteryDrawR
         variables: drawId ? { id: drawId } : {},
       }),
       cache: "no-store",
-    });
+    }, 4000);
 
     if (!response.ok) {
       return null;
@@ -296,7 +311,7 @@ function getNextDrawTimestamp(): number {
 
 export async function GET() {
   try {
-    // Fetch all queries in parallel
+    // Fetch all queries in parallel for maximum speed
     const [latestDrawData, drawWithStakedData, tokenInfo] = await Promise.all([
       fetchLatestLotteryDraw(),
       fetchLotteryDrawWithStaked(),
@@ -319,58 +334,49 @@ export async function GET() {
       : drawStatus === "COMPLETED" || drawStatus === "DRAWN";
     
     if (isDrawCompleted && drawNumber > 0) {
-      // The API returned a completed draw, so upcoming is the next one
       drawNumber = drawNumber + 1;
-      // Reset prize pool since we don't have data for the upcoming draw yet
-      // Try to fetch the upcoming draw's data
-      const upcomingDrawData = await fetchLotteryDrawWithStaked(drawNumber);
-      if (upcomingDrawData) {
-        prizePool = parseFloat(upcomingDrawData.prizePoolAmount) || prizePool;
-        drawStatus = upcomingDrawData.status || "PENDING";
-      } else {
-        drawStatus = "PENDING";
-      }
+      drawStatus = "PENDING";
     }
     
-    // Fetch the current/upcoming draw's staked data
+    // Fetch all remaining data in parallel for speed
+    const [currentDrawStakedData, priorDrawData, prizes] = await Promise.all([
+      fetchLotteryDrawWithStaked(drawNumber),
+      drawNumber > 1 ? fetchLotteryDrawWithStaked(drawNumber - 1) : Promise.resolve(null),
+      drawNumber > 0 ? fetchPrizesAndResults(drawNumber) : Promise.resolve(null),
+    ]);
+    
+    // Process current draw staked data
     let totalStaked = 0;
     let totalTickets = 0;
     
-    // Try to get staked data for the upcoming draw
-    const currentDrawStakedData = await fetchLotteryDrawWithStaked(drawNumber);
     if (currentDrawStakedData?.totalStaked) {
       totalStaked = parseFloat(currentDrawStakedData.totalStaked);
       totalTickets = Math.floor(totalStaked / 50);
-      // Also update prize pool if we got better data
       if (currentDrawStakedData.prizePoolAmount) {
         prizePool = parseFloat(currentDrawStakedData.prizePoolAmount);
       }
+      if (currentDrawStakedData.status) {
+        drawStatus = currentDrawStakedData.status;
+      }
     } else if (drawWithStakedData?.totalStaked) {
-      // Fallback to original query data
       totalStaked = parseFloat(drawWithStakedData.totalStaked);
       totalTickets = Math.floor(totalStaked / 50);
     }
     
-    // Fetch prior week's staked data (previous draw = drawNumber - 1)
+    // Process prior week data
     let priorWeekTickets = 0;
     let priorWeekSHFLStaked = 0;
-    if (drawNumber > 1) {
-      const priorDrawData = await fetchLotteryDrawWithStaked(drawNumber - 1);
-      if (priorDrawData?.totalStaked) {
-        priorWeekSHFLStaked = parseFloat(priorDrawData.totalStaked);
-        priorWeekTickets = Math.floor(priorWeekSHFLStaked / 50);
-      }
+    if (priorDrawData?.totalStaked) {
+      priorWeekSHFLStaked = parseFloat(priorDrawData.totalStaked);
+      priorWeekTickets = Math.floor(priorWeekSHFLStaked / 50);
     }
     
-    // Fetch prize divisions to get exact jackpot amount for the upcoming draw
+    // Process jackpot amount
     let jackpotAmount = prizePool * 0.30; // Default fallback (30% for jackpot)
-    if (drawNumber > 0) {
-      const prizes = await fetchPrizesAndResults(drawNumber);
-      if (prizes) {
-        const jackpotPrize = prizes.find(p => p.category === "JACKPOT");
-        if (jackpotPrize) {
-          jackpotAmount = parseFloat(jackpotPrize.amount);
-        }
+    if (prizes) {
+      const jackpotPrize = prizes.find(p => p.category === "JACKPOT");
+      if (jackpotPrize) {
+        jackpotAmount = parseFloat(jackpotPrize.amount);
       }
     }
     
@@ -424,9 +430,8 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
     }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        // Cache for 30 seconds at edge, serve stale for up to 60 seconds while revalidating
+        'Cache-Control': 's-maxage=30, stale-while-revalidate=60',
       }
     });
   } catch {
@@ -449,9 +454,8 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
     }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        // Cache fallback for 10 seconds
+        'Cache-Control': 's-maxage=10, stale-while-revalidate=30',
       }
     });
   }

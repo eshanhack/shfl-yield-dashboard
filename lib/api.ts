@@ -14,6 +14,24 @@ function signalDemoDataFallback(source: string) {
   }
 }
 
+// Timeout wrapper for fetch calls to prevent hanging
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
 // CoinGecko API endpoint for SHFL token
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const SHFL_COIN_ID = "shuffle-2"; // SHFL token ID on CoinGecko
@@ -81,76 +99,93 @@ const GET_TOKEN_INFO_QUERY = `query tokenInfo {
 }`;
 
 /**
- * Fetch current SHFL price - tries Shuffle.com first, then CoinGecko as fallback
+ * Fetch current SHFL price - races Shuffle.com and CoinGecko for fastest response
  */
 export async function fetchSHFLPrice(): Promise<SHFLPrice> {
-  // Try Shuffle.com API first (more reliable)
-  try {
-    // Add timestamp to prevent caching
-    const shuffleResponse = await fetch(`${SHUFFLE_API_ENDPOINT}?t=${Date.now()}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Origin": "https://shuffle.com",
-        "Referer": "https://shuffle.com/token",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-      },
-      body: JSON.stringify({
-        operationName: "tokenInfo",
-        query: GET_TOKEN_INFO_QUERY,
-        variables: {},
-      }),
-      cache: "no-store",
-    });
+  // Race both APIs for fastest response
+  const shufflePromise = (async (): Promise<SHFLPrice | null> => {
+    try {
+      const shuffleResponse = await fetchWithTimeout(`${SHUFFLE_API_ENDPOINT}?t=${Date.now()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Origin": "https://shuffle.com",
+          "Referer": "https://shuffle.com/token",
+        },
+        body: JSON.stringify({
+          operationName: "tokenInfo",
+          query: GET_TOKEN_INFO_QUERY,
+          variables: {},
+        }),
+        cache: "no-store",
+      }, 5000); // 5 second timeout
 
-    if (shuffleResponse.ok) {
-      const data = await shuffleResponse.json();
-      const tokenInfo = data.data?.tokenInfo;
+      if (shuffleResponse.ok) {
+        const data = await shuffleResponse.json();
+        const tokenInfo = data.data?.tokenInfo;
+        
+        if (tokenInfo?.priceInUsd) {
+          return {
+            usd: parseFloat(tokenInfo.priceInUsd),
+            usd_24h_change: parseFloat(tokenInfo.twentyFourHourPercentageChange || "0"),
+            last_updated: new Date().toISOString(),
+          };
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const coingeckoPromise = (async (): Promise<SHFLPrice | null> => {
+    try {
+      const response = await fetchWithTimeout(
+        `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`,
+        { cache: "no-store" },
+        5000 // 5 second timeout
+      );
       
-      if (tokenInfo?.priceInUsd) {
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      const shflData = data[SHFL_COIN_ID];
+      
+      if (shflData?.usd) {
         return {
-          usd: parseFloat(tokenInfo.priceInUsd),
-          usd_24h_change: parseFloat(tokenInfo.twentyFourHourPercentageChange || "0"),
-          last_updated: new Date().toISOString(),
+          usd: shflData.usd,
+          usd_24h_change: shflData.usd_24h_change ?? 0,
+          last_updated: new Date((shflData.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
         };
       }
+      return null;
+    } catch {
+      return null;
     }
-  } catch {
-    // Shuffle.com API unavailable, trying CoinGecko fallback
-  }
+  })();
 
-  // Fallback to CoinGecko
+  // Race both APIs - return whichever succeeds first
   try {
-    const response = await fetch(
-      `${COINGECKO_API}/simple/price?ids=${SHFL_COIN_ID}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true&t=${Date.now()}`,
-      { cache: "no-store" }
-    );
-    
-    if (!response.ok) {
-      throw new Error("Failed to fetch price from CoinGecko");
-    }
-    
-    const data = await response.json();
-    const shflData = data[SHFL_COIN_ID];
-    
-    if (shflData?.usd) {
-      return {
-        usd: shflData.usd,
-        usd_24h_change: shflData.usd_24h_change ?? 0,
-        last_updated: new Date((shflData.last_updated_at ?? Date.now() / 1000) * 1000).toISOString(),
-      };
-    }
+    const result = await Promise.race([
+      shufflePromise.then(r => r || Promise.reject()),
+      coingeckoPromise.then(r => r || Promise.reject()),
+    ]);
+    if (result) return result;
   } catch {
-    // CoinGecko API unavailable
+    // Both failed in race, try to get any result
   }
+  
+  // Wait for any successful result
+  const [shuffleResult, coingeckoResult] = await Promise.all([shufflePromise, coingeckoPromise]);
+  if (shuffleResult) return shuffleResult;
+  if (coingeckoResult) return coingeckoResult;
 
-  // Last resort fallback - should rarely happen
+  // Last resort fallback
   signalDemoDataFallback("price");
   return {
-    usd: 0.30, // More realistic fallback
+    usd: 0.30,
     usd_24h_change: 0,
     last_updated: new Date().toISOString(),
   };
@@ -161,9 +196,10 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
  */
 export async function fetchPriceHistory(days: number = 365): Promise<PriceHistoryPoint[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${COINGECKO_API}/coins/${SHFL_COIN_ID}/market_chart?vs_currency=usd&days=${days}`,
-      { next: { revalidate: 3600 } } // Cache for 1 hour
+      { next: { revalidate: 3600 } }, // Cache for 1 hour
+      10000 // 10 second timeout for larger data
     );
     
     if (!response.ok) {
@@ -210,10 +246,10 @@ function generateMockPriceHistory(days: number): PriceHistoryPoint[] {
  */
 export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
   try {
-    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
+    const response = await fetchWithTimeout(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
       headers: { 'Cache-Control': 'no-cache' }
-    });
+    }, 8000);
     
     if (!response.ok) {
       throw new Error("Failed to fetch lottery history");
@@ -279,10 +315,10 @@ export async function fetchAvgWeeklyNGR(): Promise<number> {
  */
 export async function fetchNGRStats(): Promise<NGRStats> {
   try {
-    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
+    const response = await fetchWithTimeout(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
       headers: { 'Cache-Control': 'no-cache' }
-    });
+    }, 8000);
     
     if (!response.ok) {
       throw new Error("Failed to fetch lottery history");
@@ -310,12 +346,12 @@ export async function fetchNGRStats(): Promise<NGRStats> {
 export async function fetchLotteryStats(): Promise<LotteryStats> {
   try {
     // Add timestamp to bust cache
-    const response = await fetch(`/api/lottery-stats?t=${Date.now()}`, {
+    const response = await fetchWithTimeout(`/api/lottery-stats?t=${Date.now()}`, {
       cache: "no-store", // Always fetch fresh data
       headers: {
         'Cache-Control': 'no-cache',
       }
-    });
+    }, 8000);
     
     if (!response.ok) {
       throw new Error("Failed to fetch lottery stats");
@@ -366,10 +402,10 @@ function estimateTicketsFromPool(prizePool: number): number {
  */
 export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
   try {
-    const response = await fetch(`/api/lottery-history?t=${Date.now()}`, {
+    const response = await fetchWithTimeout(`/api/lottery-history?t=${Date.now()}`, {
       cache: "no-store",
       headers: { 'Cache-Control': 'no-cache' }
-    });
+    }, 8000);
     
     if (!response.ok) {
       throw new Error("Failed to fetch NGR history");
