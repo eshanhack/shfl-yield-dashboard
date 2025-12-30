@@ -66,7 +66,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           {/* Logo */}
           <div className="flex items-center gap-2">
             <img
-              src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
+              src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
               alt="SHFL Token"
               className="w-8 h-8 sm:w-9 sm:h-9 animate-spin"
               style={{ animationDuration: "3s" }}
@@ -170,7 +170,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
               <img
-                src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
+                src="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png"
                 alt="SHFL Token"
                 className="w-9 h-9 animate-spin"
                 style={{ animationDuration: "3s" }}

@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   description: "Track SHFL token staking profitability and lottery yields with real-time data",
   keywords: ["SHFL", "SHFLPro", "Shuffle", "yield", "staking", "lottery", "crypto"],
   icons: {
-    icon: "https://i.ibb.co/CsBL2xn6/shfl-logo.png",
-    shortcut: "https://i.ibb.co/CsBL2xn6/shfl-logo.png",
-    apple: "https://i.ibb.co/CsBL2xn6/shfl-logo.png",
+    icon: "https://i.ibb.co/TDMBKTP7/shfl-logo-2.png",
+    shortcut: "https://i.ibb.co/TDMBKTP7/shfl-logo-2.png",
+    apple: "https://i.ibb.co/TDMBKTP7/shfl-logo-2.png",
   },
 };
 
@@ -54,7 +54,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         
-        <link rel="icon" href="https://i.ibb.co/CsBL2xn6/shfl-logo.png" />
+        <link rel="icon" href="https://i.ibb.co/TDMBKTP7/shfl-logo-2.png" />
         <meta name="color-scheme" content="dark" />
         
         {/* DNS prefetch for external resources */}
