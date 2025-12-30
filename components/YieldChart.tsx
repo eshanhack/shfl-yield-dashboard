@@ -10,57 +10,52 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { Activity } from "lucide-react";
-import { ChartDataPoint } from "@/lib/api";
 import { HistoricalDraw, calculateGlobalAPY } from "@/lib/calculations";
 
 interface YieldChartProps {
-  data: ChartDataPoint[];
-  historicalDraws?: HistoricalDraw[];
-  currentTotalTickets?: number;
+  historicalDraws: HistoricalDraw[];
+  currentPrice: number;
 }
 
-export default function YieldChart({ data, historicalDraws = [], currentTotalTickets = 1200000 }: YieldChartProps) {
-  // Combine chart data with APY calculations from historical draws
+export default function YieldChart({ historicalDraws, currentPrice }: YieldChartProps) {
+  // Build chart data directly from historical draws (most accurate source)
   const formattedData = useMemo(() => {
-    return data.map((point) => {
-      // Find matching historical draw by date (approximate match)
-      const pointDate = new Date(point.timestamp);
+    // Sort draws oldest first for chart display
+    const sortedDraws = [...historicalDraws].sort((a, b) => a.drawNumber - b.drawNumber);
+    
+    return sortedDraws.map((draw) => {
+      // Use adjusted NGR if available (excludes jackpot replenishment), otherwise use raw NGR
+      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
       
-      // Find the closest historical draw
-      let matchedDraw: HistoricalDraw | undefined;
-      let minDiff = Infinity;
+      // Use historical price at draw time, or current price as fallback
+      const priceAtDraw = draw.shflPriceAtDraw || currentPrice;
       
-      for (const draw of historicalDraws) {
-        const drawDate = new Date(draw.date);
-        const diff = Math.abs(drawDate.getTime() - pointDate.getTime());
-        if (diff < minDiff) {
-          minDiff = diff;
-          matchedDraw = draw;
-        }
-      }
-      
-      // Calculate APY for this point
-      // Use the draw's actual totalTickets and price at that time
-      const totalTickets = matchedDraw?.totalTickets || currentTotalTickets;
-      const priceAtTime = point.price;
-      const ngrForDraw = matchedDraw?.ngrUSD || point.ngr * 1_000_000; // Convert back from millions
-      const prizeSplit = matchedDraw?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
-      
-      // Calculate APY using the actual values at that time
-      const apy = totalTickets > 0 && priceAtTime > 0
-        ? calculateGlobalAPY(ngrForDraw, totalTickets, priceAtTime, prizeSplit)
+      // Calculate APY using the CORRECT formula with actual draw data
+      const apy = draw.totalTickets > 0 && priceAtDraw > 0
+        ? calculateGlobalAPY(
+            ngrForCalc,
+            draw.totalTickets,
+            priceAtDraw,
+            draw.prizepoolSplit || "30-14-8-9-7-6-5-10-11"
+          )
         : 0;
       
+      // Format date for display
+      const drawDate = new Date(draw.date);
+      const dateLabel = drawDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      
       return {
-        ...point,
-        apy: Math.min(apy, 500), // Cap at 500% for display purposes
-        apyScaled: Math.min(apy, 500) / 100, // Scale for display on price axis (100% = 1.0)
+        date: dateLabel,
+        drawNumber: draw.drawNumber,
+        ngr: ngrForCalc / 1_000_000, // Convert to millions for display
+        price: priceAtDraw,
+        apy: Math.min(apy, 500), // Cap at 500% for display
+        apyScaled: Math.min(apy, 500) / 100, // Scale for price axis (100% = 1.0)
       };
     });
-  }, [data, historicalDraws, currentTotalTickets]);
+  }, [historicalDraws, currentPrice]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;

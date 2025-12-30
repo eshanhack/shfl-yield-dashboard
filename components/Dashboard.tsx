@@ -51,9 +51,7 @@ import {
   fetchLotteryStats,
   fetchNGRHistory,
   fetchNGRStats,
-  combineChartData,
   SHFLPrice,
-  ChartDataPoint,
   LotteryStats,
   NGRStats,
   DEMO_DATA_FALLBACK_EVENT,
@@ -75,7 +73,6 @@ export default function Dashboard() {
   
   // State - use null/empty initial values to prevent showing incorrect data
   const [price, setPrice] = useState<SHFLPrice | null>(null);
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [historicalDraws, setHistoricalDraws] = useState<HistoricalDraw[]>([]);
   const [lotteryStats, setLotteryStats] = useState<LotteryStats | null>(null);
   const [ngrStats, setNgrStats] = useState<NGRStats | null>(null);
@@ -152,11 +149,6 @@ export default function Dashboard() {
       clearTimeout(maxLoadTimeout);
 
       setPrice(priceData);
-      
-      // Combine price and NGR for chart
-      const combined = await combineChartData(priceHistory, ngrHistory);
-      setChartData(combined);
-
       setHistoricalDraws(draws);
       setLotteryStats(stats);
       setNgrStats(ngrStatsData);
@@ -236,8 +228,6 @@ export default function Dashboard() {
 
       // Update state quietly - React will batch these updates
       setPrice(priceData);
-      const combined = await combineChartData(priceHistory, ngrHistory);
-      setChartData(combined);
       setHistoricalDraws(draws);
       setLotteryStats(stats);
       setNgrStats(ngrStatsData);
@@ -1121,9 +1111,8 @@ export default function Dashboard() {
               {/* NGR vs Price Chart */}
               <section id="ngr-chart" className="lg:col-span-2 h-full">
                 <YieldChart 
-                  data={chartData} 
                   historicalDraws={completedDraws}
-                  currentTotalTickets={lotteryStats?.totalTickets || 1200000}
+                  currentPrice={price.usd}
                 />
               </section>
 
