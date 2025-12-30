@@ -88,7 +88,7 @@ export default function Loader() {
             <div className="coin-flipper">
               <div className="coin-side">
                 <img
-                  src="https://i.ibb.co/J0Qt8Sm/shlf-pro.png"
+                  src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
                   alt="SHFL"
                   width={80}
                   height={80}
@@ -97,7 +97,7 @@ export default function Loader() {
               </div>
               <div className="coin-side coin-back">
                 <img
-                  src="https://i.ibb.co/J0Qt8Sm/shlf-pro.png"
+                  src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
                   alt="SHFL"
                   width={80}
                   height={80}
