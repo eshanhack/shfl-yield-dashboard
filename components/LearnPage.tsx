@@ -42,13 +42,14 @@ interface LearnPageProps {
 // SHFL Contract Address
 const SHFL_CONTRACT = "0x8881562783028F5c1BCB985d2283D5E170D88888";
 
-// USDC Icon Component
+// USDC Icon Component - uses actual CoinMarketCap logo
 function USDCIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="16" fill="#2775CA"/>
-      <path d="M20.5 18.5C20.5 20.71 18.71 22.5 16.5 22.5H15.5V24.5H14.5V22.5H13.5C11.29 22.5 9.5 20.71 9.5 18.5H11.5C11.5 19.6 12.4 20.5 13.5 20.5H16.5C17.6 20.5 18.5 19.6 18.5 18.5C18.5 17.4 17.6 16.5 16.5 16.5H13.5C11.29 16.5 9.5 14.71 9.5 12.5C9.5 10.29 11.29 8.5 13.5 8.5H14.5V6.5H15.5V8.5H16.5C18.71 8.5 20.5 10.29 20.5 12.5H18.5C18.5 11.4 17.6 10.5 16.5 10.5H13.5C12.4 10.5 11.5 11.4 11.5 12.5C11.5 13.6 12.4 14.5 13.5 14.5H16.5C18.71 14.5 20.5 16.29 20.5 18.5Z" fill="white"/>
-    </svg>
+    <img 
+      src="https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" 
+      alt="USDC" 
+      className={`${className} rounded-full`}
+    />
   );
 }
 
