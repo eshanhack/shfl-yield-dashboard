@@ -79,7 +79,8 @@ export default function PersonalROITracker({
     });
 
     // Price appreciation/depreciation
-    const startPrice = entryPrice > 0 ? entryPrice : (startDraw.shflPrice || currentPrice);
+    // Use entry price if set, otherwise use current price (user should set entry price for accurate tracking)
+    const startPrice = entryPrice > 0 ? entryPrice : currentPrice;
     const priceChange = currentPrice - startPrice;
     const priceChangePercent = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
     const priceImpact = priceChange * stakedAmount;
@@ -266,20 +267,18 @@ export default function PersonalROITracker({
               </div>
             </div>
 
-            {/* Custom Entry Price - Desktop only */}
-            <div className="hidden lg:block">
-              <div className="flex items-center gap-2 text-[10px] text-terminal-textMuted">
-                <span>Custom entry price:</span>
-                <input
-                  type="number"
-                  step="0.0001"
-                  placeholder={roiData.startPrice.toFixed(4)}
-                  value={entryPrice || ""}
-                  onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
-                  className="w-24 bg-terminal-dark border border-terminal-border rounded px-2 py-1 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
-                />
-                <span className="text-terminal-textMuted/70">(leave empty to use historical price)</span>
-              </div>
+            {/* Entry Price Input */}
+            <div className="flex items-center gap-2 text-[10px] text-terminal-textMuted p-2 bg-terminal-dark/50 rounded-lg">
+              <span>Your entry price:</span>
+              <input
+                type="number"
+                step="0.0001"
+                placeholder={currentPrice.toFixed(4)}
+                value={entryPrice || ""}
+                onChange={(e) => setEntryPrice(parseFloat(e.target.value) || 0)}
+                className="w-20 lg:w-24 bg-terminal-dark border border-terminal-border rounded px-2 py-1 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
+              />
+              <span className="text-terminal-textMuted/70 hidden lg:inline">(for accurate price impact)</span>
             </div>
           </div>
         ) : (
