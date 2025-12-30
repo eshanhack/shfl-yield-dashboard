@@ -56,6 +56,7 @@ import {
   ChartDataPoint,
   LotteryStats,
   NGRStats,
+  DEMO_DATA_FALLBACK_EVENT,
 } from "@/lib/api";
 
 import {
@@ -236,10 +237,33 @@ export default function Dashboard() {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // Listen for demo data fallback events and trigger silent retry
+    let demoRetryTimeout: NodeJS.Timeout | null = null;
+    let demoRetryCount = 0;
+    const maxDemoRetries = 3;
+    
+    const handleDemoDataFallback = () => {
+      // Only retry a limited number of times to avoid infinite loops
+      if (demoRetryCount >= maxDemoRetries) return;
+      
+      // Clear any pending retry
+      if (demoRetryTimeout) clearTimeout(demoRetryTimeout);
+      
+      // Schedule a silent retry after 5 seconds
+      demoRetryTimeout = setTimeout(() => {
+        demoRetryCount++;
+        silentRefresh();
+      }, 5000);
+    };
+    
+    window.addEventListener(DEMO_DATA_FALLBACK_EVENT, handleDemoDataFallback);
+
     return () => {
       clearInterval(priceInterval);
       clearInterval(dataInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(DEMO_DATA_FALLBACK_EVENT, handleDemoDataFallback);
+      if (demoRetryTimeout) clearTimeout(demoRetryTimeout);
     };
   }, []);
 

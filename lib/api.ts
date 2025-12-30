@@ -4,6 +4,16 @@
 
 import { HistoricalDraw } from "./calculations";
 
+// Event to signal that demo data was used as fallback
+export const DEMO_DATA_FALLBACK_EVENT = "shfl-demo-data-fallback";
+
+// Dispatch event when falling back to demo data (client-side only)
+function signalDemoDataFallback(source: string) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(DEMO_DATA_FALLBACK_EVENT, { detail: { source } }));
+  }
+}
+
 // CoinGecko API endpoint for SHFL token
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const SHFL_COIN_ID = "shuffle-2"; // SHFL token ID on CoinGecko
@@ -138,6 +148,7 @@ export async function fetchSHFLPrice(): Promise<SHFLPrice> {
   }
 
   // Last resort fallback - should rarely happen
+  signalDemoDataFallback("price");
   return {
     usd: 0.30, // More realistic fallback
     usd_24h_change: 0,
@@ -167,6 +178,7 @@ export async function fetchPriceHistory(days: number = 365): Promise<PriceHistor
     }));
   } catch {
     // Return mock data on error
+    signalDemoDataFallback("priceHistory");
     return generateMockPriceHistory(days);
   }
 }
@@ -244,6 +256,7 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
     });
   } catch {
     // Return mock data on error
+    signalDemoDataFallback("lotteryHistory");
     return getMockHistoricalDraws(12);
   }
 }
@@ -283,6 +296,7 @@ export async function fetchNGRStats(): Promise<NGRStats> {
     };
   } catch {
     // Return fallback on error
+    signalDemoDataFallback("ngrStats");
     return {
       current4WeekAvg: 500_000,
       prior4WeekAvg: 500_000,
@@ -330,6 +344,7 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
     };
   } catch {
     // Return mock data on error
+    signalDemoDataFallback("lotteryStats");
     return getMockLotteryStats();
   }
 }
@@ -376,6 +391,7 @@ export async function fetchNGRHistory(): Promise<NGRHistoryPoint[]> {
     return points.sort((a: NGRHistoryPoint, b: NGRHistoryPoint) => a.timestamp - b.timestamp);
   } catch {
     // Return mock data on error
+    signalDemoDataFallback("ngrHistory");
     return getMockNGRHistory(52);
   }
 }
