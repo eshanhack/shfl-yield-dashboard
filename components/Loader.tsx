@@ -88,7 +88,7 @@ export default function Loader() {
             <div className="coin-flipper">
               <div className="coin-side">
                 <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  src="https://i.ibb.co/9HrqjHc8/Gemini-Generated-Image-duwgygduwgygduwg-removebg-preview.png"
                   alt="SHFL"
                   width={80}
                   height={80}
@@ -97,7 +97,7 @@ export default function Loader() {
               </div>
               <div className="coin-side coin-back">
                 <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  src="https://i.ibb.co/9HrqjHc8/Gemini-Generated-Image-duwgygduwgygduwg-removebg-preview.png"
                   alt="SHFL"
                   width={80}
                   height={80}
