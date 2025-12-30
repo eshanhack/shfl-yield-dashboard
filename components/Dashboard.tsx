@@ -1120,7 +1120,11 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5 items-stretch">
               {/* NGR vs Price Chart */}
               <section id="ngr-chart" className="lg:col-span-2 h-full">
-                <YieldChart data={chartData} />
+                <YieldChart 
+                  data={chartData} 
+                  historicalDraws={completedDraws}
+                  currentTotalTickets={lotteryStats?.totalTickets || 1200000}
+                />
               </section>
 
               {/* Ticket Expected Value */}

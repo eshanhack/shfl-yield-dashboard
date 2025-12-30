@@ -14,16 +14,53 @@ import {
 } from "recharts";
 import { Activity } from "lucide-react";
 import { ChartDataPoint } from "@/lib/api";
+import { HistoricalDraw, calculateGlobalAPY } from "@/lib/calculations";
 
 interface YieldChartProps {
   data: ChartDataPoint[];
+  historicalDraws?: HistoricalDraw[];
+  currentTotalTickets?: number;
 }
 
-export default function YieldChart({ data }: YieldChartProps) {
-  // Show all weekly data points
+export default function YieldChart({ data, historicalDraws = [], currentTotalTickets = 1200000 }: YieldChartProps) {
+  // Combine chart data with APY calculations from historical draws
   const formattedData = useMemo(() => {
-    return data;
-  }, [data]);
+    return data.map((point) => {
+      // Find matching historical draw by date (approximate match)
+      const pointDate = new Date(point.timestamp);
+      
+      // Find the closest historical draw
+      let matchedDraw: HistoricalDraw | undefined;
+      let minDiff = Infinity;
+      
+      for (const draw of historicalDraws) {
+        const drawDate = new Date(draw.date);
+        const diff = Math.abs(drawDate.getTime() - pointDate.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          matchedDraw = draw;
+        }
+      }
+      
+      // Calculate APY for this point
+      // Use the draw's actual totalTickets and price at that time
+      const totalTickets = matchedDraw?.totalTickets || currentTotalTickets;
+      const priceAtTime = point.price;
+      const ngrForDraw = matchedDraw?.ngrUSD || point.ngr * 1_000_000; // Convert back from millions
+      const prizeSplit = matchedDraw?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
+      
+      // Calculate APY using the actual values at that time
+      const apy = totalTickets > 0 && priceAtTime > 0
+        ? calculateGlobalAPY(ngrForDraw, totalTickets, priceAtTime, prizeSplit)
+        : 0;
+      
+      return {
+        ...point,
+        apy: Math.min(apy, 500), // Cap at 500% for display purposes
+        apyScaled: Math.min(apy, 500) / 100, // Scale for display on price axis (100% = 1.0)
+      };
+    });
+  }, [data, historicalDraws, currentTotalTickets]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -41,6 +78,8 @@ export default function YieldChart({ data }: YieldChartProps) {
             <span className="font-medium text-terminal-text">
               {entry.name === "NGR"
                 ? `$${entry.value.toFixed(2)}M`
+                : entry.name === "APY"
+                ? `${(entry.value * 100).toFixed(1)}%`
                 : `$${entry.value.toFixed(4)}`}
             </span>
           </div>
@@ -65,14 +104,18 @@ export default function YieldChart({ data }: YieldChartProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-terminal-accent" />
-            <span className="text-xs text-terminal-textSecondary">NGR ($M)</span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-terminal-accent" />
+            <span className="text-[10px] text-terminal-textSecondary">NGR ($M)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white" />
-            <span className="text-xs text-terminal-textSecondary">Price ($)</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-white" />
+            <span className="text-[10px] text-terminal-textSecondary">Price ($)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="text-[10px] text-terminal-textSecondary">APY (%)</span>
           </div>
         </div>
       </div>
@@ -131,6 +174,22 @@ export default function YieldChart({ data }: YieldChartProps) {
                 r: 4,
                 fill: "#FFFFFF",
                 stroke: "#8A2BE2",
+                strokeWidth: 2,
+              }}
+            />
+            <Line
+              yAxisId="price"
+              type="monotone"
+              dataKey="apyScaled"
+              name="APY"
+              stroke="#34D399"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={false}
+              activeDot={{
+                r: 4,
+                fill: "#34D399",
+                stroke: "#10B981",
                 strokeWidth: 2,
               }}
             />
