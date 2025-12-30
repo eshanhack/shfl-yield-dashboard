@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   description: "Track SHFL token staking profitability and lottery yields with real-time data",
   keywords: ["SHFL", "SHFLPro", "Shuffle", "yield", "staking", "lottery", "crypto"],
   icons: {
-    icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png",
-    shortcut: "https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png",
-    apple: "https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png",
+    icon: "https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png",
+    shortcut: "https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png",
+    apple: "https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png",
   },
 };
 
@@ -54,7 +54,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         
-        <link rel="icon" href="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png" />
+        <link rel="icon" href="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png" />
         <meta name="color-scheme" content="dark" />
         
         {/* DNS prefetch for external resources */}

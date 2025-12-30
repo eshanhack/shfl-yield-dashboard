@@ -88,8 +88,8 @@ export default function Loader() {
             <div className="coin-flipper">
               <div className="coin-side">
                 <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
-                  alt="SHFL"
+                  src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
+                  alt="SHFL Pro"
                   width={80}
                   height={80}
                   style={{ borderRadius: "50%" }}
@@ -97,8 +97,8 @@ export default function Loader() {
               </div>
               <div className="coin-side coin-back">
                 <img
-                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
-                  alt="SHFL"
+                  src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
+                  alt="SHFL Pro"
                   width={80}
                   height={80}
                   style={{ borderRadius: "50%" }}
