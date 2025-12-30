@@ -37,6 +37,10 @@ import TokenValuationTable from "./TokenValuationTable";
 import RevenueAnalysis from "./RevenueAnalysis";
 import Loader from "./Loader";
 import LoadingBar from "./LoadingBar";
+import PersonalROITracker from "./PersonalROITracker";
+import BreakEvenTimer from "./BreakEvenTimer";
+import NGRMomentumIndicator from "./NGRMomentumIndicator";
+import JackpotHunterPanel from "./JackpotHunterPanel";
 import { useToast } from "@/contexts/ToastContext";
 
 import {
@@ -1024,7 +1028,30 @@ export default function Dashboard() {
               </section>
             </div>
 
-            {/* Sensitivity Table & Jackpot Frequency - 12-column grid on desktop */}
+            {/* Personal ROI & Break-Even Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
+              <section id="roi-tracker">
+                <PersonalROITracker
+                  historicalDraws={completedDraws}
+                  currentPrice={price.usd}
+                />
+              </section>
+              <section id="break-even">
+                <BreakEvenTimer
+                  historicalDraws={completedDraws}
+                  currentPrice={price.usd}
+                  currentWeeklyYieldPer1K={(() => {
+                    const avgNGR = ngrStats.current4WeekAvg;
+                    const totalPool = avgNGR * 0.15 / 0.15; // Back to lottery NGR
+                    const stakerPool = totalPool * 0.70;
+                    const tickets = 1000 / 50;
+                    return (tickets / lotteryStats.totalTickets) * stakerPool;
+                  })()}
+                />
+              </section>
+            </div>
+
+            {/* Sensitivity Table & Jackpot Panels - 12-column grid on desktop */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-5 mb-4 sm:mb-5">
               <section id="sensitivity" className="xl:col-span-7">
                 <SensitivityTable
@@ -1042,6 +1069,15 @@ export default function Dashboard() {
                 />
               </section>
             </div>
+
+            {/* Jackpot Hunter Panel */}
+            <section id="jackpot-hunter" className="mb-4 sm:mb-5">
+              <JackpotHunterPanel
+                currentJackpot={lotteryStats.jackpotAmount || weeklyPoolUSD * 0.87}
+                totalTickets={lotteryStats.totalTickets}
+                historicalDraws={completedDraws}
+              />
+            </section>
 
             {/* Lottery History Table */}
             <section id="lottery-history">
@@ -1083,6 +1119,14 @@ export default function Dashboard() {
                 />
               </section>
             </div>
+
+            {/* NGR Momentum Indicator */}
+            <section id="ngr-momentum" className="mb-4 sm:mb-5">
+              <NGRMomentumIndicator
+                historicalDraws={completedDraws}
+                currentWeekNGR={completedDraws[0]?.postedNgrUSD || completedDraws[0]?.ngrUSD || ngrStats.current4WeekAvg}
+              />
+            </section>
 
             {/* Revenue History Chart */}
             <section id="revenue-chart">

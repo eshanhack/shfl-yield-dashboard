@@ -13,16 +13,20 @@ interface SectionConfig {
 
 const SECTION_CONFIGS: Record<DashboardSection, SectionConfig[]> = {
   lottery: [
-    { id: "yield-calculator", label: "Yield Calculator", shortLabel: "Calculator" },
+    { id: "yield-calculator", label: "Yield Calculator", shortLabel: "Yield" },
     { id: "ngr-chart", label: "NGR vs Price", shortLabel: "Chart" },
     { id: "ticket-ev", label: "Ticket EV", shortLabel: "EV" },
-    { id: "sensitivity", label: "Sensitivity Table", shortLabel: "Sensitivity" },
-    { id: "jackpot-frequency", label: "Jackpot Frequency", shortLabel: "Jackpot" },
-    { id: "lottery-history", label: "Lottery History", shortLabel: "History" },
+    { id: "roi-tracker", label: "ROI Tracker", shortLabel: "ROI" },
+    { id: "break-even", label: "Break-Even", shortLabel: "B/E" },
+    { id: "sensitivity", label: "Sensitivity", shortLabel: "Matrix" },
+    { id: "jackpot-frequency", label: "Jackpot Stats", shortLabel: "JP Stats" },
+    { id: "jackpot-hunter", label: "Jackpot Hunter", shortLabel: "Hunter" },
+    { id: "lottery-history", label: "History", shortLabel: "History" },
   ],
   revenue: [
     { id: "shuffle-revenue", label: "Shuffle Revenue", shortLabel: "Revenue" },
     { id: "revenue-analysis", label: "Revenue Analysis", shortLabel: "Analysis" },
+    { id: "ngr-momentum", label: "NGR Momentum", shortLabel: "Momentum" },
     { id: "revenue-chart", label: "Revenue History", shortLabel: "Chart" },
   ],
   token: [

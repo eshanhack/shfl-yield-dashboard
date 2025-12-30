@@ -591,7 +591,9 @@ html {
   [id^="shuffle-"],
   [id^="revenue-"],
   [id^="price-"],
-  [id^="token-"] {
+  [id^="token-"],
+  [id^="roi-"],
+  [id^="break-"] {
     scroll-margin-top: 60px;
   }
 }
