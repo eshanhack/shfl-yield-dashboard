@@ -155,7 +155,10 @@ export default function SubNavigation({ activeSection }: SubNavigationProps) {
         isManualClickRef.current = false;
       }, 800);
       
-      const yOffset = -220;
+      // Mobile: smaller offset (just below header ~70px)
+      // Desktop: larger offset to account for sticky nav
+      const isMobile = window.innerWidth < 1024;
+      const yOffset = isMobile ? -70 : -220;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
       window.scrollTo({
