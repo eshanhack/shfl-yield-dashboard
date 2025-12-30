@@ -1113,13 +1113,20 @@ export default function Dashboard() {
         <footer className="mt-6 sm:mt-8 lg:mt-10 pt-4 sm:pt-6 lg:pt-8 border-t border-terminal-border">
           {/* Global Disclaimer */}
           <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-terminal-dark rounded border border-yellow-500/30 text-[10px] sm:text-xs text-terminal-textMuted">
-            <p className="mb-1">
+            <p className="mb-2">
               <span className="text-yellow-400 font-medium">⚠️ Disclaimer:</span>{" "}
               This platform is not affiliated with, endorsed by, or associated with Shuffle.com.
             </p>
+            <p className="mb-2">
+              <span className="text-terminal-textSecondary font-medium">Data Accuracy:</span>{" "}
+              All data, calculations, projections, and estimates displayed on this platform may be inaccurate, incomplete, or outdated. 
+              Gross revenue numbers are estimates. Net revenue figures are derived from publicly available data which may contain errors.
+            </p>
             <p>
-              Gross revenue numbers are estimates. Net revenue figures are derived from publicly available data provided by Shuffle.
-              All calculations are for informational purposes only and should not be considered financial advice.
+              <span className="text-terminal-textSecondary font-medium">No Reliance:</span>{" "}
+              This information is provided for informational and educational purposes only. Do not rely on any data or calculations 
+              shown here for any decision, including but not limited to financial, investment, trading, or tax-related decisions. 
+              This is not financial advice. Always do your own research and consult qualified professionals before making any decisions.
             </p>
           </div>
           
