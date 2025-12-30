@@ -100,7 +100,17 @@ export function wasJackpotWon(jackpotted: number, prizePool: number): boolean {
 }
 
 /**
- * Calculate expected weekly yield for a given number of tickets
+ * Calculate expected weekly yield using proper expected value math
+ * 
+ * For each division (excluding jackpot):
+ *   1. Division NGR = weeklyNGR × division_percentage
+ *   2. Expected winners = totalTickets × probability_of_division
+ *   3. Prize per winner = Division NGR / Expected winners
+ *   4. User's EV = userTickets × probability × prize_per_winner
+ * 
+ * Mathematically this simplifies to:
+ *   User's EV per division = userTickets × Division NGR / totalTickets
+ *   Total EV = userTickets × (NGR × nonJackpotPct) / totalTickets
  * 
  * @param userTickets - Number of tickets the user has
  * @param totalTicketsInDraw - Total tickets in the draw
@@ -114,23 +124,48 @@ export function calculateWeeklyYield(
   weeklyNGR: number,
   prizeSplit: string
 ): number {
-  if (userTickets === 0 || totalTicketsInDraw === 0) return 0;
+  if (userTickets === 0 || totalTicketsInDraw === 0 || weeklyNGR === 0) return 0;
   
-  // Get the non-jackpot percentage (divisions 2-9)
-  const nonJackpotPct = getNonJackpotPercentage(prizeSplit);
+  // Parse the prize split percentages
+  const splitPcts = parsePrizeSplit(prizeSplit);
   
-  // Pool available for yield = NGR × non-jackpot percentage
-  const yieldablePool = weeklyNGR * nonJackpotPct;
+  // Calculate expected value for each division using probabilities
+  let totalExpectedValue = 0;
   
-  // User's share = their tickets / total tickets
-  const userShare = userTickets / totalTicketsInDraw;
+  for (let i = 0; i < PRIZE_DIVISIONS.length; i++) {
+    const division = PRIZE_DIVISIONS[i];
+    
+    // Skip jackpot (division 1) - too unlikely to include in yield
+    if (division.excludeFromYield) continue;
+    
+    // Get the percentage of NGR allocated to this division
+    const divisionPct = (splitPcts[i] || 0) / 100;
+    
+    // NGR contribution to this division's pool
+    const divisionNGR = weeklyNGR * divisionPct;
+    
+    // Expected number of winners in this division
+    // = total tickets × probability of winning this division
+    const expectedWinners = Math.max(1, totalTicketsInDraw * division.probability);
+    
+    // Average prize per winner in this division
+    const prizePerWinner = divisionNGR / expectedWinners;
+    
+    // User's expected value from this division
+    // = probability of winning × prize if won × number of tickets
+    const userExpectedValue = division.probability * prizePerWinner * userTickets;
+    
+    totalExpectedValue += userExpectedValue;
+  }
   
-  // Expected weekly earnings
-  return yieldablePool * userShare;
+  return totalExpectedValue;
 }
 
 /**
  * Calculate full yield metrics for a given SHFL stake
+ * 
+ * Weekly Expected USD = sum of expected value across divisions 2-9
+ * Annual APY = (Weekly Expected USD × 52) / Staking Value USD × 100
  */
 export function calculateYield(
   shflStaked: number,
@@ -142,7 +177,7 @@ export function calculateYield(
   const ticketCount = Math.floor(shflStaked / SHFL_PER_TICKET);
   const stakingValueUSD = shflStaked * shflPriceUSD;
   
-  if (ticketCount === 0 || totalTicketsInDraw === 0) {
+  if (ticketCount === 0 || totalTicketsInDraw === 0 || weeklyNGR === 0) {
     return {
       weeklyExpectedUSD: 0,
       annualExpectedUSD: 0,
@@ -152,7 +187,7 @@ export function calculateYield(
     };
   }
   
-  // Calculate weekly expected earnings
+  // Calculate weekly expected earnings using probability-based EV
   const weeklyExpectedUSD = calculateWeeklyYield(
     ticketCount,
     totalTicketsInDraw,
@@ -160,10 +195,10 @@ export function calculateYield(
     prizeSplit
   );
   
-  // Annualize
+  // Annualize: multiply by 52 weeks
   const annualExpectedUSD = weeklyExpectedUSD * WEEKS_PER_YEAR;
   
-  // Calculate APY
+  // Calculate APY: annual return as percentage of staking value
   const effectiveAPY = stakingValueUSD > 0 
     ? (annualExpectedUSD / stakingValueUSD) * 100 
     : 0;
@@ -201,6 +236,7 @@ export function calculateGlobalAPY(
 
 /**
  * Calculate yield per 1,000 SHFL staked for a specific draw
+ * Uses 20 tickets (1000 SHFL / 50 SHFL per ticket)
  */
 export function calculateYieldPer1KSHFL(
   weeklyNGR: number,
@@ -213,20 +249,21 @@ export function calculateYieldPer1KSHFL(
 
 /**
  * Calculate historical APY using the SHFL price at the time of the draw
- * This gives an accurate picture of what yield looked like at that moment in time
+ * APY = (Weekly Yield USD × 52) / (1000 SHFL × price) × 100
  */
 export function calculateHistoricalAPY(
   yieldPerThousandSHFL: number,
   shflPriceAtDraw: number
 ): number {
-  if (shflPriceAtDraw <= 0) return 0;
+  if (shflPriceAtDraw <= 0 || yieldPerThousandSHFL <= 0) return 0;
   
   // Value of 1,000 SHFL at the time of the draw
   const stakingValueUSD = 1000 * shflPriceAtDraw;
   
-  // Annualized yield as percentage
+  // Annualized yield: weekly × 52 weeks
   const annualYieldUSD = yieldPerThousandSHFL * WEEKS_PER_YEAR;
   
+  // APY as percentage
   return (annualYieldUSD / stakingValueUSD) * 100;
 }
 
