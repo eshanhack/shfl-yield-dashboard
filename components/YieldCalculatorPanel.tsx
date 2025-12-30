@@ -441,9 +441,9 @@ export default function YieldCalculatorPanel({
                     <th className="px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
                       Expected
                     </th>
-                    {/* Yield % column - hidden on mobile */}
+                    {/* APY column - hidden on mobile */}
                     <th className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 xl:px-6 py-2 lg:py-3 xl:py-4 text-right text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-terminal-textSecondary uppercase tracking-wider">
-                      Yield %
+                      APY
                     </th>
                   </tr>
                 </thead>
@@ -475,10 +475,10 @@ export default function YieldCalculatorPanel({
                           <CurrencyAmount amount={upcomingYield.weeklyUSD} className="text-xs sm:text-sm  font-medium text-cyan-100" />
                         </div>
                       </td>
-                      {/* Yield % - hidden on mobile */}
+                      {/* APY - hidden on mobile */}
                       <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <span className="text-xs sm:text-sm  font-bold tabular-nums text-cyan-300">
-                          {upcomingYield.weeklyPercent.toFixed(2)}%
+                          {(upcomingYield.weeklyPercent * 52).toFixed(2)}%
                         </span>
                       </td>
                     </tr>
@@ -537,14 +537,14 @@ export default function YieldCalculatorPanel({
                           <CurrencyAmount amount={weeklyUSD} className="text-xs sm:text-sm  font-medium text-terminal-text" />
                         </div>
                       </td>
-                      {/* Yield % - hidden on mobile */}
+                      {/* APY - hidden on mobile */}
                       <td className="hidden lg:table-cell px-2 sm:px-4 lg:px-5 py-2 lg:py-3 text-right">
                         <span className={`text-xs sm:text-sm  font-bold tabular-nums ${
-                          weeklyPercent > (avgWeekYield.weeklyExpectedUSD / stakingValueUSD) * 100
+                          weeklyPercent * 52 > annualAPY
                             ? "text-terminal-positive"
                             : "text-terminal-text"
                         }`}>
-                          {weeklyPercent.toFixed(2)}%
+                          {(weeklyPercent * 52).toFixed(2)}%
                         </span>
                       </td>
                     </tr>
