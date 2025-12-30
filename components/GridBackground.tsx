@@ -12,7 +12,7 @@ export default function GridBackground({
   interactive = true 
 }: GridBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0.5, y: 0.5 });
+  const mouseRef = useRef({ x: 0.5, y: 0.5, active: false });
   const animationRef = useRef<number>(0);
 
   useEffect(() => {
@@ -37,18 +37,26 @@ export default function GridBackground({
 
     // Mouse tracking for interactivity
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interactive) return;
       mouseRef.current = {
-        x: e.clientX / width,
-        y: e.clientY / height,
+        x: e.clientX,
+        y: e.clientY,
+        active: true,
       };
     };
+    
+    const handleMouseLeave = () => {
+      mouseRef.current.active = false;
+    };
+    
     window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     // Grid configuration
     const gridSize = 40;
-    const perspectiveStrength = intensity === "strong" ? 0.4 : intensity === "medium" ? 0.25 : 0.15;
-    const baseOpacity = intensity === "strong" ? 0.3 : intensity === "medium" ? 0.2 : 0.12;
+    const perspectiveStrength = intensity === "strong" ? 0.4 : intensity === "medium" ? 0.25 : 0.18;
+    const baseOpacity = intensity === "strong" ? 0.35 : intensity === "medium" ? 0.25 : 0.18;
+    const torchRadius = intensity === "strong" ? 250 : intensity === "medium" ? 200 : 180;
+    const torchIntensity = intensity === "strong" ? 2.5 : intensity === "medium" ? 2.2 : 2.0;
     
     let time = 0;
 
@@ -57,9 +65,26 @@ export default function GridBackground({
       
       time += 0.005;
       
-      // Calculate vortex center with subtle mouse influence
-      const vortexX = width * (0.5 + (mouseRef.current.x - 0.5) * 0.1);
-      const vortexY = height * (0.8 + (mouseRef.current.y - 0.5) * 0.1);
+      // Calculate vortex center
+      const vortexX = width * 0.5;
+      const vortexY = height * 0.85;
+      
+      // Mouse position for torch effect
+      const mouseX = mouseRef.current.x;
+      const mouseY = mouseRef.current.y;
+      const mouseActive = mouseRef.current.active;
+      
+      // Helper to calculate torch brightness boost
+      const getTorchBoost = (x: number, y: number) => {
+        if (!mouseActive) return 1;
+        const dx = x - mouseX;
+        const dy = y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > torchRadius) return 1;
+        // Smooth falloff - brighter at center
+        const falloff = 1 - (dist / torchRadius);
+        return 1 + (falloff * falloff * torchIntensity);
+      };
       
       // Draw horizontal lines with perspective warp
       const numHorizontalLines = Math.ceil(height / gridSize) + 20;
@@ -67,34 +92,40 @@ export default function GridBackground({
       for (let i = -10; i < numHorizontalLines; i++) {
         const baseY = i * gridSize - (time * 50) % gridSize;
         
-        ctx.beginPath();
+        // Draw line in segments for torch effect
+        let prevX = 0;
+        let prevY = baseY;
         
-        for (let x = 0; x <= width; x += 5) {
+        for (let x = 0; x <= width; x += 8) {
           // Calculate distance from vortex
           const dx = x - vortexX;
           const dy = baseY - vortexY;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const maxDist = Math.sqrt(width * width + height * height);
           
-          // Warp effect - lines curve toward vortex
+          // Warp effect
           const warpFactor = Math.pow(1 - dist / maxDist, 2) * perspectiveStrength;
           const warpedY = baseY + (vortexY - baseY) * warpFactor * 0.5;
           const warpedX = x + (vortexX - x) * warpFactor * 0.3;
           
-          if (x === 0) {
-            ctx.moveTo(warpedX, warpedY);
-          } else {
+          if (x > 0) {
+            // Calculate opacity with torch boost
+            const normalizedY = baseY / height;
+            const lineOpacity = baseOpacity * Math.max(0, Math.min(1, normalizedY * 1.5));
+            const torchBoost = getTorchBoost((prevX + warpedX) / 2, (prevY + warpedY) / 2);
+            const finalOpacity = Math.min(0.9, lineOpacity * torchBoost);
+            
+            ctx.beginPath();
+            ctx.moveTo(prevX, prevY);
             ctx.lineTo(warpedX, warpedY);
+            ctx.strokeStyle = `rgba(138, 43, 226, ${finalOpacity})`;
+            ctx.lineWidth = torchBoost > 1.5 ? 1.5 : 1;
+            ctx.stroke();
           }
+          
+          prevX = warpedX;
+          prevY = warpedY;
         }
-        
-        // Fade based on distance from bottom (horizon)
-        const normalizedY = baseY / height;
-        const lineOpacity = baseOpacity * Math.max(0, Math.min(1, normalizedY * 1.5));
-        
-        ctx.strokeStyle = `rgba(138, 43, 226, ${lineOpacity})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
       }
       
       // Draw vertical lines with perspective
@@ -103,9 +134,10 @@ export default function GridBackground({
       for (let i = -5; i < numVerticalLines; i++) {
         const baseX = i * gridSize;
         
-        ctx.beginPath();
+        let prevX = baseX;
+        let prevY = 0;
         
-        for (let y = 0; y <= height; y += 5) {
+        for (let y = 0; y <= height; y += 8) {
           const dx = baseX - vortexX;
           const dy = y - vortexY;
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -115,33 +147,51 @@ export default function GridBackground({
           const warpedX = baseX + (vortexX - baseX) * warpFactor * 0.5;
           const warpedY = y + (vortexY - y) * warpFactor * 0.3;
           
-          if (y === 0) {
-            ctx.moveTo(warpedX, warpedY);
-          } else {
+          if (y > 0) {
+            const normalizedX = Math.abs(baseX - width / 2) / (width / 2);
+            const lineOpacity = baseOpacity * (1 - normalizedX * 0.5);
+            const torchBoost = getTorchBoost((prevX + warpedX) / 2, (prevY + warpedY) / 2);
+            const finalOpacity = Math.min(0.9, lineOpacity * torchBoost);
+            
+            ctx.beginPath();
+            ctx.moveTo(prevX, prevY);
             ctx.lineTo(warpedX, warpedY);
+            ctx.strokeStyle = `rgba(138, 43, 226, ${finalOpacity})`;
+            ctx.lineWidth = torchBoost > 1.5 ? 1.5 : 1;
+            ctx.stroke();
           }
+          
+          prevX = warpedX;
+          prevY = warpedY;
         }
-        
-        // Distance from center affects opacity
-        const normalizedX = Math.abs(baseX - width / 2) / (width / 2);
-        const lineOpacity = baseOpacity * (1 - normalizedX * 0.5);
-        
-        ctx.strokeStyle = `rgba(138, 43, 226, ${lineOpacity})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
       }
       
       // Add glow at vortex center
-      const gradient = ctx.createRadialGradient(
+      const vortexGradient = ctx.createRadialGradient(
         vortexX, vortexY, 0,
-        vortexX, vortexY, 300
+        vortexX, vortexY, 350
       );
-      gradient.addColorStop(0, `rgba(138, 43, 226, ${baseOpacity * 0.8})`);
-      gradient.addColorStop(0.5, `rgba(138, 43, 226, ${baseOpacity * 0.3})`);
-      gradient.addColorStop(1, "rgba(138, 43, 226, 0)");
+      vortexGradient.addColorStop(0, `rgba(138, 43, 226, ${baseOpacity * 0.6})`);
+      vortexGradient.addColorStop(0.5, `rgba(138, 43, 226, ${baseOpacity * 0.2})`);
+      vortexGradient.addColorStop(1, "rgba(138, 43, 226, 0)");
       
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = vortexGradient;
       ctx.fillRect(0, 0, width, height);
+      
+      // Add torch glow following mouse
+      if (mouseActive) {
+        const torchGradient = ctx.createRadialGradient(
+          mouseX, mouseY, 0,
+          mouseX, mouseY, torchRadius * 1.5
+        );
+        torchGradient.addColorStop(0, `rgba(138, 43, 226, ${baseOpacity * 1.2})`);
+        torchGradient.addColorStop(0.3, `rgba(138, 43, 226, ${baseOpacity * 0.5})`);
+        torchGradient.addColorStop(0.6, `rgba(138, 43, 226, ${baseOpacity * 0.15})`);
+        torchGradient.addColorStop(1, "rgba(138, 43, 226, 0)");
+        
+        ctx.fillStyle = torchGradient;
+        ctx.fillRect(0, 0, width, height);
+      }
       
       animationRef.current = requestAnimationFrame(draw);
     };
@@ -151,6 +201,7 @@ export default function GridBackground({
     return () => {
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(animationRef.current);
     };
   }, [intensity, interactive]);
@@ -159,8 +210,7 @@ export default function GridBackground({
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none"
-      style={{ opacity: 0.4 }}
+      style={{ opacity: intensity === "subtle" ? 0.6 : intensity === "medium" ? 0.5 : 0.45 }}
     />
   );
 }
-

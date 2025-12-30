@@ -512,7 +512,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-terminal-black terminal-grid relative">
       {/* Animated Grid Background - only visible in empty areas */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <GridBackground intensity="subtle" interactive={true} />
+        <GridBackground intensity="medium" interactive={true} />
       </div>
       
       {/* Loading Progress Bar */}
