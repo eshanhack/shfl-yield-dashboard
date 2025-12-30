@@ -68,7 +68,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
             <img
               src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
               alt="SHFL Token"
-              className="w-7 h-7 sm:w-8 sm:h-8 animate-spin"
+              className="w-9 h-9 sm:w-10 sm:h-10 animate-spin"
               style={{ animationDuration: "3s" }}
             />
             <div>
@@ -172,7 +172,7 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
               <img
                 src="https://i.ibb.co/CsBL2xn6/shfl-logo.png"
                 alt="SHFL Token"
-                className="w-8 h-8 animate-spin"
+                className="w-10 h-10 animate-spin"
                 style={{ animationDuration: "3s" }}
               />
               <div>
