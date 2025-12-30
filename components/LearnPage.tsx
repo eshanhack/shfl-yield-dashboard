@@ -28,7 +28,7 @@ import {
   Copy,
   Check,
   Info,
-  Infinity,
+  Infinity as InfinityIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -173,7 +173,7 @@ function LotteryTicketConcept() {
                       <Ticket className="w-8 h-8 lg:w-10 lg:h-10 text-white/80" />
                     </div>
                     <div className="absolute bottom-2 left-0 right-0 text-center">
-                      <Infinity className="w-4 h-4 text-white/60 mx-auto" />
+                      <InfinityIcon className="w-4 h-4 text-white/60 mx-auto" />
                     </div>
                   </motion.div>
                 ))}
