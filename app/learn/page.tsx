@@ -4,20 +4,25 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import LearnPage from "@/components/LearnPage";
 import GridBackground from "@/components/GridBackground";
-import { fetchLotteryStats } from "@/lib/api";
+import { fetchLotteryStats, fetchSHFLPrice } from "@/lib/api";
 
 export default function LearnRoute() {
   const router = useRouter();
   const [nextDrawTimestamp, setNextDrawTimestamp] = useState<number | undefined>();
+  const [shflPrice, setShflPrice] = useState<number | undefined>();
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const stats = await fetchLotteryStats();
+        const [stats, price] = await Promise.all([
+          fetchLotteryStats(),
+          fetchSHFLPrice()
+        ]);
         setNextDrawTimestamp(stats.nextDrawTimestamp);
+        setShflPrice(price.usd);
       } catch (error) {
-        console.error("Failed to load lottery stats:", error);
+        console.error("Failed to load data:", error);
       } finally {
         setIsLoaded(true);
       }
@@ -45,7 +50,7 @@ export default function LearnRoute() {
     <div className="min-h-screen bg-terminal-black relative">
       <GridBackground intensity="medium" interactive={true} />
       <div className="relative z-10">
-        <LearnPage onBack={handleBack} nextDrawTimestamp={nextDrawTimestamp} />
+        <LearnPage onBack={handleBack} nextDrawTimestamp={nextDrawTimestamp} shflPrice={shflPrice} />
       </div>
     </div>
   );

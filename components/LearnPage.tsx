@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useSpring, useInView } from "framer-motion";
 import {
@@ -36,10 +36,19 @@ import { cn } from "@/lib/utils";
 interface LearnPageProps {
   onBack?: () => void;
   nextDrawTimestamp?: number;
+  shflPrice?: number;
 }
 
 // SHFL Contract Address
 const SHFL_CONTRACT = "0x8881562783028F5c1BCB985d2283D5E170D88888";
+
+// Create context for SHFL price to share across components
+const SHFLPriceContext = createContext<number>(0.05);
+
+// Hook to use SHFL price
+function useSHFLPrice() {
+  return useContext(SHFLPriceContext);
+}
 
 // Animated counter hook
 function useAnimatedCounter(target: number, duration: number = 1000, enabled: boolean = true) {
@@ -247,11 +256,12 @@ function LotteryTicketConcept() {
 function RevenueFlowDiagram() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const [bettingVolume, setBettingVolume] = useState(1000000000); // Default $1B
+  const shflPrice = useSHFLPrice();
+  const [bettingVolume, setBettingVolume] = useState(750000000); // Default $750M
   const [animationStep, setAnimationStep] = useState(0);
   const [inputMode, setInputMode] = useState<"shfl" | "tickets" | "usd">("shfl");
   const [userInput, setUserInput] = useState(50000); // 50K SHFL default
-  const shflPrice = 0.05; // Approximate price
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   // CORRECTED MATH:
   // GGR = ~2% of betting volume (house edge)
@@ -298,19 +308,22 @@ function RevenueFlowDiagram() {
     return `$${n.toFixed(0)}`;
   };
   
-  const cycleInputMode = () => {
-    setInputMode(prev => {
-      if (prev === "shfl") {
-        setUserInput(Math.floor(userInput / 50)); // Convert to tickets
-        return "tickets";
-      }
-      if (prev === "tickets") {
-        setUserInput(Math.round(userInput * 50 * shflPrice)); // Convert to USD
-        return "usd";
-      }
-      setUserInput(Math.round(userInput / shflPrice)); // Convert to SHFL
-      return "shfl";
-    });
+  const handleModeChange = (newMode: "shfl" | "tickets" | "usd") => {
+    // Convert current value to new mode
+    const currentTickets = getUserTickets();
+    switch (newMode) {
+      case "shfl":
+        setUserInput(currentTickets * 50);
+        break;
+      case "tickets":
+        setUserInput(currentTickets);
+        break;
+      case "usd":
+        setUserInput(Math.round(currentTickets * 50 * shflPrice));
+        break;
+    }
+    setInputMode(newMode);
+    setDropdownOpen(false);
   };
   
   const getInputLabel = () => {
@@ -330,7 +343,7 @@ function RevenueFlowDiagram() {
         </label>
         <input
           type="range"
-          min={500000000}
+          min={250000000}
           max={2000000000}
           step={50000000}
           value={bettingVolume}
@@ -341,23 +354,14 @@ function RevenueFlowDiagram() {
           {formatMoney(bettingVolume)}
         </div>
         <div className="text-xs text-terminal-textMuted mt-1">
-          Typical range: $500M - $2B per week
+          Typical: ~$500M per week
         </div>
       </div>
       
-      {/* User Input Section */}
+      {/* User Input Section with Dropdown */}
       <div className="mb-6 p-4 rounded-xl bg-terminal-card border border-terminal-border max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm text-terminal-textSecondary">Your Position</label>
-          <button
-            onClick={cycleInputMode}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-xs font-medium hover:bg-terminal-accent/20 transition-colors"
-          >
-            <ArrowRight className="w-3 h-3" />
-            {inputMode === "shfl" ? "→ Tickets" : inputMode === "tickets" ? "→ USD" : "→ SHFL"}
-          </button>
-        </div>
-        <div className="flex items-center gap-3">
+        <label className="text-sm text-terminal-textSecondary block mb-3">Your Position</label>
+        <div className="flex items-center gap-2">
           <input
             type="number"
             min={1}
@@ -365,7 +369,32 @@ function RevenueFlowDiagram() {
             onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
             className="flex-1 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
           />
-          <span className="text-sm text-terminal-textMuted w-16">{getInputLabel()}</span>
+          {/* Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-sm font-medium hover:bg-terminal-accent/20 transition-colors min-w-[90px] justify-between"
+            >
+              {getInputLabel()}
+              <ChevronDown className={cn("w-4 h-4 transition-transform", dropdownOpen && "rotate-180")} />
+            </button>
+            {dropdownOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-terminal-card border border-terminal-border rounded-lg shadow-xl z-20 overflow-hidden">
+                {(["shfl", "tickets", "usd"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => handleModeChange(mode)}
+                    className={cn(
+                      "w-full px-4 py-2 text-left text-sm hover:bg-terminal-accent/10 transition-colors",
+                      inputMode === mode ? "text-terminal-accent bg-terminal-accent/5" : "text-terminal-text"
+                    )}
+                  >
+                    {mode === "shfl" ? "SHFL" : mode === "tickets" ? "Tickets" : "USD"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="text-xs text-terminal-textMuted mt-2 text-center">
           = <span className="text-terminal-accent font-mono">{userTickets.toLocaleString()}</span> tickets
@@ -459,7 +488,7 @@ function RevenueFlowDiagram() {
           <div className="text-center">
             <div className="text-[9px] lg:text-[10px] text-terminal-textMuted uppercase mb-0.5">Lottery (15%)</div>
             <div className="text-sm lg:text-base font-bold text-terminal-accent">{formatMoney(lotteryPool)}</div>
-            <div className="text-[8px] lg:text-[9px] text-terminal-accent">Your Yield 🎯</div>
+            <div className="text-[8px] lg:text-[9px] text-terminal-accent">Weekly Lottery Pool</div>
           </div>
         </motion.div>
       </div>
@@ -518,10 +547,10 @@ function RevenueFlowDiagram() {
 function StakeSharePie() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const shflPrice = useSHFLPrice();
   const [userStake, setUserStake] = useState(50000);
   const totalStaked = 180000000; // 180M tokens staked
   const weeklyPool = 400000; // ~$400K weekly pool
-  const shflPrice = 0.05; // Approximate price
   
   // 1 ticket per 50 SHFL
   const userTickets = Math.floor(userStake / 50);
@@ -796,13 +825,14 @@ function TicketSystem() {
 
 // Weekly Draw Simulator - NOW WITH SHFL/TICKETS/USD INPUT
 function DrawSimulator() {
+  const shflPrice = useSHFLPrice();
   const [isSimulating, setIsSimulating] = useState(false);
   const [results, setResults] = useState<number[]>([]);
   const [currentWeek, setCurrentWeek] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
   const [inputMode, setInputMode] = useState<"shfl" | "tickets" | "usd">("shfl");
   const [userInput, setUserInput] = useState(50000); // 50K SHFL default
-  const shflPrice = 0.05;
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const totalTickets = 3600000; // ~3.6M total tickets
   
@@ -817,19 +847,21 @@ function DrawSimulator() {
   const userTickets = getUserTickets();
   const userShare = userTickets / totalTickets;
   
-  const cycleInputMode = () => {
-    setInputMode(prev => {
-      if (prev === "shfl") {
-        setUserInput(Math.floor(userInput / 50)); // Convert to tickets
-        return "tickets";
-      }
-      if (prev === "tickets") {
-        setUserInput(Math.round(userInput * 50 * shflPrice)); // Convert to USD
-        return "usd";
-      }
-      setUserInput(Math.round(userInput / shflPrice)); // Convert to SHFL
-      return "shfl";
-    });
+  const handleModeChange = (newMode: "shfl" | "tickets" | "usd") => {
+    const currentTickets = getUserTickets();
+    switch (newMode) {
+      case "shfl":
+        setUserInput(currentTickets * 50);
+        break;
+      case "tickets":
+        setUserInput(currentTickets);
+        break;
+      case "usd":
+        setUserInput(Math.round(currentTickets * 50 * shflPrice));
+        break;
+    }
+    setInputMode(newMode);
+    setDropdownOpen(false);
   };
   
   const getInputLabel = () => {
@@ -880,18 +912,9 @@ function DrawSimulator() {
   return (
     <div className="py-4 lg:py-8">
       <div className="text-center mb-6">
-        {/* SHFL/Tickets/USD Input with Flip */}
+        {/* SHFL/Tickets/USD Input with Dropdown */}
         <div className="inline-block mb-4 p-4 rounded-xl bg-terminal-card border border-terminal-border">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-sm text-terminal-textSecondary">Your Position</label>
-            <button
-              onClick={cycleInputMode}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-xs font-medium hover:bg-terminal-accent/20 transition-colors"
-            >
-              <ArrowRight className="w-3 h-3" />
-              {inputMode === "shfl" ? "→ Tickets" : inputMode === "tickets" ? "→ USD" : "→ SHFL"}
-            </button>
-          </div>
+          <label className="text-sm text-terminal-textSecondary block mb-3">Your Position</label>
           <div className="flex items-center gap-2 justify-center">
             <input
               type="number"
@@ -900,7 +923,32 @@ function DrawSimulator() {
               onChange={(e) => setUserInput(Math.max(1, Number(e.target.value) || 1))}
               className="w-32 px-3 py-2 rounded-lg bg-terminal-dark border border-terminal-border text-center font-mono text-terminal-text"
             />
-            <span className="text-sm text-terminal-textMuted w-16">{getInputLabel()}</span>
+            {/* Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 text-terminal-accent text-sm font-medium hover:bg-terminal-accent/20 transition-colors min-w-[90px] justify-between"
+              >
+                {getInputLabel()}
+                <ChevronDown className={cn("w-4 h-4 transition-transform", dropdownOpen && "rotate-180")} />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-terminal-card border border-terminal-border rounded-lg shadow-xl z-20 overflow-hidden">
+                  {(["shfl", "tickets", "usd"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => handleModeChange(mode)}
+                      className={cn(
+                        "w-full px-4 py-2 text-left text-sm hover:bg-terminal-accent/10 transition-colors",
+                        inputMode === mode ? "text-terminal-accent bg-terminal-accent/5" : "text-terminal-text"
+                      )}
+                    >
+                      {mode === "shfl" ? "SHFL" : mode === "tickets" ? "Tickets" : "USD"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-xs text-terminal-textMuted mt-2">
             = <span className="text-terminal-accent font-mono">{userTickets.toLocaleString()}</span> tickets
@@ -1239,10 +1287,10 @@ function StepByStepGuide({ nextDrawTimestamp }: { nextDrawTimestamp?: number }) 
 function CompoundingCalculator() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const shflPrice = useSHFLPrice();
   const [initialStake, setInitialStake] = useState(50000);
   const [weeklyYieldPct, setWeeklyYieldPct] = useState(0.5);
   const [weeks, setWeeks] = useState(52);
-  const shflPrice = 0.05; // Current price
   
   const results = useMemo(() => {
     const initialValue = initialStake * shflPrice;
@@ -1391,25 +1439,26 @@ function CompoundingCalculator() {
           </div>
           
           <div className="relative h-[calc(100%-50px)]">
-            <svg className="w-full h-full" preserveAspectRatio="none">
+            {/* Use viewBox for proper SVG scaling */}
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
               {/* Hold + Yield line */}
               <motion.path
                 d={results.data.map((d, i) => {
                   const x = (i / weeks) * 100;
-                  const y = 100 - (d.holdPlusYield / maxValue) * 100;
-                  return `${i === 0 ? "M" : "L"} ${x}% ${y}%`;
+                  const y = 100 - ((d.holdPlusYield - results.data[0].holdPlusYield) / (maxValue - results.data[0].holdPlusYield)) * 90 - 5;
+                  return `${i === 0 ? "M" : "L"} ${x} ${Math.max(5, Math.min(95, y))}`;
                 }).join(" ")}
-                fill="none" stroke="currentColor" strokeWidth="2" className="text-terminal-textMuted"
+                fill="none" stroke="#6b7280" strokeWidth="0.8"
                 initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}} transition={{ duration: 2 }}
               />
               {/* Reinvested line */}
               <motion.path
                 d={results.data.map((d, i) => {
                   const x = (i / weeks) * 100;
-                  const y = 100 - (d.reinvested / maxValue) * 100;
-                  return `${i === 0 ? "M" : "L"} ${x}% ${y}%`;
+                  const y = 100 - ((d.reinvested - results.data[0].reinvested) / (maxValue - results.data[0].reinvested)) * 90 - 5;
+                  return `${i === 0 ? "M" : "L"} ${x} ${Math.max(5, Math.min(95, y))}`;
                 }).join(" ")}
-                fill="none" stroke="currentColor" strokeWidth="3" className="text-green-500"
+                fill="none" stroke="#22c55e" strokeWidth="1.2"
                 initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}} transition={{ duration: 2, delay: 0.5 }}
               />
             </svg>
@@ -1421,6 +1470,10 @@ function CompoundingCalculator() {
             <div className="absolute left-0 bottom-0 text-[8px] text-terminal-textMuted">
               ${Math.round(initialStake * shflPrice).toLocaleString()}
             </div>
+            {/* X-axis labels */}
+            <div className="absolute right-0 bottom-0 text-[8px] text-terminal-textMuted">
+              {weeks}w
+            </div>
           </div>
         </div>
       </div>
@@ -1429,10 +1482,33 @@ function CompoundingCalculator() {
 }
 
 // Main LearnPage Component
-export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps) {
+export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPrice }: LearnPageProps) {
   const router = useRouter();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const [shflPrice, setShflPrice] = useState(propPrice || 0.05);
+  
+  // Fetch SHFL price dynamically if not provided
+  useEffect(() => {
+    if (propPrice) {
+      setShflPrice(propPrice);
+      return;
+    }
+    
+    async function fetchPrice() {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=shuffle-2&vs_currencies=usd");
+        const data = await res.json();
+        if (data["shuffle-2"]?.usd) {
+          setShflPrice(data["shuffle-2"].usd);
+        }
+      } catch (error) {
+        console.error("Failed to fetch SHFL price:", error);
+      }
+    }
+    
+    fetchPrice();
+  }, [propPrice]);
   
   const handleBack = () => {
     if (onBack) {
@@ -1443,6 +1519,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
   };
   
   return (
+    <SHFLPriceContext.Provider value={shflPrice}>
     <div className="min-h-screen bg-transparent text-terminal-text relative z-10">
       {/* Progress bar at very top */}
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-terminal-accent z-[60] origin-left" style={{ scaleX }} />
@@ -1587,5 +1664,6 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
         </div>
       </div>
     </div>
+    </SHFLPriceContext.Provider>
   );
 }
