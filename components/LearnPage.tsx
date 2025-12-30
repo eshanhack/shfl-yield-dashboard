@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useSpring, useInView } from "framer-motion";
 import {
   ArrowLeft,
@@ -33,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface LearnPageProps {
-  onBack: () => void;
+  onBack?: () => void;
   nextDrawTimestamp?: number;
 }
 
@@ -118,38 +119,36 @@ function LotteryTicketConcept() {
             initial={{ scale: 0 }}
             animate={isInView ? { scale: 1 } : {}}
             transition={{ type: "spring", duration: 0.8 }}
-            className="inline-block mb-6"
+            className="inline-flex justify-center mb-6"
           >
-            <div className="relative">
-              {/* Glowing ticket stack */}
-              <div className="relative">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-20 h-28 lg:w-24 lg:h-32 bg-gradient-to-br from-terminal-accent to-purple-600 rounded-xl"
-                    style={{
-                      top: i * -4,
-                      left: i * 4,
-                      zIndex: 3 - i,
-                    }}
-                    animate={{
-                      y: [0, -5, 0],
-                    }}
-                    transition={{
-                      duration: 2,
-                      delay: i * 0.2,
-                      repeat: Infinity,
-                    }}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Ticket className="w-8 h-8 lg:w-10 lg:h-10 text-white/80" />
-                    </div>
-                    <div className="absolute bottom-2 left-0 right-0 text-center">
-                      <InfinityIcon className="w-4 h-4 text-white/60 mx-auto" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+            {/* Glowing ticket stack - properly sized container */}
+            <div className="relative w-24 h-32 lg:w-28 lg:h-36">
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-20 h-28 lg:w-24 lg:h-32 bg-gradient-to-br from-terminal-accent to-purple-600 rounded-xl shadow-lg shadow-terminal-accent/30"
+                  style={{
+                    top: i * 4,
+                    left: i * 4,
+                    zIndex: 3 - i,
+                  }}
+                  animate={{
+                    y: [0, -5, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    delay: i * 0.2,
+                    repeat: Infinity,
+                  }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Ticket className="w-8 h-8 lg:w-10 lg:h-10 text-white/80" />
+                  </div>
+                  <div className="absolute bottom-2 left-0 right-0 text-center">
+                    <InfinityIcon className="w-4 h-4 text-white/60 mx-auto" />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
           
@@ -1230,8 +1229,17 @@ function CompoundingCalculator() {
 
 // Main LearnPage Component
 export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps) {
+  const router = useRouter();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.push("/");
+    }
+  };
   
   return (
     <div className="min-h-screen bg-transparent text-terminal-text relative z-10">
@@ -1241,7 +1249,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
       {/* Back Button - Floating */}
       <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">
         <motion.button 
-          onClick={onBack} 
+          onClick={handleBack} 
           className="flex items-center gap-2 text-terminal-textSecondary hover:text-terminal-text text-sm px-3 py-2 rounded-lg bg-terminal-card/50 border border-terminal-border hover:border-terminal-accent transition-all" 
           whileHover={{ x: -3 }}
         >
@@ -1357,7 +1365,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp }: LearnPageProps)
               Head back to the dashboard or go stake on Shuffle.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <motion.button onClick={onBack} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              <motion.button onClick={handleBack} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                 className="px-5 py-2.5 rounded-lg bg-terminal-accent text-white font-medium text-sm flex items-center gap-2 justify-center">
                 <ArrowLeft className="w-4 h-4" /> Dashboard
               </motion.button>

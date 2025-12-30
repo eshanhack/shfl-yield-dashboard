@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Activity, Clock, TrendingUp, TrendingDown, Menu, X, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CurrencySelector from "./CurrencySelector";
@@ -11,10 +12,9 @@ interface HeaderProps {
   priceChange24h: number;
   nextDrawTimestamp: number;
   onLogoClick?: () => void;
-  onLearnClick?: () => void;
 }
 
-export default function Header({ price, priceChange24h, nextDrawTimestamp, onLogoClick, onLearnClick }: HeaderProps) {
+export default function Header({ price, priceChange24h, nextDrawTimestamp, onLogoClick }: HeaderProps) {
   const [timeToNextDraw, setTimeToNextDraw] = useState("");
   const [isPriceUpdating, setIsPriceUpdating] = useState(false);
   const [displayPrice, setDisplayPrice] = useState(price);
@@ -88,13 +88,13 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp, onLog
             </button>
             
             {/* Learn Button - Mobile */}
-            <button
-              onClick={onLearnClick}
+            <Link
+              href="/learn"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 hover:bg-terminal-accent/20 transition-all group"
             >
               <GraduationCap className="w-4 h-4 text-terminal-accent group-hover:scale-110 transition-transform" />
               <span className="text-xs font-medium text-terminal-accent hidden sm:inline">Learn</span>
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Stats Row */}
@@ -208,13 +208,13 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp, onLog
             </button>
             
             {/* Learn Button - Desktop */}
-            <button
-              onClick={onLearnClick}
+            <Link
+              href="/learn"
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30 hover:bg-terminal-accent/20 hover:border-terminal-accent/50 transition-all group"
             >
               <GraduationCap className="w-4 h-4 text-terminal-accent group-hover:scale-110 transition-transform" />
               <span className="text-xs font-medium text-terminal-accent">Learn</span>
-            </button>
+            </Link>
           </div>
 
           {/* Center: Live Stats */}

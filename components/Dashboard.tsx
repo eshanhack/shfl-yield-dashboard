@@ -42,7 +42,6 @@ import BreakEvenTimer from "./BreakEvenTimer";
 import NGRMomentumIndicator from "./NGRMomentumIndicator";
 import JackpotHunterPanel from "./JackpotHunterPanel";
 import GridBackground from "./GridBackground";
-import LearnPage from "./LearnPage";
 import { useToast } from "@/contexts/ToastContext";
 
 import {
@@ -95,9 +94,6 @@ export default function Dashboard() {
   const [tokenRevenueData, setTokenRevenueData] = useState<any>(null);
   const [marketCapsData, setMarketCapsData] = useState<any>(null);
   const [tanzaniteData, setTanzaniteData] = useState<any>(null);
-  
-  // Learn page state
-  const [showLearnPage, setShowLearnPage] = useState(false);
 
   // Fetch initial data (with loading states)
   const loadData = async (showRefreshing = false) => {
@@ -609,40 +605,24 @@ export default function Dashboard() {
           onLogoClick={() => {
             window.scrollTo({ top: 0, behavior: "instant" });
             setActiveSection("lottery");
-            setShowLearnPage(false);
           }}
-          onLearnClick={() => setShowLearnPage(true)}
         />
 
-        {/* Desktop: Tabs + Jump To below header - HIDDEN when Learn page is showing */}
-        {!showLearnPage && (
-          <div className="hidden lg:block border-b border-terminal-border/30">
-            <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-5 pb-4">
-              <div className="mb-3">
-                <SectionSelector 
-                  activeSection={activeSection} 
-                  onSectionChange={setActiveSection} 
-                />
-              </div>
-              <SubNavigation activeSection={activeSection} />
+        {/* Desktop: Tabs + Jump To below header */}
+        <div className="hidden lg:block border-b border-terminal-border/30">
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 pt-5 pb-4">
+            <div className="mb-3">
+              <SectionSelector 
+                activeSection={activeSection} 
+                onSectionChange={setActiveSection} 
+              />
             </div>
+            <SubNavigation activeSection={activeSection} />
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Show Learn Page OR Dashboard Content */}
-      {showLearnPage ? (
-        <>
-          {/* Spacer for fixed header */}
-          <div className="h-[60px] lg:h-[60px]" />
-          <LearnPage 
-            onBack={() => setShowLearnPage(false)} 
-            nextDrawTimestamp={lotteryStats.nextDrawTimestamp}
-          />
-        </>
-      ) : (
-        <>
-          {/* Mobile: Tabs + Jump To at bottom of screen */}
+      {/* Mobile: Tabs + Jump To at bottom of screen */}
           <div 
             className="lg:hidden fixed left-0 right-0 bottom-0 z-50 bg-terminal-black border-t border-terminal-border/30"
             style={{
@@ -1331,18 +1311,16 @@ export default function Dashboard() {
         </footer>
       </main>
 
-          {/* Calculator Modal */}
-          <PersonalCalculator
-            isOpen={isCalculatorOpen}
-            onClose={() => setIsCalculatorOpen(false)}
-            shflPrice={price.usd}
-            weeklyNGR={ngrStats.current4WeekAvg}
-            totalTickets={lotteryStats.totalTickets}
-            historicalDraws={completedDraws}
-            prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
-          />
-        </>
-      )}
+      {/* Calculator Modal */}
+      <PersonalCalculator
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        shflPrice={price.usd}
+        weeklyNGR={ngrStats.current4WeekAvg}
+        totalTickets={lotteryStats.totalTickets}
+        historicalDraws={completedDraws}
+        prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
+      />
     </div>
   );
 }
