@@ -33,10 +33,10 @@ export default function Loader() {
           
           @keyframes glowPulse {
             0%, 100% {
-              filter: drop-shadow(0 0 15px rgba(255, 85, 0, 0.5));
+              filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.5));
             }
             50% {
-              filter: drop-shadow(0 0 30px rgba(255, 85, 0, 0.9));
+              filter: drop-shadow(0 0 30px rgba(138, 43, 226, 0.9));
             }
           }
           
@@ -74,7 +74,7 @@ export default function Loader() {
           .loading-dot {
             width: 10px;
             height: 10px;
-            background-color: #FF5500;
+            background-color: #8A2BE2;
             border-radius: 50%;
             animation: dotBounce 1.2s ease-in-out infinite;
           }
@@ -88,8 +88,8 @@ export default function Loader() {
             <div className="coin-flipper">
               <div className="coin-side">
                 <img
-                  src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
-                  alt="SHFL Pro"
+                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  alt="SHFL"
                   width={80}
                   height={80}
                   style={{ borderRadius: "50%" }}
@@ -97,8 +97,8 @@ export default function Loader() {
               </div>
               <div className="coin-side coin-back">
                 <img
-                  src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
-                  alt="SHFL Pro"
+                  src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                  alt="SHFL"
                   width={80}
                   height={80}
                   style={{ borderRadius: "50%" }}
@@ -107,7 +107,7 @@ export default function Loader() {
             </div>
           </div>
           
-          <p style={{ color: '#FF5500', fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>
+          <p style={{ color: '#8A2BE2', fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>
             SHFL<span style={{ color: '#fff' }}>Pro</span>
           </p>
           <p style={{ color: '#A0A0A0', fontSize: '14px' }}>

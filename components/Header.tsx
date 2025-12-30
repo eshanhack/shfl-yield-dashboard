@@ -66,8 +66,8 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           {/* Logo */}
           <div className="flex items-center gap-2">
             <img
-              src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
-              alt="SHFL Pro"
+              src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+              alt="SHFL Token"
               className="w-7 h-7 sm:w-8 sm:h-8 animate-spin"
               style={{ animationDuration: "3s" }}
             />
@@ -170,8 +170,8 @@ export default function Header({ price, priceChange24h, nextDrawTimestamp }: Hea
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
               <img
-                src="https://i.ibb.co/8gPPNMxd/shfl-pro-logo.png"
-                alt="SHFL Pro"
+                src="https://s2.coinmarketcap.com/static/img/coins/64x64/29960.png"
+                alt="SHFL Token"
                 className="w-8 h-8 animate-spin"
                 style={{ animationDuration: "3s" }}
               />

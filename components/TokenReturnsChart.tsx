@@ -16,7 +16,7 @@ interface TokenData {
 }
 
 const TOKENS: TokenData[] = [
-  { id: "shuffle-2", symbol: "SHFL", name: "Shuffle", color: "#FF5500" },
+  { id: "shuffle-2", symbol: "SHFL", name: "Shuffle", color: "#8A2BE2" },
   { id: "bitcoin", symbol: "BTC", name: "Bitcoin", color: "#F7931A" },
   { id: "ethereum", symbol: "ETH", name: "Ethereum", color: "#627EEA" },
   { id: "solana", symbol: "SOL", name: "Solana", color: "#00FFA3" },

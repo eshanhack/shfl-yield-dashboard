@@ -815,7 +815,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Total</span>
-                      <span className="font-bold text-orange-400 tabular-nums">{lotteryStats.totalSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(1) : "0"}%</span>
+                      <span className="font-bold text-purple-400 tabular-nums">{lotteryStats.totalSupply ? ((lotteryStats.totalSHFLStaked / lotteryStats.totalSupply) * 100).toFixed(1) : "0"}%</span>
                     </div>
                   </div>
                 </>
@@ -872,7 +872,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Staked</span>
-                      <span className="font-medium text-orange-400 tabular-nums">{tokenMetrics.stakedPercent.toFixed(1)}%</span>
+                      <span className="font-medium text-purple-400 tabular-nums">{tokenMetrics.stakedPercent.toFixed(1)}%</span>
                     </div>
                   </div>
                 </>

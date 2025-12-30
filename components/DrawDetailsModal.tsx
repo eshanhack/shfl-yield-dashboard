@@ -33,8 +33,8 @@ interface DrawDetailsModalProps {
 
 const PRIZE_CATEGORY_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   JACKPOT: { label: "Jackpot", icon: <Trophy className="h-4 w-4" />, color: "text-yellow-400" },
-  SECOND_PRIZE: { label: "Division 2", icon: <Award className="h-4 w-4" />, color: "text-orange-400" },
-  THIRD_PRIZE: { label: "Division 3", icon: <Award className="h-4 w-4" />, color: "text-orange-300" },
+  SECOND_PRIZE: { label: "Division 2", icon: <Award className="h-4 w-4" />, color: "text-purple-400" },
+  THIRD_PRIZE: { label: "Division 3", icon: <Award className="h-4 w-4" />, color: "text-purple-300" },
   FOURTH_PRIZE: { label: "Division 4", icon: <Target className="h-4 w-4" />, color: "text-blue-400" },
   FIFTH_PRIZE: { label: "Division 5", icon: <Target className="h-4 w-4" />, color: "text-blue-300" },
   SIXTH_PRIZE: { label: "Division 6", icon: <Zap className="h-4 w-4" />, color: "text-green-400" },
@@ -94,12 +94,12 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0a0a0a] border border-[#FF5500]/50 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#0a0a0a] border border-[#8A2BE2]/50 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="bg-[#FF5500]/20 p-2 rounded-lg">
-              <Trophy className="h-6 w-6 text-[#FF5500]" />
+            <div className="bg-[#8A2BE2]/20 p-2 rounded-lg">
+              <Trophy className="h-6 w-6 text-[#8A2BE2]" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white font-mono">Draw #{drawNumber}</h2>
@@ -127,7 +127,7 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
         <div className="p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-[#FF5500] animate-spin" />
+              <Loader2 className="h-8 w-8 text-[#8A2BE2] animate-spin" />
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -143,11 +143,11 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
                 </div>
                 <div className="bg-black border border-gray-800 rounded-lg p-4">
                   <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">NGR Added</p>
-                  <p className="text-[#FF5500] font-mono text-lg">{formatUSD(details.ngrAdded)}</p>
+                  <p className="text-[#8A2BE2] font-mono text-lg">{formatUSD(details.ngrAdded)}</p>
                 </div>
                 <div className="bg-black border border-gray-800 rounded-lg p-4">
                   <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Singles Added</p>
-                  <p className="text-orange-300 font-mono text-lg">{formatUSD(details.singlesAdded)}</p>
+                  <p className="text-purple-300 font-mono text-lg">{formatUSD(details.singlesAdded)}</p>
                 </div>
                 <div className="bg-black border border-gray-800 rounded-lg p-4">
                   <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Jackpotted</p>
@@ -162,7 +162,7 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
                   {details.prizepoolSplit.split("-").map((split, index) => (
                     <span
                       key={index}
-                      className="bg-[#FF5500]/20 text-[#FF5500] px-3 py-1 rounded text-sm font-mono"
+                      className="bg-[#8A2BE2]/20 text-[#8A2BE2] px-3 py-1 rounded text-sm font-mono"
                     >
                       Div {index + 1}: {split}%
                     </span>
@@ -174,7 +174,7 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
               {sortedPrizes && sortedPrizes.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-white font-semibold flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-[#FF5500]" />
+                    <DollarSign className="h-4 w-4 text-[#8A2BE2]" />
                     Prize Breakdown
                   </h3>
                   <div className="bg-black border border-gray-800 rounded-lg overflow-hidden">
@@ -222,7 +222,7 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
                       <tfoot className="bg-gray-900/50 border-t border-gray-700">
                         <tr>
                           <td className="px-4 py-3 font-semibold text-white">Total</td>
-                          <td className="text-right px-4 py-3 font-mono text-[#FF5500] font-bold">
+                          <td className="text-right px-4 py-3 font-mono text-[#8A2BE2] font-bold">
                             {formatUSD(sortedPrizes.reduce((sum, p) => sum + p.amount, 0))}
                           </td>
                           <td className="text-right px-4 py-3 font-mono text-green-400 font-bold">
@@ -253,10 +253,10 @@ export default function DrawDetailsModal({ drawNumber, onClose }: DrawDetailsMod
                       {sortedPrizes.find(p => p.category === "JACKPOT")?.winCount === 0 ? "Not Won" : "Won!"}
                     </p>
                   </div>
-                  <div className="bg-gradient-to-br from-[#FF5500]/10 to-orange-600/5 border border-[#FF5500]/30 rounded-lg p-4">
+                  <div className="bg-gradient-to-br from-[#8A2BE2]/10 to-purple-600/5 border border-[#8A2BE2]/30 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Users className="h-5 w-5 text-[#FF5500]" />
-                      <p className="text-[#FF5500] text-sm font-medium">Total Winners</p>
+                      <Users className="h-5 w-5 text-[#8A2BE2]" />
+                      <p className="text-[#8A2BE2] text-sm font-medium">Total Winners</p>
                     </div>
                     <p className="text-white font-mono text-xl font-bold">
                       {details.totalWinners || sortedPrizes.reduce((sum, p) => sum + p.winCount, 0)}

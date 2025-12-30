@@ -90,7 +90,7 @@ export default function CurrencyAmount({
           isHovered && "drop-shadow-[0_0_8px_rgba(138,43,226,0.8)]"
         )}
         style={{
-          textShadow: isHovered ? "0 0 10px rgba(255, 85, 0, 0.6), 0 0 20px rgba(255, 85, 0, 0.4)" : "none"
+          textShadow: isHovered ? "0 0 10px rgba(138, 43, 226, 0.6), 0 0 20px rgba(138, 43, 226, 0.4)" : "none"
         }}
       >
         {convertedFormatted}

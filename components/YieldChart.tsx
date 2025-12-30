@@ -113,7 +113,7 @@ export default function YieldChart({ data }: YieldChartProps) {
               yAxisId="ngr"
               dataKey="ngr"
               name="NGR"
-              fill="#FF5500"
+              fill="#8A2BE2"
               opacity={0.6}
               radius={[2, 2, 0, 0]}
             />
@@ -128,7 +128,7 @@ export default function YieldChart({ data }: YieldChartProps) {
               activeDot={{
                 r: 4,
                 fill: "#FFFFFF",
-                stroke: "#FF5500",
+                stroke: "#8A2BE2",
                 strokeWidth: 2,
               }}
             />

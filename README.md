@@ -2,7 +2,7 @@
 
 A Bloomberg Terminal-style dashboard for tracking SHFL token staking profitability and lottery yields on Shuffle.com.
 
-![Terminal](https://img.shields.io/badge/Style-Bloomberg_Terminal-FF5500)
+![Terminal](https://img.shields.io/badge/Style-Bloomberg_Terminal-8A2BE2)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 
@@ -101,7 +101,7 @@ shfl-pro/
 - **Card**: `#0d0d0d`
 - **Text Primary**: `#FFFFFF`
 - **Text Secondary**: `#A0A0A0`
-- **Accent**: `#FF5500` (Bloomberg Orange)
+- **Accent**: `#8A2BE2` (Purple)
 - **Positive**: `#00FF88`
 - **Negative**: `#FF4444`
 
