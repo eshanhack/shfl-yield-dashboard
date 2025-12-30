@@ -44,6 +44,10 @@ export interface HistoricalDraw {
   ngrUSD: number;
   totalTickets: number;
   yieldPerThousandSHFL: number;
+  // Historical SHFL price at the time of this draw (for accurate APY calculation)
+  shflPriceAtDraw?: number;
+  // Historical APY calculated using the price at time of draw
+  historicalAPY?: number;
   prizepoolSplit?: string;
   jackpotWon?: boolean;
   jackpotAmount?: number;
@@ -205,6 +209,25 @@ export function calculateYieldPer1KSHFL(
 ): number {
   const ticketsPer1K = Math.floor(1000 / SHFL_PER_TICKET); // 20 tickets
   return calculateWeeklyYield(ticketsPer1K, totalTicketsInDraw, weeklyNGR, prizeSplit);
+}
+
+/**
+ * Calculate historical APY using the SHFL price at the time of the draw
+ * This gives an accurate picture of what yield looked like at that moment in time
+ */
+export function calculateHistoricalAPY(
+  yieldPerThousandSHFL: number,
+  shflPriceAtDraw: number
+): number {
+  if (shflPriceAtDraw <= 0) return 0;
+  
+  // Value of 1,000 SHFL at the time of the draw
+  const stakingValueUSD = 1000 * shflPriceAtDraw;
+  
+  // Annualized yield as percentage
+  const annualYieldUSD = yieldPerThousandSHFL * WEEKS_PER_YEAR;
+  
+  return (annualYieldUSD / stakingValueUSD) * 100;
 }
 
 /**

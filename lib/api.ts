@@ -242,32 +242,68 @@ function generateMockPriceHistory(days: number): PriceHistoryPoint[] {
 }
 
 /**
+ * Find the closest price point to a given timestamp
+ */
+function findClosestPrice(priceHistory: PriceHistoryPoint[], targetTimestamp: number): number {
+  if (priceHistory.length === 0) return 0;
+  
+  let closestPrice = priceHistory[0].price;
+  let minDiff = Math.abs(priceHistory[0].timestamp - targetTimestamp);
+  
+  for (const point of priceHistory) {
+    const diff = Math.abs(point.timestamp - targetTimestamp);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestPrice = point.price;
+    }
+  }
+  
+  return closestPrice;
+}
+
+/**
  * Fetch real lottery history from our API route
+ * Also fetches historical price data to calculate accurate historical APYs
  */
 export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
   try {
-    const response = await fetchWithTimeout(`/api/lottery-history?t=${Date.now()}`, {
-      cache: "no-store",
-      headers: { 'Cache-Control': 'no-cache' }
-    }, 8000);
+    // Fetch lottery history and price history in parallel
+    const [lotteryResponse, priceHistory] = await Promise.all([
+      fetchWithTimeout(`/api/lottery-history?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { 'Cache-Control': 'no-cache' }
+      }, 8000),
+      fetchPriceHistory(365).catch(() => [] as PriceHistoryPoint[]), // Fallback to empty if fails
+    ]);
     
-    if (!response.ok) {
+    if (!lotteryResponse.ok) {
       throw new Error("Failed to fetch lottery history");
     }
     
-    const data = await response.json();
+    const data = await lotteryResponse.json();
     
     if (!data.success || !data.draws) {
       throw new Error("Invalid response");
     }
     
-    // Transform raw API data to HistoricalDraw format
+    // Transform raw API data to HistoricalDraw format with historical prices
     return data.draws.map((draw: LotteryDrawRaw) => {
       // Use actual totalTickets from API if available, otherwise estimate
       const totalTickets = draw.totalTickets || estimateTicketsFromPool(draw.prizePool);
       
       // For jackpot replenishment weeks, use adjusted NGR for yield calculation
       const effectiveNGR = draw.adjustedNGR !== undefined ? draw.adjustedNGR : draw.totalNGRContribution;
+      
+      const yieldPerThousandSHFL = calcYield(effectiveNGR, totalTickets, draw.prizepoolSplit);
+      
+      // Find the historical SHFL price at the time of this draw
+      const drawTimestamp = new Date(draw.date).getTime();
+      const shflPriceAtDraw = findClosestPrice(priceHistory, drawTimestamp);
+      
+      // Calculate historical APY using the price at time of draw
+      const historicalAPY = shflPriceAtDraw > 0 
+        ? calculateHistoricalAPY(yieldPerThousandSHFL, shflPriceAtDraw)
+        : undefined;
       
       return {
         drawNumber: draw.drawNumber,
@@ -276,7 +312,10 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         // ngrUSD = actual NGR that contributed to THIS draw (from previous draw's posted NGR)
         ngrUSD: draw.totalNGRContribution, // ngrAdded + (singlesAdded * 0.85)
         totalTickets,
-        yieldPerThousandSHFL: calcYield(effectiveNGR, totalTickets, draw.prizepoolSplit),
+        yieldPerThousandSHFL,
+        // Historical price and APY for accurate historical analysis
+        shflPriceAtDraw,
+        historicalAPY,
         prizepoolSplit: draw.prizepoolSplit,
         jackpotWon: draw.jackpotWon,
         jackpotAmount: draw.jackpotAmount,
@@ -385,7 +424,7 @@ export async function fetchLotteryStats(): Promise<LotteryStats> {
   }
 }
 
-import { calculateYieldPer1KSHFL as calcYield, getNonJackpotPercentage } from "./calculations";
+import { calculateYieldPer1KSHFL as calcYield, getNonJackpotPercentage, calculateHistoricalAPY } from "./calculations";
 
 /**
  * Estimate ticket count based on prize pool size
@@ -460,20 +499,20 @@ export function getMockNGRHistory(weeks: number = 52): NGRHistoryPoint[] {
  * Get mock historical lottery draws (fallback)
  */
 export function getMockHistoricalDraws(count: number = 12): HistoricalDraw[] {
-  // Real data from the lottery history page
+  // Real data from the lottery history page with approximate historical prices
   const realDraws: HistoricalDraw[] = [
-    { drawNumber: 62, date: "2025-12-19", totalPoolUSD: 1263612, ngrUSD: 173555, totalTickets: 500000, yieldPerThousandSHFL: 50.54 },
-    { drawNumber: 61, date: "2025-12-12", totalPoolUSD: 3103837, ngrUSD: 1201151, totalTickets: 1200000, yieldPerThousandSHFL: 51.73 },
-    { drawNumber: 60, date: "2025-12-05", totalPoolUSD: 3333438, ngrUSD: 205120, totalTickets: 1300000, yieldPerThousandSHFL: 51.28 },
-    { drawNumber: 59, date: "2025-11-28", totalPoolUSD: 3259985, ngrUSD: 431594, totalTickets: 1300000, yieldPerThousandSHFL: 50.15 },
-    { drawNumber: 58, date: "2025-11-21", totalPoolUSD: 3187332, ngrUSD: 525537, totalTickets: 1270000, yieldPerThousandSHFL: 50.19 },
-    { drawNumber: 57, date: "2025-11-14", totalPoolUSD: 4474708, ngrUSD: 529812, totalTickets: 1780000, yieldPerThousandSHFL: 50.28 },
-    { drawNumber: 56, date: "2025-11-07", totalPoolUSD: 2985268, ngrUSD: 1515179, totalTickets: 1190000, yieldPerThousandSHFL: 50.17 },
-    { drawNumber: 55, date: "2025-10-31", totalPoolUSD: 2862620, ngrUSD: 757382, totalTickets: 1140000, yieldPerThousandSHFL: 50.22 },
-    { drawNumber: 54, date: "2025-10-24", totalPoolUSD: 2715131, ngrUSD: 675318, totalTickets: 1080000, yieldPerThousandSHFL: 50.28 },
-    { drawNumber: 53, date: "2025-10-17", totalPoolUSD: 2921000, ngrUSD: 746891, totalTickets: 1160000, yieldPerThousandSHFL: 50.36 },
-    { drawNumber: 52, date: "2025-10-10", totalPoolUSD: 2349206, ngrUSD: 1124115, totalTickets: 940000, yieldPerThousandSHFL: 50.00 },
-    { drawNumber: 51, date: "2025-10-03", totalPoolUSD: 2285434, ngrUSD: 551224, totalTickets: 910000, yieldPerThousandSHFL: 50.23 },
+    { drawNumber: 62, date: "2025-12-19", totalPoolUSD: 1263612, ngrUSD: 173555, totalTickets: 500000, yieldPerThousandSHFL: 50.54, shflPriceAtDraw: 0.32, historicalAPY: calculateHistoricalAPY(50.54, 0.32) },
+    { drawNumber: 61, date: "2025-12-12", totalPoolUSD: 3103837, ngrUSD: 1201151, totalTickets: 1200000, yieldPerThousandSHFL: 51.73, shflPriceAtDraw: 0.30, historicalAPY: calculateHistoricalAPY(51.73, 0.30) },
+    { drawNumber: 60, date: "2025-12-05", totalPoolUSD: 3333438, ngrUSD: 205120, totalTickets: 1300000, yieldPerThousandSHFL: 51.28, shflPriceAtDraw: 0.28, historicalAPY: calculateHistoricalAPY(51.28, 0.28) },
+    { drawNumber: 59, date: "2025-11-28", totalPoolUSD: 3259985, ngrUSD: 431594, totalTickets: 1300000, yieldPerThousandSHFL: 50.15, shflPriceAtDraw: 0.25, historicalAPY: calculateHistoricalAPY(50.15, 0.25) },
+    { drawNumber: 58, date: "2025-11-21", totalPoolUSD: 3187332, ngrUSD: 525537, totalTickets: 1270000, yieldPerThousandSHFL: 50.19, shflPriceAtDraw: 0.22, historicalAPY: calculateHistoricalAPY(50.19, 0.22) },
+    { drawNumber: 57, date: "2025-11-14", totalPoolUSD: 4474708, ngrUSD: 529812, totalTickets: 1780000, yieldPerThousandSHFL: 50.28, shflPriceAtDraw: 0.20, historicalAPY: calculateHistoricalAPY(50.28, 0.20) },
+    { drawNumber: 56, date: "2025-11-07", totalPoolUSD: 2985268, ngrUSD: 1515179, totalTickets: 1190000, yieldPerThousandSHFL: 50.17, shflPriceAtDraw: 0.18, historicalAPY: calculateHistoricalAPY(50.17, 0.18) },
+    { drawNumber: 55, date: "2025-10-31", totalPoolUSD: 2862620, ngrUSD: 757382, totalTickets: 1140000, yieldPerThousandSHFL: 50.22, shflPriceAtDraw: 0.16, historicalAPY: calculateHistoricalAPY(50.22, 0.16) },
+    { drawNumber: 54, date: "2025-10-24", totalPoolUSD: 2715131, ngrUSD: 675318, totalTickets: 1080000, yieldPerThousandSHFL: 50.28, shflPriceAtDraw: 0.15, historicalAPY: calculateHistoricalAPY(50.28, 0.15) },
+    { drawNumber: 53, date: "2025-10-17", totalPoolUSD: 2921000, ngrUSD: 746891, totalTickets: 1160000, yieldPerThousandSHFL: 50.36, shflPriceAtDraw: 0.14, historicalAPY: calculateHistoricalAPY(50.36, 0.14) },
+    { drawNumber: 52, date: "2025-10-10", totalPoolUSD: 2349206, ngrUSD: 1124115, totalTickets: 940000, yieldPerThousandSHFL: 50.00, shflPriceAtDraw: 0.13, historicalAPY: calculateHistoricalAPY(50.00, 0.13) },
+    { drawNumber: 51, date: "2025-10-03", totalPoolUSD: 2285434, ngrUSD: 551224, totalTickets: 910000, yieldPerThousandSHFL: 50.23, shflPriceAtDraw: 0.12, historicalAPY: calculateHistoricalAPY(50.23, 0.12) },
   ];
   
   return realDraws.slice(0, count);

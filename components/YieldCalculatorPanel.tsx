@@ -141,6 +141,7 @@ export default function YieldCalculatorPanel({
 
   // Historical yields for each draw (historicalDraws should already be filtered to completed draws)
   // Use adjustedNgrUSD when available (accounts for jackpot replenishment)
+  // Use historical SHFL price for accurate APY calculations at time of draw
   const historicalYields = useMemo(() => {
     return historicalDraws.slice(0, 8).map((draw) => {
       // Use adjusted NGR if available (after jackpot replenishment is deducted)
@@ -154,10 +155,23 @@ export default function YieldCalculatorPanel({
         draw.totalTickets,
         draw.prizepoolSplit || prizeSplit
       );
+      
+      // Use historical SHFL price for accurate historical APY, fallback to current price
+      const priceAtDraw = draw.shflPriceAtDraw && draw.shflPriceAtDraw > 0 
+        ? draw.shflPriceAtDraw 
+        : shflPrice;
+      const historicalStakingValue = shflAmount * priceAtDraw;
+      
       return {
         draw,
         weeklyUSD: yieldResult.weeklyExpectedUSD,
-        weeklyPercent: (yieldResult.weeklyExpectedUSD / stakingValueUSD) * 100,
+        // Use historical price for accurate historical yield percentage
+        weeklyPercent: historicalStakingValue > 0 
+          ? (yieldResult.weeklyExpectedUSD / historicalStakingValue) * 100
+          : 0,
+        // Also provide the APY that was accurate at time of draw
+        historicalAPY: draw.historicalAPY,
+        priceAtDraw,
         // Track if this week had jackpot replenishment adjustment
         hadJackpotReplenishment: draw.jackpotReplenishment && draw.jackpotReplenishment > 0,
         jackpotReplenishment: draw.jackpotReplenishment || 0,
@@ -166,7 +180,7 @@ export default function YieldCalculatorPanel({
         isJackpotWon: draw.jackpotWon || false,
       };
     });
-  }, [shflAmount, shflPrice, historicalDraws, prizeSplit, stakingValueUSD]);
+  }, [shflAmount, shflPrice, historicalDraws, prizeSplit]);
 
   return (
     <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-5">
