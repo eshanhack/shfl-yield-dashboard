@@ -10,6 +10,7 @@ export default function LearnRoute() {
   const router = useRouter();
   const [nextDrawTimestamp, setNextDrawTimestamp] = useState<number | undefined>();
   const [shflPrice, setShflPrice] = useState<number | undefined>();
+  const [totalTickets, setTotalTickets] = useState<number | undefined>();
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function LearnRoute() {
         ]);
         setNextDrawTimestamp(stats.nextDrawTimestamp);
         setShflPrice(price.usd);
+        setTotalTickets(stats.totalTickets);
       } catch (error) {
         console.error("Failed to load data:", error);
       } finally {
@@ -50,7 +52,12 @@ export default function LearnRoute() {
     <div className="min-h-screen bg-terminal-black relative">
       <GridBackground intensity="medium" interactive={true} />
       <div className="relative z-10">
-        <LearnPage onBack={handleBack} nextDrawTimestamp={nextDrawTimestamp} shflPrice={shflPrice} />
+        <LearnPage 
+          onBack={handleBack} 
+          nextDrawTimestamp={nextDrawTimestamp} 
+          shflPrice={shflPrice}
+          totalTickets={totalTickets}
+        />
       </div>
     </div>
   );

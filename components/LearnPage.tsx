@@ -37,6 +37,7 @@ interface LearnPageProps {
   onBack?: () => void;
   nextDrawTimestamp?: number;
   shflPrice?: number;
+  totalTickets?: number; // Current total tickets in the pool
 }
 
 // SHFL Contract Address
@@ -59,6 +60,15 @@ const SHFLPriceContext = createContext<number>(0.05);
 // Hook to use SHFL price
 function useSHFLPrice() {
   return useContext(SHFLPriceContext);
+}
+
+// Create context for total tickets (with 5% growth assumption)
+// Default: 4.2M tickets (210M SHFL / 50)
+const TotalTicketsContext = createContext<number>(4200000);
+
+// Hook to use total tickets
+function useTotalTickets() {
+  return useContext(TotalTicketsContext);
 }
 
 // Animated counter hook
@@ -122,11 +132,12 @@ function AnimatedSection({
 function LotteryTicketConcept() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const totalTickets = useTotalTickets();
   const [ticketCount, setTicketCount] = useState(100);
   const [weeks, setWeeks] = useState(1);
   
-  // Simulate wins over weeks
-  const weeklyWinChance = ticketCount / 180000; // Simplified
+  // Simulate wins over weeks - use dynamic total tickets
+  const weeklyWinChance = ticketCount / totalTickets;
   const avgWeeklyWin = weeklyWinChance * 400000; // Avg pool
   const totalWins = avgWeeklyWin * weeks;
   
@@ -300,9 +311,8 @@ function RevenueFlowDiagram() {
   const ngr = ggr * ngrRate;
   const lotteryPool = ngr * lotteryRate;
   
-  // Calculate user's share based on input mode
-  const totalStaked = 180000000; // 180M staked
-  const totalTickets = totalStaked / 50; // ~3.6M tickets
+  // Use dynamic total tickets from context (includes 5% growth assumption)
+  const totalTickets = useTotalTickets();
   
   const getUserTickets = () => {
     switch (inputMode) {
@@ -575,13 +585,12 @@ function StakeSharePie() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const shflPrice = useSHFLPrice();
+  const totalTickets = useTotalTickets();
   const [userStake, setUserStake] = useState(50000);
-  const totalStaked = 180000000; // 180M tokens staked
   const weeklyPool = 400000; // ~$400K weekly pool
   
   // 1 ticket per 50 SHFL
   const userTickets = Math.floor(userStake / 50);
-  const totalTickets = Math.floor(totalStaked / 50); // ~3.6M tickets
   
   const userShare = userTickets / totalTickets;
   const weeklyYield = weeklyPool * userShare;
@@ -873,7 +882,8 @@ function DrawSimulator() {
   const [userInput, setUserInput] = useState(50000); // 50K SHFL default
   const [dropdownOpen, setDropdownOpen] = useState(false);
   
-  const totalTickets = 3600000; // ~3.6M total tickets
+  // Use dynamic total tickets from context (includes 5% growth assumption)
+  const totalTickets = useTotalTickets();
   
   const getUserTickets = () => {
     switch (inputMode) {
@@ -1529,11 +1539,16 @@ function CompoundingCalculator() {
 }
 
 // Main LearnPage Component
-export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPrice }: LearnPageProps) {
+export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPrice, totalTickets: propTotalTickets }: LearnPageProps) {
   const router = useRouter();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
   const [shflPrice, setShflPrice] = useState(propPrice || 0.05);
+  
+  // Use actual total tickets with 5% growth assumption for estimates
+  // Default fallback: 4.2M tickets (210M SHFL / 50)
+  const GROWTH_FACTOR = 1.05; // 5% growth assumption
+  const effectiveTotalTickets = Math.round((propTotalTickets || 4200000) * GROWTH_FACTOR);
   
   // Fetch SHFL price dynamically if not provided
   useEffect(() => {
@@ -1567,6 +1582,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPr
   
   return (
     <SHFLPriceContext.Provider value={shflPrice}>
+    <TotalTicketsContext.Provider value={effectiveTotalTickets}>
     <div className="min-h-screen bg-transparent text-terminal-text relative z-10">
       {/* Progress bar at very top */}
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-terminal-accent z-[60] origin-left" style={{ scaleX }} />
@@ -1700,6 +1716,7 @@ export default function LearnPage({ onBack, nextDrawTimestamp, shflPrice: propPr
         </div>
       </div>
     </div>
+    </TotalTicketsContext.Provider>
     </SHFLPriceContext.Provider>
   );
 }
