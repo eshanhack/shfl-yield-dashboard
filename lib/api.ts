@@ -305,28 +305,35 @@ export async function fetchLotteryHistory(): Promise<HistoricalDraw[]> {
         ? calculateHistoricalAPY(yieldPerThousandSHFL, shflPriceAtDraw)
         : undefined;
       
+      // IMPORTANT: adjustedNGR and shflPriceAtDraw MUST always have valid values
+      // to prevent inconsistent APY calculations (the source of "glitching")
+      const finalAdjustedNGR = draw.adjustedNGR ?? draw.totalNGRContribution;
+      const finalPriceAtDraw = shflPriceAtDraw > 0 ? shflPriceAtDraw : 0.20; // Fallback to reasonable estimate
+      
       return {
         drawNumber: draw.drawNumber,
         date: draw.date,
         totalPoolUSD: draw.prizePool,
-        // ngrUSD = actual NGR that contributed to THIS draw (from previous draw's posted NGR)
-        ngrUSD: draw.totalNGRContribution, // ngrAdded + (singlesAdded * 0.85)
+        // ngrUSD = actual NGR that contributed to THIS draw (already includes singlesAdded * 0.85)
+        ngrUSD: draw.totalNGRContribution,
         totalTickets,
         yieldPerThousandSHFL,
-        // Historical price and APY for accurate historical analysis
-        shflPriceAtDraw,
-        historicalAPY,
+        // Historical price and APY - ALWAYS set to prevent glitches
+        shflPriceAtDraw: finalPriceAtDraw,
+        historicalAPY: calculateHistoricalAPY(yieldPerThousandSHFL, finalPriceAtDraw),
         prizepoolSplit: draw.prizepoolSplit,
         jackpotWon: draw.jackpotWon,
         jackpotAmount: draw.jackpotAmount,
         jackpotted: draw.jackpotted,
+        // Singles data (for reference, NOT for calculation - ngrUSD already includes it)
+        singlesAdded: draw.singlesAdded,
         // Posted values (what's shown in this draw's row - goes to NEXT draw)
         postedNgrUSD: (draw.postedNgrAdded || 0) + (draw.postedSinglesAdded || 0) * 0.85,
         postedSinglesAdded: draw.postedSinglesAdded,
-        // Adjusted NGR for jackpot replenishment
-        adjustedNgrUSD: draw.adjustedNGR,
-        jackpotReplenishment: draw.jackpotReplenishment,
-        prevJackpotWon: draw.prevJackpotWon,
+        // Adjusted NGR for jackpot replenishment - ALWAYS set
+        adjustedNgrUSD: finalAdjustedNGR,
+        jackpotReplenishment: draw.jackpotReplenishment || 0,
+        prevJackpotWon: draw.prevJackpotWon || false,
       };
     });
   } catch {

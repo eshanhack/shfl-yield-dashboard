@@ -389,7 +389,8 @@ export default function Dashboard() {
     if (completedDraws.length === 0 || !lotteryStats || !price) return 0;
     const lastDraw = completedDraws[0];
     // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-    const ngrForCalc = lastDraw.adjustedNgrUSD ?? (lastDraw.ngrUSD + (lastDraw.singlesAdded || 0) * 0.85);
+    // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
+    const ngrForCalc = lastDraw.adjustedNgrUSD ?? lastDraw.ngrUSD;
     const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
     // Use historical price at draw time for accuracy
     const priceAtDraw = lastDraw.shflPriceAtDraw || price.usd;
@@ -406,7 +407,8 @@ export default function Dashboard() {
     
     const totalAPY = priorDraws.reduce((sum, draw) => {
       // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-      const ngrForCalc = draw.adjustedNgrUSD ?? (draw.ngrUSD + (draw.singlesAdded || 0) * 0.85);
+      // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
+      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
       const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
       // Use historical price at draw time for accuracy
       const priceAtDraw = draw.shflPriceAtDraw || price.usd;
@@ -430,7 +432,8 @@ export default function Dashboard() {
     
     completedDraws.forEach((draw, index) => {
       // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-      const ngrForCalc = draw.adjustedNgrUSD ?? (draw.ngrUSD + (draw.singlesAdded || 0) * 0.85);
+      // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
+      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
       const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
       // Use historical price at draw time, or current price as fallback
       const priceAtDraw = draw.shflPriceAtDraw || price.usd;
@@ -473,15 +476,15 @@ export default function Dashboard() {
   }, [completedDraws]);
 
   // Find highest NGR week
+  // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
   const highestNGRData = useMemo(() => {
     if (completedDraws.length === 0) return { ngr: 0, weeksAgo: 0 };
     
     let highest = { ngr: 0, weeksAgo: 0 };
     
     completedDraws.forEach((draw, index) => {
-      const ngrTotal = draw.ngrUSD + (draw.singlesAdded || 0) * 0.85;
-      if (ngrTotal > highest.ngr) {
-        highest = { ngr: ngrTotal, weeksAgo: index };
+      if (draw.ngrUSD > highest.ngr) {
+        highest = { ngr: draw.ngrUSD, weeksAgo: index };
       }
     });
     
@@ -499,7 +502,8 @@ export default function Dashboard() {
     };
     
     // Calculate total lottery NGR added across ALL draws (this is the actual prizes distributed)
-    const totalLotteryNGRAdded = completedDraws.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0);
+    // NOTE: ngrUSD already includes singlesAdded * 0.85
+    const totalLotteryNGRAdded = completedDraws.reduce((sum, d) => sum + d.ngrUSD, 0);
     const avgWeeklyLotteryNGR = totalLotteryNGRAdded / completedDraws.length;
     
     // Annual values (Lottery NGR is 15% of Shuffle NGR)
@@ -508,23 +512,24 @@ export default function Dashboard() {
     const annualGGR = annualNGR * 2;  // GGR is roughly 2x NGR
     
     // Growth calculations - compare recent 4 weeks vs prior 4 weeks
+    // NOTE: ngrUSD already includes singlesAdded * 0.85
     const recent4 = completedDraws.slice(0, 4);
     const prior4 = completedDraws.slice(4, 8);
-    const recentNGR = recent4.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / recent4.length;
-    const priorNGR = prior4.length > 0 ? prior4.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / prior4.length : recentNGR;
+    const recentNGR = recent4.reduce((sum, d) => sum + d.ngrUSD, 0) / recent4.length;
+    const priorNGR = prior4.length > 0 ? prior4.reduce((sum, d) => sum + d.ngrUSD, 0) / prior4.length : recentNGR;
     const monthlyNGRGrowth = priorNGR > 0 ? ((recentNGR - priorNGR) / priorNGR) * 100 : 0;
     
     // Weekly growth
-    const weekNGR = completedDraws[0]?.ngrUSD + (completedDraws[0]?.singlesAdded || 0) * 0.85 || 0;
-    const priorWeekNGR = completedDraws[1]?.ngrUSD + (completedDraws[1]?.singlesAdded || 0) * 0.85 || weekNGR;
+    const weekNGR = completedDraws[0]?.ngrUSD || 0;
+    const priorWeekNGR = completedDraws[1]?.ngrUSD || weekNGR;
     const weeklyNGRGrowth = priorWeekNGR > 0 ? ((weekNGR - priorWeekNGR) / priorWeekNGR) * 100 : 0;
     
     // Annual growth (first half vs second half of all draws)
     const halfPoint = Math.floor(completedDraws.length / 2);
     const recentHalf = completedDraws.slice(0, halfPoint);
     const olderHalf = completedDraws.slice(halfPoint);
-    const recentAvg = recentHalf.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / recentHalf.length;
-    const olderAvg = olderHalf.length > 0 ? olderHalf.reduce((sum, d) => sum + d.ngrUSD + (d.singlesAdded || 0) * 0.85, 0) / olderHalf.length : recentAvg;
+    const recentAvg = recentHalf.reduce((sum, d) => sum + d.ngrUSD, 0) / recentHalf.length;
+    const olderAvg = olderHalf.length > 0 ? olderHalf.reduce((sum, d) => sum + d.ngrUSD, 0) / olderHalf.length : recentAvg;
     const annualNGRGrowth = olderAvg > 0 ? ((recentAvg - olderAvg) / olderAvg) * 100 : 0;
     
     // Average pool size
@@ -1021,7 +1026,7 @@ export default function Dashboard() {
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
-                      <CurrencyAmount amount={lastWeekNGR + (completedDraws[0]?.singlesAdded || 0) * 0.85} className="font-medium text-terminal-accent text-[10px] sm:text-xs lg:text-sm" />
+                      <CurrencyAmount amount={lastWeekNGR} className="font-medium text-terminal-accent text-[10px] sm:text-xs lg:text-sm" />
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Highest</span>
