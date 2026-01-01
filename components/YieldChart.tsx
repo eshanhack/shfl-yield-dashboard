@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
   ComposedChart,
   Line,
@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Activity } from "lucide-react";
 import { HistoricalDraw, calculateGlobalAPY } from "@/lib/calculations";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface YieldChartProps {
   historicalDraws: HistoricalDraw[];
@@ -20,6 +21,8 @@ interface YieldChartProps {
 }
 
 export default function YieldChart({ historicalDraws, currentPrice }: YieldChartProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  
   // Build chart data directly from historical draws (most accurate source)
   const formattedData = useMemo(() => {
     // Sort draws oldest first for chart display
@@ -84,7 +87,7 @@ export default function YieldChart({ historicalDraws, currentPrice }: YieldChart
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-start gap-2">
           <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20 flex-shrink-0">
@@ -112,6 +115,7 @@ export default function YieldChart({ historicalDraws, currentPrice }: YieldChart
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
             <span className="text-[10px] text-terminal-textSecondary">APY (%)</span>
           </div>
+          <ScreenshotButton targetRef={panelRef} filename="shfl-ngr-price-chart" />
         </div>
       </div>
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Activity, TrendingUp, TrendingDown, BarChart3, Scale, AlertTriangle, Shield, Zap } from "lucide-react";
 import { HistoricalDraw, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface NGRMomentumIndicatorProps {
   historicalDraws: HistoricalDraw[];
@@ -18,6 +19,8 @@ export default function NGRMomentumIndicator({
   historicalDraws,
   currentWeekNGR,
 }: NGRMomentumIndicatorProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  
   // Calculate volatility and stability metrics
   const volatilityData = useMemo(() => {
     const draws = historicalDraws.filter(d => d.ngrUSD > 0);
@@ -127,12 +130,15 @@ export default function NGRMomentumIndicator({
 
   if (!volatilityData) {
     return (
-      <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
-            <Activity className="w-4 h-4 text-terminal-accent" />
+      <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+              <Activity className="w-4 h-4 text-terminal-accent" />
+            </div>
+            <h3 className="text-sm font-medium text-terminal-text">NGR Volatility</h3>
           </div>
-          <h3 className="text-sm font-medium text-terminal-text">NGR Volatility</h3>
+          <ScreenshotButton targetRef={panelRef} filename="shfl-ngr-volatility" />
         </div>
         <p className="text-terminal-textMuted text-sm">Need more data to analyze volatility</p>
       </div>
@@ -188,7 +194,7 @@ export default function NGRMomentumIndicator({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
         <div className="flex items-center justify-between">
@@ -223,19 +229,22 @@ export default function NGRMomentumIndicator({
             </div>
           </div>
           
-          {/* Volatility Badge */}
-          <div className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
-            volatilityData.volatilityLevel === "low" 
-              ? "bg-terminal-positive/20 text-terminal-positive"
-              : volatilityData.volatilityLevel === "extreme"
-              ? "bg-terminal-negative/20 text-terminal-negative"
-              : volatilityData.volatilityLevel === "high"
-              ? "bg-orange-500/20 text-orange-400"
-              : "bg-yellow-500/20 text-yellow-400"
-          )}>
-            {getVolatilityIcon(volatilityData.volatilityLevel)}
-            <span className="hidden sm:inline">{getVolatilityLabel(volatilityData.volatilityLevel)}</span>
+          {/* Volatility Badge and Screenshot */}
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
+              volatilityData.volatilityLevel === "low" 
+                ? "bg-terminal-positive/20 text-terminal-positive"
+                : volatilityData.volatilityLevel === "extreme"
+                ? "bg-terminal-negative/20 text-terminal-negative"
+                : volatilityData.volatilityLevel === "high"
+                ? "bg-orange-500/20 text-orange-400"
+                : "bg-yellow-500/20 text-yellow-400"
+            )}>
+              {getVolatilityIcon(volatilityData.volatilityLevel)}
+              <span className="hidden sm:inline">{getVolatilityLabel(volatilityData.volatilityLevel)}</span>
+            </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-ngr-volatility" />
           </div>
         </div>
       </div>

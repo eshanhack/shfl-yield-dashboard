@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Crosshair, Trophy, Target, Sparkles, Dice1, TrendingUp, Zap, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatNumber, TOTAL_LOTTERY_COMBINATIONS } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface JackpotHunterPanelProps {
   currentJackpot: number;
@@ -21,6 +22,7 @@ export default function JackpotHunterPanel({
   historicalDraws,
 }: JackpotHunterPanelProps) {
   const [stakedAmount, setStakedAmount] = useState<number>(1000);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Load saved staked amount from localStorage
   useEffect(() => {
@@ -138,7 +140,7 @@ export default function JackpotHunterPanel({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
         <div className="flex items-center justify-between">
@@ -163,12 +165,15 @@ export default function JackpotHunterPanel({
             </div>
           </div>
           
-          {/* Current Jackpot Badge */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-yellow-500/20 border border-yellow-500/30">
-            <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-            <span className="text-xs font-bold text-yellow-400">
-              <CurrencyAmount amount={currentJackpot} />
-            </span>
+          {/* Current Jackpot Badge and Screenshot */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-yellow-500/20 border border-yellow-500/30">
+              <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="text-xs font-bold text-yellow-400">
+                <CurrencyAmount amount={currentJackpot} />
+              </span>
+            </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-jackpot-hunter" />
           </div>
         </div>
       </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Scale, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
 import InfoTooltip from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 type ViewMode = "revenue" | "earnings";
 
@@ -74,6 +75,7 @@ export default function TokenValuationTable({ prefetchedMarketCaps, prefetchedRe
   const [tokens, setTokens] = useState<TokenWithCalculations[]>(() => getFallbackTokens("revenue"));
   const [dataSource, setDataSource] = useState<"live" | "demo">("live");
   const [hasProcessedPrefetch, setHasProcessedPrefetch] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const processData = useCallback((mcJson: any, revJson: any, mode: ViewMode) => {
     const marketCaps = mcJson?.data || {};
@@ -186,7 +188,7 @@ export default function TokenValuationTable({ prefetchedMarketCaps, prefetchedRe
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header - Stacked on mobile */}
       <div className="p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -218,30 +220,33 @@ export default function TokenValuationTable({ prefetchedMarketCaps, prefetchedRe
             </div>
           </div>
           
-          {/* View Mode Tabs - Full width on mobile */}
-          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:w-full">
-            <button
-              onClick={() => setViewMode("revenue")}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
-                viewMode === "revenue"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-terminal-textMuted hover:text-terminal-text"
-              )}
-            >
-              Revenue (P/S)
-            </button>
-            <button
-              onClick={() => setViewMode("earnings")}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
-                viewMode === "earnings"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-terminal-textMuted hover:text-terminal-text"
-              )}
-            >
-              Earnings (P/E)
-            </button>
+          {/* View Mode Tabs and Screenshot */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:flex-1">
+              <button
+                onClick={() => setViewMode("revenue")}
+                className={cn(
+                  "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
+                  viewMode === "revenue"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-terminal-textMuted hover:text-terminal-text"
+                )}
+              >
+                Revenue (P/S)
+              </button>
+              <button
+                onClick={() => setViewMode("earnings")}
+                className={cn(
+                  "px-3 py-1.5 text-[10px] font-medium rounded-md transition-all max-lg:flex-1",
+                  viewMode === "earnings"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "text-terminal-textMuted hover:text-terminal-text"
+                )}
+              >
+                Earnings (P/E)
+              </button>
+            </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-token-valuation" />
           </div>
         </div>
       </div>

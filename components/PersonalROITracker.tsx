@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { CircleDollarSign, TrendingUp, TrendingDown, Calendar, Coins, ChevronDown, ArrowRight, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface PersonalROITrackerProps {
   historicalDraws: HistoricalDraw[];
@@ -19,6 +20,7 @@ export default function PersonalROITracker({
   const [stakedAmount, setStakedAmount] = useState<number>(1000);
   const [startDrawNumber, setStartDrawNumber] = useState<number | null>(null);
   const [entryPrice, setEntryPrice] = useState<number | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Load saved staked amount and entry price from localStorage
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function PersonalROITracker({
   const availableDraws = historicalDraws.slice(0, 52);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -178,6 +180,7 @@ export default function PersonalROITracker({
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-terminal-textMuted pointer-events-none" />
             </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-roi-tracker" />
           </div>
         </div>
       </div>

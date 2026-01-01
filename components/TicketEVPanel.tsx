@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { 
   Ticket, 
   Zap, 
@@ -21,6 +21,7 @@ import {
 } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface TicketEVPanelProps {
   totalPool: number;
@@ -41,6 +42,7 @@ export default function TicketEVPanel({
 }: TicketEVPanelProps) {
   // "upcoming" means use the current/upcoming draw props, otherwise use historical draw number
   const [selectedDraw, setSelectedDraw] = useState<"upcoming" | number>("upcoming");
+  const panelRef = useRef<HTMLDivElement>(null);
   
   // Get the draw data based on selection
   const drawData = useMemo(() => {
@@ -91,7 +93,7 @@ export default function TicketEVPanel({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
       {/* Header - Stacked on mobile for better fit */}
       <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6 mb-4">
         <div className="flex items-center gap-2 lg:flex-shrink-0">
@@ -111,21 +113,24 @@ export default function TicketEVPanel({
           </div>
         </div>
         
-        {/* Draw Selector Dropdown - Full width on mobile */}
-        <div className="relative max-lg:w-full">
-          <select
-            value={selectedDraw}
-            onChange={(e) => setSelectedDraw(e.target.value === "upcoming" ? "upcoming" : parseInt(e.target.value))}
-            className="appearance-none w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 py-1.5 pr-8 text-[10px] max-lg:text-xs lg:text-xs text-terminal-text focus:outline-none focus:border-terminal-accent cursor-pointer"
-          >
-            <option value="upcoming">Draw #{currentDrawNumber} (Upcoming)</option>
-            {historicalDraws.slice(0, 20).map((draw) => (
-              <option key={draw.drawNumber} value={draw.drawNumber}>
-                Draw #{draw.drawNumber} - {new Date(draw.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-terminal-textMuted pointer-events-none" />
+        {/* Draw Selector Dropdown and Screenshot Button */}
+        <div className="flex items-center gap-2 max-lg:w-full">
+          <div className="relative flex-1 lg:flex-initial">
+            <select
+              value={selectedDraw}
+              onChange={(e) => setSelectedDraw(e.target.value === "upcoming" ? "upcoming" : parseInt(e.target.value))}
+              className="appearance-none w-full bg-terminal-dark border border-terminal-border rounded-lg px-3 py-1.5 pr-8 text-[10px] max-lg:text-xs lg:text-xs text-terminal-text focus:outline-none focus:border-terminal-accent cursor-pointer"
+            >
+              <option value="upcoming">Draw #{currentDrawNumber} (Upcoming)</option>
+              {historicalDraws.slice(0, 20).map((draw) => (
+                <option key={draw.drawNumber} value={draw.drawNumber}>
+                  Draw #{draw.drawNumber} - {new Date(draw.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-terminal-textMuted pointer-events-none" />
+          </div>
+          <ScreenshotButton targetRef={panelRef} filename="shfl-ticket-ev" />
         </div>
       </div>
 

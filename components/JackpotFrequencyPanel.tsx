@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Trophy, TrendingUp, Calendar, Target, Clock, Sparkles } from "lucide-react";
 import { HistoricalDraw, TOTAL_LOTTERY_COMBINATIONS, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface JackpotFrequencyPanelProps {
   historicalDraws: HistoricalDraw[];
@@ -28,6 +29,8 @@ export default function JackpotFrequencyPanel({
   currentTickets,
   currentJackpot,
 }: JackpotFrequencyPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  
   // Find all jackpot wins from historical data
   const jackpotWins = useMemo(() => {
     return historicalDraws
@@ -147,21 +150,24 @@ export default function JackpotFrequencyPanel({
   const currentDrawProbability = 1 - Math.pow(1 - JACKPOT_PROBABILITY, currentTickets);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-yellow-500/10 border border-yellow-500/20">
-            <Trophy className="w-4 h-4 text-yellow-400" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded bg-yellow-500/10 border border-yellow-500/20">
+              <Trophy className="w-4 h-4 text-yellow-400" />
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
+                Jackpot Frequency
+              </h3>
+              <p className="text-[10px] sm:text-xs text-terminal-textMuted">
+                Historical patterns & probability predictions
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xs sm:text-sm font-medium text-terminal-text">
-              Jackpot Frequency
-            </h3>
-            <p className="text-[10px] sm:text-xs text-terminal-textMuted">
-              Historical patterns & probability predictions
-            </p>
-          </div>
+          <ScreenshotButton targetRef={panelRef} filename="shfl-jackpot-frequency" />
         </div>
       </div>
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Hourglass, TrendingUp, Calendar, Target, ChevronDown, Settings2 } from "lucide-react";
 import { HistoricalDraw, formatUSD, formatNumber } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface BreakEvenTimerProps {
   historicalDraws: HistoricalDraw[];
@@ -21,6 +22,7 @@ export default function BreakEvenTimer({
   const [stakedAmount, setStakedAmount] = useState<number>(1000);
   const [entryPrice, setEntryPrice] = useState<number | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Load saved staked amount and entry price from localStorage
   useEffect(() => {
@@ -154,7 +156,7 @@ export default function BreakEvenTimer({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full flex flex-col">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -179,7 +181,7 @@ export default function BreakEvenTimer({
             </div>
           </div>
 
-          {/* Entry Price Input */}
+          {/* Entry Price Input and Screenshot */}
           <div className="flex items-center gap-2 max-lg:w-full">
             <span className="text-[10px] text-terminal-textMuted">Entry:</span>
             <input
@@ -201,6 +203,7 @@ export default function BreakEvenTimer({
               placeholder={currentPrice.toFixed(4)}
               className="w-20 lg:w-24 bg-terminal-dark border border-terminal-border rounded-lg px-2 py-1.5 text-xs text-terminal-text focus:outline-none focus:border-terminal-accent"
             />
+            <ScreenshotButton targetRef={panelRef} filename="shfl-breakeven" />
           </div>
         </div>
       </div>

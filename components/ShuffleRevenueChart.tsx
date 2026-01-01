@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { BarChart3, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { HistoricalDraw, formatNumber } from "@/lib/calculations";
 import CurrencyAmount from "./CurrencyAmount";
 import { cn } from "@/lib/utils";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface ShuffleRevenueChartProps {
   historicalDraws: HistoricalDraw[];
@@ -23,6 +24,8 @@ interface ChartDataPoint {
 export default function ShuffleRevenueChart({
   historicalDraws,
 }: ShuffleRevenueChartProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  
   // Transform historical draws into chart data
   const chartData = useMemo(() => {
     return historicalDraws
@@ -99,7 +102,7 @@ export default function ShuffleRevenueChart({
   };
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow">
       {/* Header - Mobile optimized */}
       <div className="p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -119,36 +122,39 @@ export default function ShuffleRevenueChart({
             </div>
           </div>
           
-          {/* Change Metrics - Stacked vertically on mobile */}
-          <div className="flex max-lg:flex-col max-lg:gap-1 lg:flex-row lg:items-center lg:gap-4">
-            <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
-              <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">WoW</div>
-              <div className={cn(
-                "flex items-center gap-1 text-xs font-bold",
-                changeMetrics.wow >= 0 ? "text-terminal-positive" : "text-terminal-negative"
-              )}>
-                {changeMetrics.wow >= 0 ? (
-                  <TrendingUp className="w-3 h-3" />
-                ) : (
-                  <TrendingDown className="w-3 h-3" />
-                )}
-                {changeMetrics.wow >= 0 ? "+" : ""}{changeMetrics.wow.toFixed(1)}%
+          {/* Change Metrics and Screenshot */}
+          <div className="flex items-center gap-3">
+            <div className="flex max-lg:flex-col max-lg:gap-1 lg:flex-row lg:items-center lg:gap-4">
+              <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
+                <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">WoW</div>
+                <div className={cn(
+                  "flex items-center gap-1 text-xs font-bold",
+                  changeMetrics.wow >= 0 ? "text-terminal-positive" : "text-terminal-negative"
+                )}>
+                  {changeMetrics.wow >= 0 ? (
+                    <TrendingUp className="w-3 h-3" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3" />
+                  )}
+                  {changeMetrics.wow >= 0 ? "+" : ""}{changeMetrics.wow.toFixed(1)}%
+                </div>
+              </div>
+              <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
+                <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">MoM</div>
+                <div className={cn(
+                  "flex items-center gap-1 text-xs font-bold",
+                  changeMetrics.mom >= 0 ? "text-terminal-positive" : "text-terminal-negative"
+                )}>
+                  {changeMetrics.mom >= 0 ? (
+                    <TrendingUp className="w-3 h-3" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3" />
+                  )}
+                  {changeMetrics.mom >= 0 ? "+" : ""}{changeMetrics.mom.toFixed(1)}%
+                </div>
               </div>
             </div>
-            <div className="flex items-center max-lg:justify-between lg:flex-col lg:text-right gap-2 lg:gap-0">
-              <div className="text-[10px] text-terminal-textMuted lg:mb-0.5">MoM</div>
-              <div className={cn(
-                "flex items-center gap-1 text-xs font-bold",
-                changeMetrics.mom >= 0 ? "text-terminal-positive" : "text-terminal-negative"
-              )}>
-                {changeMetrics.mom >= 0 ? (
-                  <TrendingUp className="w-3 h-3" />
-                ) : (
-                  <TrendingDown className="w-3 h-3" />
-                )}
-                {changeMetrics.mom >= 0 ? "+" : ""}{changeMetrics.mom.toFixed(1)}%
-              </div>
-            </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-revenue-history" />
           </div>
         </div>
       </div>

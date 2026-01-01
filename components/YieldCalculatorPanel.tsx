@@ -21,6 +21,7 @@ import {
 } from "@/lib/calculations";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface UpcomingDrawData {
   drawNumber: number;
@@ -61,6 +62,7 @@ export default function YieldCalculatorPanel({
   const [inputMode, setInputMode] = useState<InputMode>("shfl");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Parse the input value to number and calculate SHFL amount based on mode
   const rawInputValue = parseFloat(inputValue) || 0;
@@ -222,7 +224,7 @@ export default function YieldCalculatorPanel({
   }, [shflAmount, shflPrice, historicalDraws, prizeSplit]);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-5">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow mb-4 sm:mb-5">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-terminal-border">
         <div className="flex items-center justify-between">
@@ -242,6 +244,7 @@ export default function YieldCalculatorPanel({
               </p>
             </div>
           </div>
+          <ScreenshotButton targetRef={panelRef} filename="shfl-yield-calculator" />
         </div>
       </div>
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TrendingUp, TrendingDown, LineChart as LineChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/calculations";
+import ScreenshotButton from "./ScreenshotButton";
 
 type TimePeriod = "1d" | "7d" | "30d" | "365d";
 
@@ -50,6 +51,7 @@ export default function TokenReturnsChart({ prefetchedData }: TokenReturnsChartP
     new Set(TOKENS.map(t => t.symbol))
   );
   const [hasPrefetchedLoaded, setHasPrefetchedLoaded] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const periodDays: Record<TimePeriod, number> = {
     "1d": 1,
@@ -220,7 +222,7 @@ export default function TokenReturnsChart({ prefetchedData }: TokenReturnsChartP
   }, [returns]);
 
   return (
-    <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full">
+    <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow h-full">
       {/* Header - Stacked on mobile */}
       <div className="p-4 border-b border-terminal-border">
         <div className="flex flex-col max-lg:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -248,22 +250,25 @@ export default function TokenReturnsChart({ prefetchedData }: TokenReturnsChartP
             </div>
           </div>
           
-          {/* Time Period Selector - Full width on mobile, wrap buttons */}
-          <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:w-full max-lg:justify-center">
-            {(["1d", "7d", "30d", "365d"] as TimePeriod[]).map((period) => (
-              <button
-                key={period}
-                onClick={() => setTimePeriod(period)}
-                className={cn(
-                  "px-2.5 max-lg:px-3 max-lg:flex-1 py-1 text-[10px] font-medium rounded-md transition-all",
-                  timePeriod === period
-                    ? "bg-terminal-accent/20 text-terminal-accent"
-                    : "text-terminal-textMuted hover:text-terminal-text"
-                )}
-              >
-                {periodLabels[period]}
-              </button>
-            ))}
+          {/* Time Period Selector and Screenshot */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-terminal-dark rounded-lg p-0.5 max-lg:flex-1 max-lg:justify-center">
+              {(["1d", "7d", "30d", "365d"] as TimePeriod[]).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setTimePeriod(period)}
+                  className={cn(
+                    "px-2.5 max-lg:px-3 max-lg:flex-1 py-1 text-[10px] font-medium rounded-md transition-all",
+                    timePeriod === period
+                      ? "bg-terminal-accent/20 text-terminal-accent"
+                      : "text-terminal-textMuted hover:text-terminal-text"
+                  )}
+                >
+                  {periodLabels[period]}
+                </button>
+              ))}
+            </div>
+            <ScreenshotButton targetRef={panelRef} filename="shfl-token-returns" />
           </div>
         </div>
       </div>

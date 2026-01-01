@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { HistoricalDraw, formatUSD, formatNumber, calculateYieldPer1KSHFL } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import { Calendar, DollarSign, Ticket, TrendingUp, ExternalLink, Trophy, Users, Sparkles, ChevronLeft, ChevronRight, Clock, Inbox, History } from "lucide-react";
@@ -8,6 +8,7 @@ import DrawDetailsModal from "./DrawDetailsModal";
 import CurrencyAmount from "./CurrencyAmount";
 import InfoTooltip, { TOOLTIPS } from "./InfoTooltip";
 import EmptyState from "./EmptyState";
+import ScreenshotButton from "./ScreenshotButton";
 
 interface UpcomingDraw {
   drawNumber: number;
@@ -30,6 +31,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
   const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [stakedAmount, setStakedAmount] = useState<number>(1000); // Default 1K SHFL
+  const panelRef = useRef<HTMLDivElement>(null);
   
   // Load saved staked amount from localStorage
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
 
   return (
     <>
-      <div className="bg-terminal-card border border-terminal-border rounded-lg card-glow overflow-hidden">
+      <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg card-glow overflow-hidden">
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-terminal-border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
@@ -128,7 +130,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-6">
               {jackpotWonCount > 0 && (
                 <div className="text-left sm:text-right">
                   <div className="text-[10px] sm:text-xs text-yellow-500 flex items-center gap-1">
@@ -148,6 +150,7 @@ export default function LotteryHistoryTable({ draws, upcomingDraw }: LotteryHist
                   <CurrencyAmount amount={avgYield} />
                 </div>
               </div>
+              <ScreenshotButton targetRef={panelRef} filename="shfl-lottery-history" />
             </div>
           </div>
         </div>
