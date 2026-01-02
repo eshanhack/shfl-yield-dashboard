@@ -9,10 +9,12 @@
  * 3. RACE CONDITION SAFE: Uses AbortController + request versioning
  * 4. NO FALLBACKS: Returns null on ANY error - never fake data
  * 5. LOGGING: Full trace at every step for debugging
+ * 6. UNIFIED LOGIC: Uses the SAME calculation as YieldChart
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { calculateGlobalAPY } from "@/lib/calculations";
+import { calculateGlobalAPY, HistoricalDraw } from "@/lib/calculations";
+import { fetchLotteryHistory, fetchLotteryStats, fetchSHFLPrice, fetchNGRStats } from "@/lib/api";
 
 // ==================== TYPES ====================
 export interface APYData {
@@ -108,32 +110,19 @@ export function useAPYData(): UseAPYDataResult {
     setError(null);
     
     try {
-      // Fetch all required data in parallel with NO CACHE
-      const timestamp = Date.now();
+      logFetch(`Fetching using lib/api.ts functions (SAME source as YieldChart)...`);
       
-      logFetch(`Fetching from APIs with cache-busting timestamp: ${timestamp}`);
-      
-      const [ngrStatsRes, lotteryStatsRes, priceRes, lotteryHistoryRes] = await Promise.all([
-        fetch(`/api/lottery-history?t=${timestamp}&stats_only=true`, {
-          signal: abortController.signal,
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-        }),
-        fetch(`/api/lottery-stats?t=${timestamp}`, {
-          signal: abortController.signal,
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-        }),
-        fetch(`/api/shfl-price?t=${timestamp}`, {
-          signal: abortController.signal,
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-        }).catch(() => null), // Price has fallback to CoinGecko below
-        fetch(`/api/lottery-history?t=${timestamp}`, {
-          signal: abortController.signal,
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-        }),
+      // =====================================================
+      // CRITICAL: Use the EXACT SAME data fetching functions
+      // as the Dashboard/YieldChart to ensure consistency.
+      // This uses fetchLotteryHistory() which transforms raw
+      // API data and includes historical prices!
+      // =====================================================
+      const [priceData, ngrStatsData, lotteryStatsData, historicalDraws] = await Promise.all([
+        fetchSHFLPrice(),
+        fetchNGRStats(),
+        fetchLotteryStats(),
+        fetchLotteryHistory(), // <-- THIS includes shflPriceAtDraw from historical lookup!
       ]);
       
       // === CHECK IF REQUEST IS STILL CURRENT ===
@@ -147,60 +136,19 @@ export function useAPYData(): UseAPYDataResult {
         return;
       }
       
-      // === PARSE RESPONSES - NO FALLBACKS ===
-      logFetch(`Parsing responses...`);
-      
-      // NGR Stats
-      if (!ngrStatsRes.ok) {
-        throw new Error(`NGR Stats API returned ${ngrStatsRes.status}`);
-      }
-      const ngrStatsData = await ngrStatsRes.json();
-      logFetch(`NGR Stats raw:`, ngrStatsData.stats);
-      
-      // Lottery Stats
-      if (!lotteryStatsRes.ok) {
-        throw new Error(`Lottery Stats API returned ${lotteryStatsRes.status}`);
-      }
-      const lotteryStatsData = await lotteryStatsRes.json();
-      logFetch(`Lottery Stats raw:`, lotteryStatsData.stats);
-      
-      // Price - try internal API first, then fallback to CoinGecko
-      let priceUSD: number | null = null;
-      if (priceRes?.ok) {
-        const priceData = await priceRes.json();
-        priceUSD = priceData?.price?.usd ?? null;
-      }
-      
-      // Fallback to CoinGecko if internal API failed
-      if (!isValidNumber(priceUSD)) {
-        logFetch(`Trying CoinGecko fallback for price...`);
-        try {
-          const cgRes = await fetch(
-            "https://api.coingecko.com/api/v3/simple/price?ids=shuffle-2&vs_currencies=usd",
-            { signal: abortController.signal }
-          );
-          if (cgRes.ok) {
-            const cgData = await cgRes.json();
-            priceUSD = cgData?.["shuffle-2"]?.usd ?? null;
-          }
-        } catch {
-          // Ignore CoinGecko errors
-        }
-      }
-      logFetch(`Price USD:`, priceUSD);
-      
-      // Lottery History (for historical APY calculations)
-      if (!lotteryHistoryRes.ok) {
-        throw new Error(`Lottery History API returned ${lotteryHistoryRes.status}`);
-      }
-      const lotteryHistoryData = await lotteryHistoryRes.json();
-      const draws = lotteryHistoryData.draws || [];
-      logFetch(`Lottery History: ${draws.length} draws`);
-      
       // === VALIDATE ALL REQUIRED DATA EXISTS ===
-      const current4WeekNGR = ngrStatsData.stats?.avgWeeklyNGR_4week;
-      const prior4WeekNGR = ngrStatsData.stats?.avgWeeklyNGR_prior4week;
-      const totalTickets = lotteryStatsData.stats?.totalTickets;
+      const current4WeekNGR = ngrStatsData.current4WeekAvg;
+      const prior4WeekNGR = ngrStatsData.prior4WeekAvg;
+      const totalTickets = lotteryStatsData.totalTickets;
+      const priceUSD = priceData.usd;
+      
+      logFetch(`Data received:`, {
+        current4WeekNGR,
+        prior4WeekNGR,
+        totalTickets,
+        priceUSD,
+        historicalDrawsCount: historicalDraws.length,
+      });
       
       logValidation(`current4WeekNGR: ${current4WeekNGR}`, isValidNumber(current4WeekNGR));
       logValidation(`prior4WeekNGR: ${prior4WeekNGR}`, isValidNumber(prior4WeekNGR));
@@ -218,10 +166,20 @@ export function useAPYData(): UseAPYDataResult {
         throw new Error("Invalid price");
       }
       
-      // === CALCULATE APY VALUES ===
-      logFetch(`Calculating APY values...`);
+      // === FILTER TO COMPLETED DRAWS ONLY ===
+      const now = new Date();
+      const completedDraws = historicalDraws.filter((draw: HistoricalDraw) => {
+        const drawDate = new Date(draw.date);
+        return drawDate < now;
+      });
       
-      const currentSplit = draws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
+      logFetch(`Completed draws: ${completedDraws.length}`);
+      
+      // === CALCULATE APY VALUES ===
+      // Using the EXACT SAME logic as YieldChart
+      logFetch(`Calculating APY values (using YieldChart logic)...`);
+      
+      const currentSplit = completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
       
       // Current 4-week average APY
       const currentAPY = calculateGlobalAPY(
@@ -237,14 +195,25 @@ export function useAPYData(): UseAPYDataResult {
       }
       
       // Last week APY (from most recent completed draw)
-      const completedDraws = draws.filter((d: any) => new Date(d.date) < new Date());
+      // USING THE SAME FIELDS AS YIELDCHART:
+      // - adjustedNgrUSD (NOT adjustedNGR - that's raw API)
+      // - shflPriceAtDraw (historical price from lib/api.ts lookup)
       let lastWeekAPY = currentAPY;
       
       if (completedDraws.length > 0) {
         const lastDraw = completedDraws[0];
-        const lastDrawNGR = lastDraw.adjustedNGR ?? lastDraw.totalNGRContribution ?? lastDraw.ngrUSD;
+        // USE adjustedNgrUSD (same as YieldChart line 33)
+        const lastDrawNGR = lastDraw.adjustedNgrUSD ?? lastDraw.ngrUSD;
         const lastDrawTickets = lastDraw.totalTickets || totalTickets;
+        // USE shflPriceAtDraw (same as YieldChart line 36)
         const lastDrawPrice = lastDraw.shflPriceAtDraw || priceUSD;
+        
+        logFetch(`Last draw data:`, {
+          drawNumber: lastDraw.drawNumber,
+          adjustedNgrUSD: lastDrawNGR,
+          shflPriceAtDraw: lastDrawPrice,
+          totalTickets: lastDrawTickets,
+        });
         
         if (isValidNumber(lastDrawNGR) && isValidNumber(lastDrawTickets) && isValidNumber(lastDrawPrice)) {
           lastWeekAPY = calculateGlobalAPY(
@@ -254,7 +223,7 @@ export function useAPYData(): UseAPYDataResult {
             lastDraw.prizepoolSplit || currentSplit
           );
           if (!isAPYInBounds(lastWeekAPY)) {
-            lastWeekAPY = currentAPY; // Fallback to current if invalid
+            lastWeekAPY = currentAPY;
           }
         }
       }
@@ -281,20 +250,34 @@ export function useAPYData(): UseAPYDataResult {
         : 0;
       logState(`APY Change:`, apyChange);
       
-      // Highest APY
-      let highestAPY = { apy: currentAPY, weeksAgo: 0, drawNumber: 0 };
-      completedDraws.forEach((draw: any, index: number) => {
-        const drawNGR = draw.adjustedNGR ?? draw.totalNGRContribution ?? draw.ngrUSD;
+      // =====================================================
+      // HIGHEST APY - Using EXACT SAME logic as YieldChart
+      // YieldChart line 33: draw.adjustedNgrUSD ?? draw.ngrUSD
+      // YieldChart line 36: draw.shflPriceAtDraw || currentPrice
+      // =====================================================
+      let highestAPY = { apy: 0, weeksAgo: 0, drawNumber: 0 };
+      
+      completedDraws.forEach((draw: HistoricalDraw, index: number) => {
+        // EXACT SAME LOGIC AS YIELDCHART:
+        const drawNGR = draw.adjustedNgrUSD ?? draw.ngrUSD;
         const drawTickets = draw.totalTickets || totalTickets;
         const drawPrice = draw.shflPriceAtDraw || priceUSD;
         
-        if (isValidNumber(drawNGR) && isValidNumber(drawTickets) && isValidNumber(drawPrice)) {
-          const drawAPY = calculateGlobalAPY(drawNGR, drawTickets, drawPrice, draw.prizepoolSplit || currentSplit);
+        if (isValidNumber(drawNGR) && isValidNumber(drawTickets) && drawTickets > 0 && isValidNumber(drawPrice) && drawPrice > 0) {
+          const drawAPY = calculateGlobalAPY(
+            drawNGR,
+            drawTickets,
+            drawPrice,
+            draw.prizepoolSplit || currentSplit
+          );
+          
           if (isAPYInBounds(drawAPY) && drawAPY > highestAPY.apy) {
             highestAPY = { apy: drawAPY, weeksAgo: index, drawNumber: draw.drawNumber };
+            logFetch(`New highest APY found: Draw #${draw.drawNumber} = ${drawAPY.toFixed(2)}%`);
           }
         }
       });
+      
       logState(`Highest APY:`, highestAPY);
       
       // === FINAL CHECK - STILL CURRENT REQUEST? ===
@@ -321,6 +304,8 @@ export function useAPYData(): UseAPYDataResult {
       logState(`✅ APY Data validated and ready:`, {
         currentAPY: apyData.currentAPY.toFixed(2) + "%",
         lastWeekAPY: apyData.lastWeekAPY.toFixed(2) + "%",
+        highestAPY: apyData.highestAPY.apy.toFixed(2) + "%",
+        highestAPYDraw: apyData.highestAPY.drawNumber,
         fetchDuration: Date.now() - fetchStartTime + "ms",
       });
       
@@ -357,7 +342,7 @@ export function useAPYData(): UseAPYDataResult {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [data]);
 
   // Initial fetch and setup
   useEffect(() => {
