@@ -487,19 +487,21 @@ export default function YieldCalculatorPanel({
                     </tr>
                   )}
                   
-                  {/* Historical Draws */}
-                  {historicalYields.map(({ draw, weeklyUSD, weeklyPercent, hadJackpotReplenishment, jackpotReplenishment, adjustedNGR, isJackpotWon }, index) => (
+                  {/* Historical Draws - filter out the upcoming draw to avoid duplicates */}
+                  {historicalYields
+                    .filter(({ draw }) => !upcomingYield || draw.drawNumber !== upcomingYield.draw.drawNumber)
+                    .map(({ draw, weeklyUSD, weeklyPercent, hadJackpotReplenishment, jackpotReplenishment, adjustedNGR, isJackpotWon }, index) => (
                     <tr 
                       key={draw.drawNumber}
                       className={`border-b border-terminal-border/50 ${
-                        index === 0 ? "bg-terminal-accent/5" : ""
+                        index === 0 && !upcomingYield ? "bg-terminal-accent/5" : ""
                       } ${isJackpotWon ? "bg-yellow-500/10" : hadJackpotReplenishment ? "bg-orange-500/5" : ""}`}
                     >
                       <td className="px-2 sm:px-4 lg:px-5 py-2 lg:py-3">
                         <span className="text-xs sm:text-sm font-medium text-terminal-text">
                           #{draw.drawNumber}
                         </span>
-                        {index === 0 ? (
+                        {index === 0 && !upcomingYield ? (
                           <span className="ml-1.5 sm:ml-2 text-[8px] sm:text-[9px] lg:text-[10px] px-1 sm:px-1.5 py-0.5 rounded bg-terminal-accent/20 text-terminal-accent uppercase">
                             Latest
                           </span>
