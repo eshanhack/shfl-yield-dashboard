@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Percent,
   DollarSign,
@@ -64,12 +64,51 @@ import {
   HistoricalDraw,
 } from "@/lib/calculations";
 
+// ==================== APY DATA VALIDATION ====================
+// Validates that APY calculations are based on complete, consistent data
+interface ValidatedAPYData {
+  currentAPY: number;
+  lastWeekAPY: number;
+  prior4WeekAPY: number;
+  apyChange: number;
+  highestAPYData: { apy: number; weeksAgo: number; drawNumber: number };
+  isValid: boolean;
+  timestamp: number; // For debugging/tracking
+}
+
+const EMPTY_APY_DATA: ValidatedAPYData = {
+  currentAPY: 0,
+  lastWeekAPY: 0,
+  prior4WeekAPY: 0,
+  apyChange: 0,
+  highestAPYData: { apy: 0, weeksAgo: 0, drawNumber: 0 },
+  isValid: false,
+  timestamp: 0,
+};
+
+// APY sanity bounds - anything outside this is likely invalid
+const MIN_VALID_APY = 0;
+const MAX_VALID_APY = 500; // 500% APY is extremely high but theoretically possible
+
+function isAPYWithinBounds(apy: number): boolean {
+  return !isNaN(apy) && isFinite(apy) && apy >= MIN_VALID_APY && apy <= MAX_VALID_APY;
+}
+
+// ==================== END APY VALIDATION ====================
+
 export default function Dashboard() {
   // Toast hook
   const { addToast } = useToast();
   
   // Track if initial data has been loaded (prevents showing stale/default values)
   const [hasInitialData, setHasInitialData] = useState(false);
+  
+  // Request versioning - prevents stale responses from overwriting fresh data
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+  
+  // Validated APY data - only updates when data passes all validation checks
+  const [validatedAPY, setValidatedAPY] = useState<ValidatedAPYData>(EMPTY_APY_DATA);
   
   // State - use null/empty initial values to prevent showing incorrect data
   const [price, setPrice] = useState<SHFLPrice | null>(null);
@@ -106,13 +145,154 @@ export default function Dashboard() {
     }
   };
 
+  // ==================== APY VALIDATION & CALCULATION ====================
+  // Validates and calculates APY data atomically to prevent glitches
+  const validateAndCalculateAPY = useCallback((
+    priceData: SHFLPrice | null,
+    ngrStatsData: NGRStats | null,
+    statsData: LotteryStats | null,
+    draws: HistoricalDraw[]
+  ): ValidatedAPYData => {
+    const timestamp = Date.now();
+    
+    // Filter to only completed draws first
+    const now = new Date();
+    const completedDrawsLocal = draws.filter((draw) => {
+      const drawDate = new Date(draw.date);
+      return drawDate < now;
+    });
+    
+    // === VALIDATION CHECKS ===
+    // 1. All required data must exist
+    if (!priceData || !ngrStatsData || !statsData || completedDrawsLocal.length === 0) {
+      console.log("[APY Validation] Missing required data:", { 
+        hasPrice: !!priceData, 
+        hasNgrStats: !!ngrStatsData, 
+        hasStats: !!statsData, 
+        drawCount: completedDrawsLocal.length 
+      });
+      return { ...EMPTY_APY_DATA, timestamp };
+    }
+    
+    // 2. Price must be positive and reasonable
+    if (priceData.usd <= 0 || priceData.usd > 100) {
+      console.log("[APY Validation] Invalid price:", priceData.usd);
+      return { ...EMPTY_APY_DATA, timestamp };
+    }
+    
+    // 3. NGR stats must be positive and reasonable
+    if (ngrStatsData.current4WeekAvg < 0 || ngrStatsData.current4WeekAvg > 10_000_000) {
+      console.log("[APY Validation] Invalid NGR stats:", ngrStatsData.current4WeekAvg);
+      return { ...EMPTY_APY_DATA, timestamp };
+    }
+    
+    // 4. Total tickets must be positive
+    if (!statsData.totalTickets || statsData.totalTickets <= 0) {
+      console.log("[APY Validation] Invalid ticket count:", statsData.totalTickets);
+      return { ...EMPTY_APY_DATA, timestamp };
+    }
+    
+    // === CALCULATE APY VALUES ===
+    try {
+      // Current 4-week average APY
+      const currentSplit = completedDrawsLocal[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
+      const currentAPY = calculateGlobalAPY(
+        ngrStatsData.current4WeekAvg,
+        statsData.totalTickets,
+        priceData.usd,
+        currentSplit
+      );
+      
+      if (!isAPYWithinBounds(currentAPY)) {
+        console.log("[APY Validation] Current APY out of bounds:", currentAPY);
+        return { ...EMPTY_APY_DATA, timestamp };
+      }
+      
+      // Last week APY (from most recent completed draw)
+      const lastDraw = completedDrawsLocal[0];
+      const lastWeekNGR = lastDraw.adjustedNgrUSD ?? lastDraw.ngrUSD;
+      const lastWeekTickets = lastDraw.totalTickets || statsData.totalTickets;
+      const lastWeekPrice = lastDraw.shflPriceAtDraw || priceData.usd;
+      
+      const lastWeekAPY = calculateGlobalAPY(
+        lastWeekNGR,
+        lastWeekTickets,
+        lastWeekPrice,
+        lastDraw.prizepoolSplit || currentSplit
+      );
+      
+      if (!isAPYWithinBounds(lastWeekAPY)) {
+        console.log("[APY Validation] Last week APY out of bounds:", lastWeekAPY);
+        return { ...EMPTY_APY_DATA, timestamp };
+      }
+      
+      // Prior 4-week average APY (weeks 5-8)
+      let prior4WeekAPY = currentAPY; // Default to current if not enough data
+      if (completedDrawsLocal.length >= 5) {
+        const priorDraws = completedDrawsLocal.slice(4, 8);
+        if (priorDraws.length > 0) {
+          const totalAPY = priorDraws.reduce((sum, draw) => {
+            const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
+            const totalTickets = draw.totalTickets || statsData.totalTickets;
+            const priceAtDraw = draw.shflPriceAtDraw || priceData.usd;
+            const apy = calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit || currentSplit);
+            return sum + (isAPYWithinBounds(apy) ? apy : 0);
+          }, 0);
+          prior4WeekAPY = totalAPY / priorDraws.length;
+        }
+      }
+      
+      // APY change percentage
+      const apyChange = prior4WeekAPY > 0 
+        ? ((currentAPY - prior4WeekAPY) / prior4WeekAPY) * 100 
+        : 0;
+      
+      // Find highest APY draw
+      let highestAPYData = { apy: 0, weeksAgo: 0, drawNumber: 0 };
+      completedDrawsLocal.forEach((draw, index) => {
+        const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
+        const totalTickets = draw.totalTickets || statsData.totalTickets;
+        const priceAtDraw = draw.shflPriceAtDraw || priceData.usd;
+        const drawAPY = calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit || currentSplit);
+        
+        if (isAPYWithinBounds(drawAPY) && drawAPY > highestAPYData.apy) {
+          highestAPYData = { apy: drawAPY, weeksAgo: index, drawNumber: draw.drawNumber };
+        }
+      });
+      
+      // Final validation - all calculated values must be within bounds
+      if (!isAPYWithinBounds(currentAPY) || !isAPYWithinBounds(lastWeekAPY)) {
+        console.log("[APY Validation] Final values out of bounds");
+        return { ...EMPTY_APY_DATA, timestamp };
+      }
+      
+      return {
+        currentAPY,
+        lastWeekAPY,
+        prior4WeekAPY,
+        apyChange: isFinite(apyChange) ? apyChange : 0,
+        highestAPYData,
+        isValid: true,
+        timestamp,
+      };
+    } catch (error) {
+      console.error("[APY Validation] Calculation error:", error);
+      return { ...EMPTY_APY_DATA, timestamp };
+    }
+  }, []);
+  // ==================== END APY VALIDATION ====================
+
   // Fetch initial data (with loading states)
-  const loadData = async (showRefreshing = false) => {
+  const loadData = useCallback(async (showRefreshing = false) => {
+    // Increment request ID to track this specific request
+    const thisRequestId = ++requestIdRef.current;
+    
     if (showRefreshing) setIsRefreshing(true);
     else setIsLoading(true);
     
     // Set a maximum loading time to prevent infinite loading
     const maxLoadTimeout = setTimeout(() => {
+      if (!isMountedRef.current) return;
       setIsLoading(false);
       setIsRefreshing(false);
       setHasInitialData(true); // Show whatever data we have
@@ -147,7 +327,24 @@ export default function Dashboard() {
       ]);
       
       clearTimeout(maxLoadTimeout);
+      
+      // === RACE CONDITION PREVENTION ===
+      // Only update state if this is still the latest request
+      if (thisRequestId !== requestIdRef.current || !isMountedRef.current) {
+        console.log("[Data Load] Discarding stale response", { thisRequestId, currentId: requestIdRef.current });
+        return;
+      }
 
+      // === VALIDATE AND UPDATE APY FIRST ===
+      // This ensures APY is calculated from consistent data
+      const validatedAPYData = validateAndCalculateAPY(priceData, ngrStatsData, stats, draws);
+      
+      // Only update if validation passed
+      if (validatedAPYData.isValid) {
+        setValidatedAPY(validatedAPYData);
+      }
+      
+      // Update other state
       setPrice(priceData);
       setHistoricalDraws(draws);
       setLotteryStats(stats);
@@ -194,10 +391,13 @@ export default function Dashboard() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [addToast, validateAndCalculateAPY]);
 
   // Silent background refresh - no loading states, no interruption
-  const silentRefresh = async () => {
+  const silentRefresh = useCallback(async () => {
+    // Increment request ID to track this specific request
+    const thisRequestId = ++requestIdRef.current;
+    
     try {
       const scraperUrl = process.env.NEXT_PUBLIC_SCRAPER_URL || "https://shfl-revenue-scraper.onrender.com";
       
@@ -225,6 +425,21 @@ export default function Dashboard() {
         fetchWithTimeout(`/api/token-revenue`, 8000),
         fetchWithTimeout(`${scraperUrl}/api/tanzanite`, 5000),
       ]);
+      
+      // === RACE CONDITION PREVENTION ===
+      // Only update state if this is still the latest request
+      if (thisRequestId !== requestIdRef.current || !isMountedRef.current) {
+        console.log("[Silent Refresh] Discarding stale response", { thisRequestId, currentId: requestIdRef.current });
+        return;
+      }
+
+      // === VALIDATE AND UPDATE APY FIRST ===
+      const validatedAPYData = validateAndCalculateAPY(priceData, ngrStatsData, stats, draws);
+      
+      // Only update if validation passed
+      if (validatedAPYData.isValid) {
+        setValidatedAPY(validatedAPYData);
+      }
 
       // Update state quietly - React will batch these updates
       setPrice(priceData);
@@ -245,7 +460,7 @@ export default function Dashboard() {
     } catch {
       // Silently fail - don't interrupt user
     }
-  };
+  }, [validateAndCalculateAPY]);
 
   // Prefetch data for other tabs in the background
   const prefetchOtherTabs = async () => {
@@ -269,13 +484,21 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    // Mark component as mounted
+    isMountedRef.current = true;
+    
     loadData();
 
     // Refresh price every 30 seconds (silent, just price)
+    // Note: Price-only updates are safe - they don't affect historical APY calculations
+    // because historical APY uses shflPriceAtDraw, not current price
     const priceInterval = setInterval(async () => {
+      if (!isMountedRef.current) return;
       try {
         const priceData = await fetchSHFLPrice();
-        setPrice(priceData);
+        if (isMountedRef.current && priceData && priceData.usd > 0) {
+          setPrice(priceData);
+        }
       } catch {
         // Silently fail
       }
@@ -283,12 +506,15 @@ export default function Dashboard() {
 
     // Background refresh all data every 3 minutes (completely silent)
     const dataInterval = setInterval(() => {
-      silentRefresh();
+      if (isMountedRef.current) {
+        silentRefresh();
+      }
     }, 180000);
 
     // Refresh when user returns to tab after being away
     let lastActiveTime = Date.now();
     const handleVisibilityChange = () => {
+      if (!isMountedRef.current) return;
       if (document.visibilityState === "visible") {
         // Only refresh if away for more than 1 minute
         if (Date.now() - lastActiveTime > 60000) {
@@ -307,6 +533,7 @@ export default function Dashboard() {
     const maxDemoRetries = 3;
     
     const handleDemoDataFallback = () => {
+      if (!isMountedRef.current) return;
       // Only retry a limited number of times to avoid infinite loops
       if (demoRetryCount >= maxDemoRetries) return;
       
@@ -315,21 +542,25 @@ export default function Dashboard() {
       
       // Schedule a silent retry after 5 seconds
       demoRetryTimeout = setTimeout(() => {
-        demoRetryCount++;
-        silentRefresh();
+        if (isMountedRef.current) {
+          demoRetryCount++;
+          silentRefresh();
+        }
       }, 5000);
     };
     
     window.addEventListener(DEMO_DATA_FALLBACK_EVENT, handleDemoDataFallback);
 
     return () => {
+      // Mark component as unmounted to prevent stale updates
+      isMountedRef.current = false;
       clearInterval(priceInterval);
       clearInterval(dataInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener(DEMO_DATA_FALLBACK_EVENT, handleDemoDataFallback);
       if (demoRetryTimeout) clearTimeout(demoRetryTimeout);
     };
-  }, []);
+  }, [loadData, silentRefresh]);
 
   // Prefetch other tabs' data once initial data is loaded
   useEffect(() => {
@@ -347,19 +578,17 @@ export default function Dashboard() {
     });
   }, [historicalDraws]);
 
-  // Calculate current APY based on 4-week average NGR
-  const currentAPY = useMemo(() => {
-    if (!ngrStats || !lotteryStats || !price) return 0;
-    // Get current prize split from latest completed draw
-    const currentSplit = completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11";
-    
-    return calculateGlobalAPY(
-      ngrStats.current4WeekAvg,
-      lotteryStats.totalTickets,
-      price.usd,
-      currentSplit
-    );
-  }, [ngrStats, lotteryStats, price, completedDraws]);
+  // ==================== USE VALIDATED APY DATA ====================
+  // All APY values come from the validated state, which is only updated
+  // when data passes all consistency checks. This prevents glitches from
+  // race conditions or partial data states.
+  const currentAPY = validatedAPY.currentAPY;
+  const lastWeekAPY = validatedAPY.lastWeekAPY;
+  const prior4WeekAPY = validatedAPY.prior4WeekAPY;
+  const apyChange = validatedAPY.apyChange;
+  const highestAPYData = validatedAPY.highestAPYData;
+  const isAPYDataValid = validatedAPY.isValid;
+  // ==================== END VALIDATED APY DATA ====================
 
   // Calculate additional stats
   const weeklyPoolUSD = lotteryStats?.currentWeekPool || 0;
@@ -382,70 +611,6 @@ export default function Dashboard() {
     if (previousDrawTickets === 0) return 0;
     return ((currentTickets - previousDrawTickets) / previousDrawTickets) * 100;
   }, [lotteryStats, completedDraws]);
-
-  // Calculate last week's APY (from the most recent completed draw)
-  // Uses adjustedNGR and historical price for accuracy
-  const lastWeekAPY = useMemo(() => {
-    if (completedDraws.length === 0 || !lotteryStats || !price) return 0;
-    const lastDraw = completedDraws[0];
-    // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-    // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
-    const ngrForCalc = lastDraw.adjustedNgrUSD ?? lastDraw.ngrUSD;
-    const totalTickets = lastDraw.totalTickets || lotteryStats.totalTickets;
-    // Use historical price at draw time for accuracy
-    const priceAtDraw = lastDraw.shflPriceAtDraw || price.usd;
-    return calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, lastDraw.prizepoolSplit);
-  }, [completedDraws, lotteryStats, price]);
-
-  // Calculate prior 4-week average APY (weeks 5-8)
-  // Uses adjustedNGR and historical price for accuracy
-  const prior4WeekAPY = useMemo(() => {
-    if (completedDraws.length < 5 || !lotteryStats || !price) return currentAPY;
-    
-    const priorDraws = completedDraws.slice(4, 8); // Weeks 5-8
-    if (priorDraws.length === 0) return currentAPY;
-    
-    const totalAPY = priorDraws.reduce((sum, draw) => {
-      // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-      // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
-      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
-      const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
-      // Use historical price at draw time for accuracy
-      const priceAtDraw = draw.shflPriceAtDraw || price.usd;
-      return sum + calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit);
-    }, 0);
-    
-    return totalAPY / priorDraws.length;
-  }, [completedDraws, lotteryStats, price, currentAPY]);
-
-  // Calculate APY change: current 4-week avg vs prior 4-week avg
-  const apyChange = useMemo(() => {
-    if (prior4WeekAPY === 0 || currentAPY === 0) return 0;
-    return ((currentAPY - prior4WeekAPY) / prior4WeekAPY) * 100;
-  }, [currentAPY, prior4WeekAPY]);
-
-  // Find highest APY draw (using ADJUSTED NGR and HISTORICAL price for accuracy)
-  const highestAPYData = useMemo(() => {
-    if (completedDraws.length === 0 || !lotteryStats || !price) return { apy: 0, weeksAgo: 0, drawNumber: 0 };
-    
-    let highest = { apy: 0, weeksAgo: 0, drawNumber: 0 };
-    
-    completedDraws.forEach((draw, index) => {
-      // Use adjustedNgrUSD (excludes jackpot replenishment) or fall back to raw ngrUSD
-      // NOTE: ngrUSD already includes singlesAdded * 0.85, do NOT add it again!
-      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
-      const totalTickets = draw.totalTickets || lotteryStats.totalTickets;
-      // Use historical price at draw time, or current price as fallback
-      const priceAtDraw = draw.shflPriceAtDraw || price.usd;
-      const drawAPY = calculateGlobalAPY(ngrForCalc, totalTickets, priceAtDraw, draw.prizepoolSplit);
-      
-      if (drawAPY > highest.apy) {
-        highest = { apy: drawAPY, weeksAgo: index, drawNumber: draw.drawNumber };
-      }
-    });
-    
-    return highest;
-  }, [completedDraws, lotteryStats, price]);
 
   // Find highest prize pool
   const highestPrizePoolData = useMemo(() => {
@@ -710,7 +875,8 @@ export default function Dashboard() {
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
-                    {apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
+                    {/* Only show APY change badge if data is valid */}
+                    {isAPYDataValid && apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
                       <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm font-medium px-1.5 sm:px-2 lg:px-2.5 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
                         <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 ${apyChange < 0 ? "rotate-180" : ""}`} />
                         <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(1)}%</span>
@@ -718,28 +884,41 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    <span 
-                      className={cn(
-                        "yield-headline yield-headline-size tabular-nums",
-                        currentAPY > 30 
-                          ? "yield-headline-fire" 
-                          : currentAPY < 15 
-                          ? "yield-headline-ice" 
-                          : "yield-headline-neutral"
-                      )}
-                    >
-                      {formatPercent(currentAPY)}
-                    </span>
+                    {/* Show loading skeleton when APY data is not validated */}
+                    {!isAPYDataValid ? (
+                      <div className="h-8 sm:h-10 lg:h-12 w-24 sm:w-32 bg-terminal-border/50 rounded animate-pulse" />
+                    ) : (
+                      <span 
+                        className={cn(
+                          "yield-headline yield-headline-size tabular-nums",
+                          currentAPY > 30 
+                            ? "yield-headline-fire" 
+                            : currentAPY < 15 
+                            ? "yield-headline-ice" 
+                            : "yield-headline-neutral"
+                        )}
+                      >
+                        {formatPercent(currentAPY)}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
-                      <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
+                      {!isAPYDataValid ? (
+                        <div className="h-4 w-14 bg-terminal-border/50 rounded animate-pulse" />
+                      ) : (
+                        <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Highest</span>
-                      <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
+                      {!isAPYDataValid ? (
+                        <div className="h-4 w-14 bg-terminal-border/50 rounded animate-pulse" />
+                      ) : (
+                        <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
+                      )}
                     </div>
                   </div>
                 </>
