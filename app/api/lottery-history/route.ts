@@ -512,10 +512,16 @@ export async function GET(request: Request) {
   const fetchAll = searchParams.get("fetchAll") === "true";
   const sanityCheck = searchParams.get("sanityCheck") === "true";
   const sanityCheckDraws = searchParams.get("draws"); // e.g., "60,61,62,63" or "all"
+  const statsOnly = searchParams.get("stats_only") === "true"; // Only return stats, no draw data
   const skipCache = searchParams.get("t") !== null; // Skip cache if timestamp is provided
 
+  // For stats_only requests, never use cache - always calculate fresh
+  // This is critical for APY accuracy
+  if (statsOnly) {
+    // Skip to the main logic - will return stats only at the end
+  }
   // Return cached response for main lottery history endpoint (no special params)
-  if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll && !skipCache) {
+  else if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll && !skipCache) {
     if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_DURATION) {
       return NextResponse.json(cachedResponse.data, {
         headers: {
@@ -848,32 +854,51 @@ export async function GET(request: Request) {
     ? last12Draws.reduce((sum, draw) => sum + (draw.adjustedNGR ?? draw.totalNGRContribution), 0) / last12Draws.length
     : 0;
 
+  // Stats object - computed fresh for every request
+  const stats = {
+    avgWeeklyNGR_4week: avgWeeklyNGR,
+    avgWeeklyNGR_prior4week: priorAvgWeeklyNGR,
+    avgWeeklyNGR_12week: avg12WeekNGR,
+    // Only include completed draws in the stats
+    last4DrawsNGR: last4Draws.map(d => ({
+      drawNumber: d.drawNumber,
+      ngrAdded: d.ngrAdded,
+      singlesAdded: d.singlesAdded,
+      totalNGRContribution: d.totalNGRContribution,
+      adjustedNGR: d.adjustedNGR ?? d.totalNGRContribution,
+      jackpotReplenishment: d.jackpotReplenishment ?? 0,
+    })),
+    // Track which draws are included (for debugging)
+    completedDrawCount: completedDraws.length,
+    latestCompletedDraw: completedDraws[0]?.drawNumber || 0,
+  };
+
+  // If stats_only is requested, return minimal response (faster)
+  if (statsOnly) {
+    return NextResponse.json({
+      success: true,
+      stats,
+      lastUpdated: new Date().toISOString(),
+      source: "stats_only",
+    }, {
+      headers: {
+        // No caching for stats_only - always fresh
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "X-Cache": "NONE",
+      },
+    });
+  }
+
   const responseData = {
     success: true,
     draws: drawsWithData,
-    stats: {
-      avgWeeklyNGR_4week: avgWeeklyNGR,
-      avgWeeklyNGR_prior4week: priorAvgWeeklyNGR,
-      avgWeeklyNGR_12week: avg12WeekNGR,
-      // Only include completed draws in the stats
-      last4DrawsNGR: last4Draws.map(d => ({
-        drawNumber: d.drawNumber,
-        ngrAdded: d.ngrAdded,
-        singlesAdded: d.singlesAdded,
-        totalNGRContribution: d.totalNGRContribution,
-        adjustedNGR: d.adjustedNGR ?? d.totalNGRContribution,
-        jackpotReplenishment: d.jackpotReplenishment ?? 0,
-      })),
-      // Track which draws are included (for debugging)
-      completedDrawCount: completedDraws.length,
-      latestCompletedDraw: completedDraws[0]?.drawNumber || 0,
-    },
+    stats,
     lastUpdated: new Date().toISOString(),
     source: "https://shfl.shuffle.com/shuffle-token-shfl/tokenomics/lottery-history",
   };
 
-  // Cache the response for future requests
-  if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll) {
+  // Cache the response for future requests (only for full data requests)
+  if (!drawId && !sanityCheck && !fetchPrizes && !fetchAll && !statsOnly) {
     cachedResponse = { data: responseData, timestamp: Date.now() };
   }
 

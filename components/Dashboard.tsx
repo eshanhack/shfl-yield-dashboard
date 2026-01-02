@@ -43,6 +43,14 @@ import NGRMomentumIndicator from "./NGRMomentumIndicator";
 import JackpotHunterPanel from "./JackpotHunterPanel";
 import GridBackground from "./GridBackground";
 import { useToast } from "@/contexts/ToastContext";
+import { 
+  APYHeadline, 
+  APYChangeBadge, 
+  LastWeekAPY, 
+  HighestAPY,
+  APYDebug 
+} from "./APYDisplay";
+import { useAPYData } from "@/hooks/useAPYData";
 
 import {
   fetchSHFLPrice,
@@ -875,50 +883,24 @@ export default function Dashboard() {
                       </span>
                       <InfoTooltip content={TOOLTIPS.apy} title="What is APY?" />
                     </div>
-                    {/* Only show APY change badge if data is valid */}
-                    {isAPYDataValid && apyChange !== 0 && !isNaN(apyChange) && isFinite(apyChange) && (
-                      <div className={`hidden sm:flex items-center gap-1 text-[10px] sm:text-xs lg:text-sm font-medium px-1.5 sm:px-2 lg:px-2.5 py-0.5 sm:py-1 rounded ${apyChange > 0 ? "text-terminal-positive bg-terminal-positive/10" : "text-terminal-negative bg-terminal-negative/10"}`}>
-                        <TrendingUp className={`w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-3.5 lg:h-3.5 ${apyChange < 0 ? "rotate-180" : ""}`} />
-                        <span>{apyChange > 0 ? "+" : ""}{apyChange.toFixed(1)}%</span>
-                      </div>
-                    )}
+                    {/* Client-only APY change badge - uses dedicated hook */}
+                    <APYChangeBadge />
                   </div>
                   <div className="mb-1 sm:mb-2 lg:mb-3">
-                    {/* Show loading skeleton when APY data is not validated */}
-                    {!isAPYDataValid ? (
-                      <div className="h-8 sm:h-10 lg:h-12 w-24 sm:w-32 bg-terminal-border/50 rounded animate-pulse" />
-                    ) : (
-                      <span 
-                        className={cn(
-                          "yield-headline yield-headline-size tabular-nums",
-                          currentAPY > 30 
-                            ? "yield-headline-fire" 
-                            : currentAPY < 15 
-                            ? "yield-headline-ice" 
-                            : "yield-headline-neutral"
-                        )}
-                      >
-                        {formatPercent(currentAPY)}
-                      </span>
-                    )}
+                    {/* Client-only APY headline - uses dedicated hook with null-first policy */}
+                    <APYHeadline />
                   </div>
                   <div className="text-[10px] sm:text-xs lg:text-sm text-terminal-textMuted mb-1 lg:mb-2">4-week avg</div>
                   <div className="space-y-0.5 sm:space-y-1 lg:space-y-1.5 mt-auto pt-1.5 sm:pt-2 lg:pt-3 border-t border-terminal-border/50">
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Last Week</span>
-                      {!isAPYDataValid ? (
-                        <div className="h-4 w-14 bg-terminal-border/50 rounded animate-pulse" />
-                      ) : (
-                        <span className="font-medium text-terminal-text tabular-nums">{formatPercent(lastWeekAPY)}</span>
-                      )}
+                      {/* Client-only last week APY */}
+                      <LastWeekAPY />
                     </div>
                     <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                       <span className="text-terminal-textMuted">Highest</span>
-                      {!isAPYDataValid ? (
-                        <div className="h-4 w-14 bg-terminal-border/50 rounded animate-pulse" />
-                      ) : (
-                        <span className="font-medium text-terminal-positive tabular-nums">{formatPercent(highestAPYData.apy)}</span>
-                      )}
+                      {/* Client-only highest APY */}
+                      <HighestAPY />
                     </div>
                   </div>
                 </>
@@ -1535,6 +1517,9 @@ export default function Dashboard() {
         historicalDraws={completedDraws}
         prizeSplit={completedDraws[0]?.prizepoolSplit || "30-14-8-9-7-6-5-10-11"}
       />
+      
+      {/* APY Debug Panel (only visible in development) */}
+      <APYDebug />
     </div>
   );
 }
