@@ -45,16 +45,13 @@ export default function ScreenshotButton({
         console.warn("Failed to load watermark logo");
       }
 
-      // Capture the modal content
+      // Capture the modal content - keep options minimal to avoid layout issues
       const canvas = await html2canvas(targetRef.current, {
         backgroundColor: "#0a0a0a",
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 15000,
-        windowWidth: targetRef.current.scrollWidth,
-        windowHeight: targetRef.current.scrollHeight,
       });
 
       // Create a new canvas to add watermark
