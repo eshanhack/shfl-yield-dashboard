@@ -45,13 +45,44 @@ export default function ScreenshotButton({
         console.warn("Failed to load watermark logo");
       }
 
-      // Capture the modal content
+      // Get the element's bounding rect for accurate capture
+      const rect = targetRef.current.getBoundingClientRect();
+      
+      // Capture the modal content with improved settings for charts/SVGs
       const canvas = await html2canvas(targetRef.current, {
         backgroundColor: "#0a0a0a",
         scale: 2, // High resolution
         logging: false,
         useCORS: true,
         allowTaint: true,
+        // Fix for SVG and flexbox alignment issues
+        foreignObjectRendering: false, // More compatible rendering
+        removeContainer: false,
+        imageTimeout: 15000,
+        // Ensure proper scroll position handling
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        x: rect.left + window.scrollX,
+        y: rect.top + window.scrollY,
+        width: rect.width,
+        height: rect.height,
+        // Clone callback to fix styles in the cloned element
+        onclone: (clonedDoc, element) => {
+          // Force all SVG elements to have explicit dimensions
+          const svgs = element.querySelectorAll('svg');
+          svgs.forEach((svg) => {
+            const svgRect = svg.getBoundingClientRect();
+            svg.setAttribute('width', String(svgRect.width));
+            svg.setAttribute('height', String(svgRect.height));
+          });
+          // Fix any ResponsiveContainer elements
+          const responsiveContainers = element.querySelectorAll('.recharts-responsive-container');
+          responsiveContainers.forEach((container) => {
+            const containerEl = container as HTMLElement;
+            containerEl.style.width = `${containerEl.offsetWidth}px`;
+            containerEl.style.height = `${containerEl.offsetHeight}px`;
+          });
+        },
       });
 
       // Create a new canvas to add watermark
