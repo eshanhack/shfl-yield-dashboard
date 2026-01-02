@@ -1,6 +1,16 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+/**
+ * YieldChart - NGR vs Price Graph
+ * 
+ * ARCHITECTURAL MANDATE:
+ * This component does NOT calculate APY.
+ * It receives chartData from useYieldData hook.
+ * The same chartData is used to derive the "Highest APY" stat.
+ * Therefore Card and Graph can NEVER disagree.
+ */
+
+import { useRef } from "react";
 import {
   ComposedChart,
   Line,
@@ -12,53 +22,20 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Activity } from "lucide-react";
-import { HistoricalDraw, calculateGlobalAPY } from "@/lib/calculations";
+import { ChartDataPoint } from "@/hooks/useYieldData";
 import ScreenshotButton from "./ScreenshotButton";
 
 interface YieldChartProps {
-  historicalDraws: HistoricalDraw[];
-  currentPrice: number;
+  /** Chart data from useYieldData - THE SINGLE SOURCE OF TRUTH */
+  chartData: ChartDataPoint[];
 }
 
-export default function YieldChart({ historicalDraws, currentPrice }: YieldChartProps) {
+export default function YieldChart({ chartData }: YieldChartProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   
-  // Build chart data directly from historical draws (most accurate source)
-  const formattedData = useMemo(() => {
-    // Sort draws oldest first for chart display
-    const sortedDraws = [...historicalDraws].sort((a, b) => a.drawNumber - b.drawNumber);
-    
-    return sortedDraws.map((draw) => {
-      // Use adjusted NGR if available (excludes jackpot replenishment), otherwise use raw NGR
-      const ngrForCalc = draw.adjustedNgrUSD ?? draw.ngrUSD;
-      
-      // Use historical price at draw time, or current price as fallback
-      const priceAtDraw = draw.shflPriceAtDraw || currentPrice;
-      
-      // Calculate APY using the CORRECT formula with actual draw data
-      const apy = draw.totalTickets > 0 && priceAtDraw > 0
-        ? calculateGlobalAPY(
-            ngrForCalc,
-            draw.totalTickets,
-            priceAtDraw,
-            draw.prizepoolSplit || "30-14-8-9-7-6-5-10-11"
-          )
-        : 0;
-      
-      // Format date for display
-      const drawDate = new Date(draw.date);
-      const dateLabel = drawDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      
-      return {
-        date: dateLabel,
-        drawNumber: draw.drawNumber,
-        ngr: ngrForCalc / 1_000_000, // Convert to millions for display
-        price: priceAtDraw,
-        apy: Math.min(apy, 500), // Cap at 500% for display
-        apyScaled: Math.min(apy, 500) / 100, // Scale for price axis (100% = 1.0)
-      };
-    });
-  }, [historicalDraws, currentPrice]);
+  // No calculation here - just use the data as-is
+  // This ensures the max APY in the chart EXACTLY matches
+  // the highestAPY stat shown on the card
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -85,6 +62,26 @@ export default function YieldChart({ historicalDraws, currentPrice }: YieldChart
       </div>
     );
   };
+
+  // Show loading state if no data
+  if (!chartData || chartData.length === 0) {
+    return (
+      <div className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 rounded bg-terminal-accent/10 border border-terminal-accent/20">
+            <Activity className="w-4 h-4 text-terminal-accent" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-terminal-text">NGR vs Price</h3>
+            <p className="text-xs text-terminal-textMuted">Loading...</p>
+          </div>
+        </div>
+        <div className="flex-1 min-h-[300px] flex items-center justify-center">
+          <div className="animate-pulse text-terminal-textMuted">Loading chart data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={panelRef} className="bg-terminal-card border border-terminal-border rounded-lg p-4 card-glow h-full flex flex-col">
@@ -121,7 +118,7 @@ export default function YieldChart({ historicalDraws, currentPrice }: YieldChart
 
       <div className="flex-1 min-h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={formattedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="#1a1a1a"
@@ -198,4 +195,3 @@ export default function YieldChart({ historicalDraws, currentPrice }: YieldChart
     </div>
   );
 }
-

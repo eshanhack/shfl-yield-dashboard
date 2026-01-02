@@ -50,7 +50,7 @@ import {
   HighestAPY,
   APYDebug 
 } from "./APYDisplay";
-import { useAPYData } from "@/hooks/useAPYData";
+import { YieldDataProvider, useYieldDataContext } from "@/hooks/useYieldData";
 
 import {
   fetchSHFLPrice,
@@ -104,7 +104,22 @@ function isAPYWithinBounds(apy: number): boolean {
 
 // ==================== END APY VALIDATION ====================
 
+// Wrapper component that provides the unified yield data context
 export default function Dashboard() {
+  return (
+    <YieldDataProvider>
+      <DashboardContent />
+    </YieldDataProvider>
+  );
+}
+
+// Inner component that consumes the yield data context
+function DashboardContent() {
+  // ==================== UNIFIED YIELD DATA ====================
+  // This is THE SINGLE SOURCE OF TRUTH for all APY values
+  // Both the Yield Card and the Graph consume from here
+  const yieldData = useYieldDataContext();
+  
   // Toast hook
   const { addToast } = useToast();
   
@@ -1286,10 +1301,11 @@ export default function Dashboard() {
             {/* Charts and Ticket EV Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5 items-stretch">
               {/* NGR vs Price Chart */}
+              {/* Uses chartData from THE SINGLE SOURCE OF TRUTH (useYieldData) */}
+              {/* This ensures the max APY in chart = the "Highest" stat on the card */}
               <section id="ngr-chart" className="lg:col-span-2 h-full">
                 <YieldChart 
-                  historicalDraws={completedDraws}
-                  currentPrice={price.usd}
+                  chartData={yieldData.metrics?.chartData || []}
                 />
               </section>
 
