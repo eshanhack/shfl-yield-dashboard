@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Camera, Check, Loader2 } from "lucide-react";
-import html2canvas from "html2canvas";
 
 const LOGO_URL = "https://i.ibb.co/TDMBKTP7/shfl-logo-2.png";
 
@@ -41,46 +40,61 @@ export default function ScreenshotButton({
       try {
         logoImg = await loadImage(LOGO_URL);
       } catch {
-        // Logo failed to load, continue without it
         console.warn("Failed to load watermark logo");
       }
 
-      // Capture the modal content - keep options minimal to avoid layout issues
-      const canvas = await html2canvas(targetRef.current, {
-        backgroundColor: "#0a0a0a",
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
+      // Get element dimensions
+      const element = targetRef.current;
+      const rect = element.getBoundingClientRect();
+      
+      // Dynamically import dom-to-image-more (client-side only)
+      const domtoimage = (await import("dom-to-image-more")).default;
+      
+      // Use dom-to-image-more for better SVG support
+      const dataUrl = await domtoimage.toPng(element, {
+        quality: 1,
+        bgcolor: "#0a0a0a",
+        width: rect.width * 2,
+        height: rect.height * 2,
+        style: {
+          transform: "scale(2)",
+          transformOrigin: "top left",
+        },
       });
 
-      // Create a new canvas to add watermark
-      const finalCanvas = document.createElement("canvas");
-      const ctx = finalCanvas.getContext("2d");
+      // Create image from data URL
+      const img = new Image();
+      img.src = dataUrl;
+      
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create canvas for watermark
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get canvas context");
 
-      finalCanvas.width = canvas.width;
-      finalCanvas.height = canvas.height;
+      canvas.width = img.width;
+      canvas.height = img.height;
 
       // Draw the screenshot
-      ctx.drawImage(canvas, 0, 0);
+      ctx.drawImage(img, 0, 0);
 
       // Add watermark in the center
       ctx.save();
-      ctx.globalAlpha = 0.25; // 25% transparency
+      ctx.globalAlpha = 0.25;
 
       const fontSize = Math.max(24, canvas.width * 0.035);
       const logoSize = fontSize * 1.5;
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
-      // Calculate total width of logo + text for centering
-      const textWidth = fontSize * 4; // Approximate width of "shfl.pro"
+      const textWidth = fontSize * 4;
       const gap = fontSize * 0.5;
       const totalWidth = logoSize + gap + textWidth;
       const startX = centerX - totalWidth / 2;
 
-      // Draw logo if loaded
       if (logoImg) {
         ctx.drawImage(
           logoImg,
@@ -90,7 +104,6 @@ export default function ScreenshotButton({
           logoSize
         );
       } else {
-        // Fallback: draw a purple circle with "S"
         ctx.beginPath();
         ctx.arc(startX + logoSize / 2, centerY, logoSize / 2, 0, Math.PI * 2);
         ctx.fillStyle = "#8A2BE2";
@@ -102,7 +115,6 @@ export default function ScreenshotButton({
         ctx.fillText("S", startX + logoSize / 2, centerY);
       }
 
-      // Draw "shfl.pro" text
       ctx.font = `bold ${fontSize}px "Space Grotesk", "Inter", system-ui, sans-serif`;
       ctx.fillStyle = "#ffffff";
       ctx.textAlign = "left";
@@ -111,8 +123,8 @@ export default function ScreenshotButton({
 
       ctx.restore();
 
-      // Convert to blob and download
-      finalCanvas.toBlob((blob) => {
+      // Download
+      canvas.toBlob((blob) => {
         if (!blob) return;
 
         const url = URL.createObjectURL(blob);
@@ -158,4 +170,3 @@ export default function ScreenshotButton({
     </button>
   );
 }
-
